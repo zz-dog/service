@@ -7,6 +7,7 @@ import (
 	"demo/pkg/utils"
 	"errors"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -15,10 +16,13 @@ type UserService struct {
 }
 
 func (s *UserService) CreateUser(req model.CreateUserReq) error {
+	// 检查用户名是否已存在
 	_, err := s.GetUserByUsername(req.Username)
 	if err == nil {
 		return fmt.Errorf("用户已存在")
 	}
+
+	// 判断是否是其他错误，而不是记录未找到的错误
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
@@ -28,12 +32,13 @@ func (s *UserService) CreateUser(req model.CreateUserReq) error {
 		return fmt.Errorf("密码加密失败: %w", err)
 	}
 
-	user := model.User{
+	newUser := model.User{
 		Username: req.Username,
 		Password: hashedPassword,
 		Phone:    req.Phone,
+		Nickname: req.Nickname,
 	}
-	return global.DB.Create(&user).Error
+	return global.DB.Create(&newUser).Error
 }
 
 func (s *UserService) GetUserByUsername(username string) (model.User, error) {
@@ -46,15 +51,37 @@ func (s *UserService) updateUser(user *model.User) error {
 	return global.DB.Save(user).Error
 }
 
-func (s *UserService) LoginWithUsername(req model.LoginUserWithUsernameReq) (token string, err error) {
+func (s *UserService) LoginWithUsername(req model.LoginUserWithUsernameReq) (*model.LoginUserResp, error) {
 	user, err := s.GetUserByUsername(req.Username)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
+	// 检查密码是否正确
 	if utils.CheckPassword(req.Password, user.Password) != nil {
-		return "", fmt.Errorf("密码错误")
+		return nil, fmt.Errorf("密码错误")
 	}
-	 return jwt.GenerateToken(fmt.Sprintf("%d", user.UserID), user.Username)
+	// 检查账号状态
+	if user.Status == 0 {
+		return nil, fmt.Errorf("账号已被禁用")
+	}
+	// 更新最后登录时间和IP
+	now := time.Now()
+	user.LastLoginAt = &now
+	user.LastLoginIP = req.Ip
+	if err := s.updateUser(&user); err != nil {
+		return nil, fmt.Errorf("更新用户登录信息失败: %w", err)
+	}
 
+	// 生成JWT token
+	token, err := jwt.GenerateToken(fmt.Sprintf("%d", user.UserID), user.Username)
+	if err != nil {
+		return nil, fmt.Errorf("生成token失败: %w", err)
+	}
+
+	// 密码字段不返回
+	user.Password = ""
+	return &model.LoginUserResp{
+		Token: token,
+		User:  user,
+	}, nil
 }
