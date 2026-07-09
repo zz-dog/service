@@ -1,0 +1,62 @@
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/main
+/demo
+/bin/
+/build/
+/dist/
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Test coverage
+coverage.out
+coverage.html
+*.cov
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Config files with sensitive data
+config.yaml
+config.yml
+config.toml
+config.json
+!config.example.yaml
+!config.example.yml
+!config.example.toml
+!config.example.json
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS generated files
+Thumbs.db
