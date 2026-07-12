@@ -15,7 +15,7 @@ import (
 type UserService struct {
 }
 
-func (s *UserService) CreateUser(req model.CreateUserReq) error {
+func (s *UserService) RegisterUser(req model.RegisterUserReq) error {
 	// 检查用户名是否已存在
 	_, err := s.GetUserByUsername(req.Username)
 	if err == nil {
@@ -54,11 +54,11 @@ func (s *UserService) updateUser(user *model.User) error {
 func (s *UserService) LoginWithUsername(req model.LoginUserWithUsernameReq) (*model.LoginUserResp, error) {
 	user, err := s.GetUserByUsername(req.Username)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("用户不存在")
 	}
 	// 检查密码是否正确
 	if utils.CheckPassword(req.Password, user.Password) != nil {
-		return nil, fmt.Errorf("密码错误")
+		return nil, fmt.Errorf("账号或密码错误")
 	}
 	// 检查账号状态
 	if user.Status == 0 {

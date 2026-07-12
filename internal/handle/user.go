@@ -9,18 +9,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CreateUser(c *gin.Context) {
-	var req model.CreateUserReq
+func RegisterUser(c *gin.Context) {
+	var req model.RegisterUserReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, 400, validator.ErrorMsg(err))
 		return
 	}
 	userService := &service.UserService{}
-	if err := userService.CreateUser(req); err != nil {
+	if err := userService.RegisterUser(req); err != nil {
 		response.ServerError(c, 500, err.Error())
 		return
 	}
-	response.SuccessMsg(c, "createUser", req)
+	response.SuccessMsg(c, "registerUser", req)
 }
 
 func LoginWithUsername(c *gin.Context) {
