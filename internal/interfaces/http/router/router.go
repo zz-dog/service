@@ -1,14 +1,17 @@
 package router
 
 import (
-	"demo/internal/handle"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+
+	"github.com/wsc-zz/service/internal/application/user"
+	"github.com/wsc-zz/service/internal/interfaces/http/handler"
 )
 
-func InitRouter() *gin.Engine {
+// InitRouter 初始化路由，注入用户应用服务。
+func InitRouter(userSvc *userapp.Service) *gin.Engine {
 	r := gin.Default()
 
 	// 允许本地开发前端跨域访问
@@ -21,11 +24,12 @@ func InitRouter() *gin.Engine {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	h := handler.NewHandler(userSvc)
+
 	apiGroup := r.Group("/api")
 	{
-		apiGroup.GET("/user/:id")
-		apiGroup.POST("/user/register", handle.RegisterUser)
-		apiGroup.POST("/user/login", handle.LoginWithUsername)
+		apiGroup.POST("/user/register", h.Register)
+		apiGroup.POST("/user/login", h.Login)
 	}
 	return r
 }
