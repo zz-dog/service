@@ -2,11 +2,18 @@ package user
 
 import "time"
 
+type LoginChannel int
+type Role int
+
 // 登录渠道
 const (
-	ChannelPassword = 1 // 账号密码登录
-	ChannelWechat   = 2 // 微信登录(小程序/公众号/App)
-	ChannelAlipay   = 3 // 支付宝快捷登录
+	ChannelPassword LoginChannel = iota // 账号密码登录
+	ChannelWechat                       // 微信登录(小程序/公众号/App)
+	ChannelAlipay                       // 支付宝快捷登录
+)
+const (
+	RoleUser  Role = iota // 普通用户
+	RoleAdmin             // 管理员
 )
 
 // User 是用户聚合根（领域实体）。
@@ -22,7 +29,7 @@ type User struct {
 	Password string
 
 	// 第三方登录核心关联字段
-	LoginChannel int
+	LoginChannel LoginChannel
 	UnionID      string
 	OpenID       string
 	AlipayUID    string
@@ -34,7 +41,7 @@ type User struct {
 	Avatar   string
 	Gender   int8
 	Birthday *time.Time
-
+	Role
 	// 账号状态：1 正常，0 禁用
 	Status int8
 
@@ -45,7 +52,7 @@ type User struct {
 
 // NewUser 创建一个新注册的密码渠道用户。
 // 作为充血模型的构造函数，集中封装不变量：默认密码渠道、正常状态。
-func NewUser(username, hashedPassword, phone, nickname string) *User {
+func NewUser(username, hashedPassword, phone, nickname string, role Role) *User {
 	return &User{
 		Username:     username,
 		Password:     hashedPassword,
@@ -53,6 +60,7 @@ func NewUser(username, hashedPassword, phone, nickname string) *User {
 		Nickname:     nickname,
 		LoginChannel: ChannelPassword,
 		Status:       1,
+		Role:         role,
 	}
 }
 

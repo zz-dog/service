@@ -45,7 +45,7 @@ func (s *Service) Register(ctx context.Context, in RegisterInput) (*UserDTO, err
 		return nil, fmt.Errorf("密码加密失败: %w", err)
 	}
 
-	u := user.NewUser(in.Username, hashed, in.Phone, in.Nickname)
+	u := user.NewUser(in.Username, hashed, in.Phone, in.Nickname, user.RoleUser)
 	if err := s.repo.Save(ctx, u); err != nil {
 		return nil, err
 	}

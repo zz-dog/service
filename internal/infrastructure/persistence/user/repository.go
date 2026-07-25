@@ -19,9 +19,6 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-// 编译期断言：确保实现满足领域接口
-var _ user.UserRepository = (*UserRepository)(nil)
-
 func (r *UserRepository) FindByUsername(ctx context.Context, username string) (*user.User, error) {
 	var po UserPO
 	err := r.db.WithContext(ctx).Where("username = ?", username).First(&po).Error

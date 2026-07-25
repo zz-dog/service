@@ -21,10 +21,10 @@ type UserPO struct {
 	Password string `gorm:"size:100;default:'';comment:BCrypt加密密码，第三方登录无密码"`
 
 	// 第三方登录核心关联字段
-	LoginChannel int    `gorm:"tinyint;not null;default:1;comment:登录渠道 1账号密码 2微信 3支付宝"`
-	UnionID      string `gorm:"size:128;index;default:'';comment:微信UnionID(多端统一标识)"`
-	OpenID       string `gorm:"size:128;index;default:'';comment:微信OpenID(单端唯一)"`
-	AlipayUID    string `gorm:"size:128;index;default:'';comment:支付宝用户唯一ID"`
+	LoginChannel user.LoginChannel `gorm:"tinyint;not null;default:1;comment:登录渠道 1账号密码 2微信 3支付宝"`
+	UnionID      string            `gorm:"size:128;index;default:'';comment:微信UnionID(多端统一标识)"`
+	OpenID       string            `gorm:"size:128;index;default:'';comment:微信OpenID(单端唯一)"`
+	AlipayUID    string            `gorm:"size:128;index;default:'';comment:支付宝用户唯一ID"`
 
 	// 基础用户信息
 	Nickname string     `gorm:"size:32;default:'';comment:用户展示昵称"`
