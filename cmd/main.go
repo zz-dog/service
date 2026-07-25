@@ -6,9 +6,12 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/wsc-zz/service/global"
-	"github.com/wsc-zz/service/internal/application/user"
+	orderapp "github.com/wsc-zz/service/internal/application/order"
+	userapp "github.com/wsc-zz/service/internal/application/user"
 	"github.com/wsc-zz/service/internal/infrastructure/auth"
-	"github.com/wsc-zz/service/internal/infrastructure/persistence/user"
+	orderpo "github.com/wsc-zz/service/internal/infrastructure/persistence/order"
+
+	userpo "github.com/wsc-zz/service/internal/infrastructure/persistence/user"
 	"github.com/wsc-zz/service/internal/infrastructure/security"
 	"github.com/wsc-zz/service/internal/interfaces/http/router"
 )
@@ -32,8 +35,14 @@ func main() {
 	tokenIssuer := auth.NewJWTTokenIssuer()
 	userSvc := userapp.NewService(userRepo, hasher, tokenIssuer)
 
+	orderRepo := orderpo.NewOrderRepository(global.DB)
+
+	orderSvc := orderapp.NewService(orderRepo)
+
+	//product
+	// productRpo := orderpo.NewProductRepository(global.DB)
 	// 4. 启动 HTTP 服务
-	r := router.InitRouter(userSvc)
+	r := router.InitRouter(userSvc, orderSvc)
 	if err := r.Run(":" + fmt.Sprint(global.Conf.Service.Port)); err != nil {
 		panic(err)
 	}

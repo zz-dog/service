@@ -9,12 +9,14 @@
 ## 0. 业务需求与架构总览
 
 ### 业务需求
+
 - **多 SKU 商品**：`Product` 聚合根 + `SKU` 值对象集合（结构类比 `Order` + `OrderItem`）
 - **分类管理**：`Category` 聚合根（独立），商品引用分类 ID
 - **用例**：商品增删改、商品查询（列表+详情+按分类/名称筛选）、库存扣减、分类增删改查
 - **权限**：浏览公开、管理要管理员 -> 扩展 JWT 中间件做角色判断
 
 ### 分层架构（与 user / order 模块对称）
+
 ```
 domain/product/                          ← 第2步：领域层
 application/product/                     ← 第3、5步：应用层
@@ -24,11 +26,13 @@ interfaces/http/handler/category.go      ← 第6步
 ```
 
 ### 跨模块改动（第1步先做，为鉴权打基础）
+
 - user 加 `Role` 字段
 - JWT claims 携带角色
 - 新增 `AdminAuth` 管理员中间件
 
 ### 重要约定
+
 - **金额一律用"分"（int64）**，和 order 模块一致，避免浮点误差。
 - **聚合根一致性**：`Product` 管理 `SKU` 列表，保存时一起落库（和 `Order` 管理 `OrderItem` 一样）。
 - **库存扣减防超卖**：用 `WHERE stock >= qty` 条件更新，影响行数为 0 即库存不足。
@@ -235,11 +239,13 @@ func AdminAuth() gin.HandlerFunc {
 ```
 
 **设计点**：
+
 - `AdminAuth` 必须套在 `JWTAuth` 之后，依赖它写入的 `c.Get("role")`。
 - `role` 类型断言是 `int8`（和 `UserClaims.Role` 一致），全链路保持 `int8`。
 - 非管理员返回 403（登录了但没权限），比 401（没登录）语义准确。
 
 ### ✅ 第 1 步自检
+
 - [ ] `go build ./...` 编译通过（重点检查 `Issue` 签名连锁是否都改了）
 - 怎么造管理员：注册用户后，手动去数据库把该用户 `role` 改成 `2`，重新登录拿新 token。
 
@@ -444,6 +450,7 @@ func (p *Product) Restock(skuCode string, qty int) error {
 ```
 
 **设计点**：
+
 1. `NewProduct` 校验名称、SKU 非空、SKU 编码不重复。
 2. `DeductStock` 在聚合根内做库存校验（内存层），但**并发安全要靠仓储层**的条件更新（第 4 步）。
 3. `ReplaceSKUs` 提供整体替换 SKU 的能力（管理端改规格）。
@@ -537,6 +544,7 @@ type ProductRepository interface {
 ```
 
 **设计点**：
+
 - `DeductStock` 单独作为仓储方法，用 `UPDATE ... SET stock=stock-? WHERE product_id=? AND sku_code=? AND stock>=?` 原子操作防超卖。
 - `FindBySKUCode` 用于下单时根据订单里的 SKU 编码找到商品。
 - `CountByCategory` 给删除分类时做安全校验。
@@ -559,6 +567,7 @@ type CategoryRepository interface {
 ```
 
 ### ✅ 第 2 步自检
+
 - [ ] `go build ./internal/domain/product/ ./internal/domain/category/` 编译通过
 - 自检问题：为什么 `DeductStock` 既在聚合根里有方法，又在仓储里单独有一个？（聚合根做内存校验，仓储做并发安全的原子更新）
 
@@ -812,6 +821,7 @@ func toProductDTO(p *domainproduct.Product) ProductDTO {
 **设计点**：`DeductStock` 做了两层校验：聚合根内存校验（快速失败，给出明确错误）+ 仓储原子更新（真正防超卖）。内存校验不是必须的，但能让"下架商品""SKU 不存在"这类错误提前暴露，不用走到 SQL。
 
 ### ✅ 第 3 步自检
+
 - [ ] `go build ./internal/application/product/` 编译通过
 
 ---
@@ -912,6 +922,7 @@ func toSKUsPO(skus []domainproduct.SKU) []SKUPO {
 ```
 
 **设计点**：
+
 - `uniqueIndex:uk_product_sku` 联合唯一索引（ProductID + SKUCode），保证同一商品下 SKU 编码不重复。
 - `toPO` 不含 SKUs（和 order 一样的套路，更新时只存主表）。
 
@@ -1048,11 +1059,13 @@ func (r *ProductRepository) CountByCategory(ctx context.Context, categoryID uint
 ```
 
 **设计点**：
+
 1. **`DeductStock` 防超卖核心**：`WHERE stock >= qty` + `UPDATE stock = stock - qty`，单条 SQL 原子完成。`RowsAffected == 0` 说明库存不足（或 SKU 不存在），返回 `ErrInsufficientStock`。这是防并发超卖的标准做法。
 2. **更新时替换 SKU**：用事务"先删后插"，因为 SKU 列表是整体替换（管理端重新设规格）。和 order 不同--order 的明细创建后不可变，商品的 SKU 可以改。
 3. **`Save` 用事务**：保证"更新主表 + 替换 SKU"要么全成功要么全失败。
 
 ### ✅ 第 4 步自检
+
 - [ ] `go build ./internal/infrastructure/persistence/product/` 编译通过
 - 自检问题：为什么 `DeductStock` 用 `WHERE stock >= qty` 而不是先查再减？（防并发：两个请求同时查到 stock=1，各自判断够，都去减就超卖了）
 
@@ -1300,6 +1313,7 @@ func toCategoryDTO(c *domaincategory.Category) CategoryDTO {
 **设计点**：`categoryapp.Service` 依赖 `ProductRepository`（跨聚合），目的是删除分类前检查"是否还有商品引用"。这是跨聚合协作的合法场景（一个用例需要两个聚合的信息）。
 
 ### ✅ 第 5 步自检
+
 - [ ] `go build ./internal/infrastructure/persistence/category/ ./internal/application/category/` 编译通过
 
 ---
@@ -1688,6 +1702,7 @@ func InitRouter(
 > ⚠️ `InitRouter` 签名又变了，`main.go` 调用处要同步（第 8 步）。
 
 ### ✅ 第 6 步自检
+
 - [ ] `go build ./internal/interfaces/http/...` 编译通过
 
 ---
@@ -1789,6 +1804,7 @@ var _ domainproduct.StockDeductor = (*Service)(nil)
 `productapp.Service` 已经有 `DeductStock` 方法了，签名匹配，自动实现接口。
 
 **设计点（重要）**：
+
 - order 依赖 `domainproduct.StockDeductor` **接口**，而不是 `productapp.Service` **具体类型**。这样 order 和 product 应用层解耦，符合依赖倒置。
 - 接口定义在 product 领域层（被依赖方定义接口），order 应用层 import 它。这是"端口"模式。
 - `main.go` 装配时把 `productSvc`（满足 `StockDeductor`）注入给 `orderapp.NewService`。
@@ -1796,6 +1812,7 @@ var _ domainproduct.StockDeductor = (*Service)(nil)
 > 💡 这是 plan 里说的"方案 A 的解耦版"：order 依赖 product 的接口而非具体类型。比直接依赖 `*productapp.Service` 更干净，但不用引入事件机制。教学推荐这种。
 
 ### ✅ 第 7 步自检
+
 - [ ] `go build ./...` 编译通过（注意 OrderItem 加 SKUCode 的连锁改动是否都改到）
 
 ---
@@ -1866,16 +1883,19 @@ func main() {
 ```
 
 > ⚠️ 注意 import：`persistence/category` 和 `application/category` 包名都是 `category`，会和别的冲突。上面的写法有坑（`category` 重复）。实际请用别名：
+>
 > ```go
 > categoryapp "github.com/wsc-zz/service/internal/application/category"
 > categorypo "github.com/wsc-zz/service/internal/infrastructure/persistence/category"
 > ```
+>
 > 然后用 `categoryapp.NewService` / `categorypo.NewCategoryRepository`。
 > （上面 main.go 的 import 块我故意写了重复名让你看到这个坑，请用别名修正。）
 
 > 但 `persistence/order`、`persistence/product`、`persistence/user` 的包名是 `orderpo`/`productpo`/`userpo`（和目录名不同），所以不冲突。只有 category 的包名建议也改成 `categorypo` 保持一致。
 
 ### 8.2 编译验证
+
 ```bash
 go build ./...
 ```
@@ -1897,51 +1917,55 @@ go build ./...
 
 ### A. 文件清单（共 16 个新文件 + 5 个修改）
 
-| # | 文件 | 类型 | 步骤 |
-|---|------|------|------|
-| 1 | `domain/user/user.go` | 修改 | 1 |
-| 2 | `persistence/user/model.go` | 修改 | 1 |
-| 3 | `infrastructure/auth/token.go` | 修改 | 1 |
-| 4 | `application/user/service.go` | 修改 | 1 |
-| 5 | `middleware/jwt.go` | 修改 | 1 |
-| 6 | `middleware/admin.go` | 新建 | 1 |
-| 7 | `domain/product/errors.go` | 新建 | 2 |
-| 8 | `domain/product/sku.go` | 新建 | 2 |
-| 9 | `domain/product/product.go` | 新建 | 2 |
-| 10 | `domain/product/repository.go` | 新建 | 2 |
-| 11 | `domain/product/stock_deductor.go` | 新建 | 7 |
-| 12 | `domain/category/category.go` | 新建 | 2 |
-| 13 | `domain/category/errors.go` | 新建 | 2 |
-| 14 | `domain/category/repository.go` | 新建 | 2 |
-| 15 | `application/product/dto.go` | 新建 | 3 |
-| 16 | `application/product/service.go` | 新建 | 3 |
-| 17 | `persistence/product/model.go` | 新建 | 4 |
-| 18 | `persistence/product/repository.go` | 新建 | 4 |
-| 19 | `persistence/category/model.go` | 新建 | 5 |
-| 20 | `persistence/category/repository.go` | 新建 | 5 |
-| 21 | `application/category/dto.go` | 新建 | 5 |
-| 22 | `application/category/service.go` | 新建 | 5 |
-| 23 | `interfaces/http/handler/product.go` | 新建 | 6 |
-| 24 | `interfaces/http/router/router.go` | 修改 | 6 |
-| 25 | `application/order/service.go` | 修改 | 7 |
-| 26 | `domain/order/item.go` | 修改 | 7 |
-| 27 | `cmd/main.go` | 修改 | 8 |
+| #   | 文件                                 | 类型 | 步骤 |
+| --- | ------------------------------------ | ---- | ---- |
+| 1   | `domain/user/user.go`                | 修改 | 1    |
+| 2   | `persistence/user/model.go`          | 修改 | 1    |
+| 3   | `infrastructure/auth/token.go`       | 修改 | 1    |
+| 4   | `application/user/service.go`        | 修改 | 1    |
+| 5   | `middleware/jwt.go`                  | 修改 | 1    |
+| 6   | `middleware/admin.go`                | 新建 | 1    |
+| 7   | `domain/product/errors.go`           | 新建 | 2    |
+| 8   | `domain/product/sku.go`              | 新建 | 2    |
+| 9   | `domain/product/product.go`          | 新建 | 2    |
+| 10  | `domain/product/repository.go`       | 新建 | 2    |
+| 11  | `domain/product/stock_deductor.go`   | 新建 | 7    |
+| 12  | `domain/category/category.go`        | 新建 | 2    |
+| 13  | `domain/category/errors.go`          | 新建 | 2    |
+| 14  | `domain/category/repository.go`      | 新建 | 2    |
+| 15  | `application/product/dto.go`         | 新建 | 3    |
+| 16  | `application/product/service.go`     | 新建 | 3    |
+| 17  | `persistence/product/model.go`       | 新建 | 4    |
+| 18  | `persistence/product/repository.go`  | 新建 | 4    |
+| 19  | `persistence/category/model.go`      | 新建 | 5    |
+| 20  | `persistence/category/repository.go` | 新建 | 5    |
+| 21  | `application/category/dto.go`        | 新建 | 5    |
+| 22  | `application/category/service.go`    | 新建 | 5    |
+| 23  | `interfaces/http/handler/product.go` | 新建 | 6    |
+| 24  | `interfaces/http/router/router.go`   | 修改 | 6    |
+| 25  | `application/order/service.go`       | 修改 | 7    |
+| 26  | `domain/order/item.go`               | 修改 | 7    |
+| 27  | `cmd/main.go`                        | 修改 | 8    |
 
 ### B. 防超卖原理
+
 ```
 并发请求A、B 同时下单，库存=1：
   ❌ 先查再减：A查到1够、B查到1够 -> 各减1 -> 库存变-1，超卖
   ✅ 条件更新：UPDATE stock=stock-1 WHERE stock>=1
               A 命中1行(库存变0)，B 命中0行(库存0不满足>=1) -> B失败，不超卖
 ```
+
 关键：把"判断+扣减"放进一条 SQL，靠数据库行锁保证原子性。
 
 ### C. 跨模块协作架构
+
 ```
 order 应用层  --依赖接口-->  domain/product.StockDeductor  <--实现--  product 应用层
                                                                        ↓
                                                                 product 仓储（真正扣库存）
 ```
+
 order 不认识 productapp.Service 具体类型，只认识接口。main.go 把 productSvc 注入给 order。这就是依赖倒置在跨模块协作上的应用。
 
 ---

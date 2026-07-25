@@ -26,8 +26,8 @@ func NewHandler(userSvc *userapp.Service) *Handler {
 type registerRequest struct {
 	Username string `json:"username" binding:"required,min=2,max=10"`
 	Password string `json:"password" binding:"required,min=6,max=20"`
-	Phone    string `json:"phone" binding:"len=11"`
-	Nickname string `json:"nickname" binding:"min=2,max=10"`
+	Phone    string `json:"phone" binding:"required,len=11"`
+	Nickname string `json:"nickname" binding:"required,min=2,max=10" `
 }
 
 // loginRequest 登录请求结构体
