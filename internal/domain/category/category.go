@@ -32,3 +32,13 @@ func (c *Category) Rename(name string) error {
 	c.Name = name
 	return nil
 }
+
+// SetParentID 设置父分类ID（0 表示顶级分类）
+func (c *Category) SetParentID(parentID uint) {
+	c.ParentID = parentID
+}
+
+// SetSort 设置排序权重，越小越靠前
+func (c *Category) SetSort(sort int) {
+	c.Sort = sort
+}

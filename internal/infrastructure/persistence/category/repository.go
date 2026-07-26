@@ -2,6 +2,7 @@ package categorypo
 
 import (
 	"context"
+	"errors"
 
 	domaincategory "github.com/wsc-zz/service/internal/domain/category"
 	"gorm.io/gorm"
@@ -17,12 +18,27 @@ func NewCategoryRepository(db *gorm.DB) *CategoryRepository {
 
 func (c *CategoryRepository) FindByID(ctx context.Context, id uint) (*domaincategory.Category, error) {
 	var po CategoryPO
-	if err := c.db.WithContext(ctx).Where("category_id = ?", id).First(&po).Error; err != nil {
+	err := c.db.WithContext(ctx).Where("category_id = ?", id).First(&po).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domaincategory.ErrCategoryNotFound
+		}
 		return nil, err
 	}
 	return po.toDomain(), nil
 }
 
+func (c *CategoryRepository) FindByName(ctx context.Context, name string) (*domaincategory.Category, error) {
+	var po CategoryPO
+	err := c.db.WithContext(ctx).Where("name = ?", name).First(&po).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domaincategory.ErrCategoryNotFound
+		}
+		return nil, err
+	}
+	return po.toDomain(), nil
+}
 func (c *CategoryRepository) FindAll(ctx context.Context) ([]*domaincategory.Category, error) {
 	var pos []*CategoryPO
 	if err := c.db.WithContext(ctx).Find(&pos).Error; err != nil {

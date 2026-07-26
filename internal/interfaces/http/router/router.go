@@ -10,11 +10,16 @@ import (
 	userapp "github.com/wsc-zz/service/internal/application/user"
 	"github.com/wsc-zz/service/internal/interfaces/http/handler"
 	"github.com/wsc-zz/service/internal/interfaces/http/middleware"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	_ "github.com/wsc-zz/service/docs"
+	categoryapp "github.com/wsc-zz/service/internal/application/category"
 )
 
 // InitRouter 初始化路由，注入用户应用服务。
 
-func InitRouter(userSvc *userapp.Service, orderSvc *orderapp.Service) *gin.Engine {
+func InitRouter(userSvc *userapp.Service, orderSvc *orderapp.Service, categorySvc *categoryapp.Service) *gin.Engine {
 	var r = gin.Default()
 	// 允许本地开发前端跨域访问
 	r.Use(cors.New(cors.Config{
@@ -28,6 +33,7 @@ func InitRouter(userSvc *userapp.Service, orderSvc *orderapp.Service) *gin.Engin
 
 	h := handler.NewHandler(userSvc)
 	orderH := handler.NewOrderHandler(orderSvc)
+	categoryH := handler.NewCategoryHandler(categorySvc)
 	var apiGroup = r.Group("/api")
 	{
 		apiGroup.POST("/user/register", h.Register)
@@ -43,5 +49,7 @@ func InitRouter(userSvc *userapp.Service, orderSvc *orderapp.Service) *gin.Engin
 			// orderGroup.POST("/:id/cancel", orderH.Cancel) // 取消订单
 		}
 	}
+	registerCatergoryRoutes(apiGroup, categoryH)
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	return r
 }

@@ -1,0 +1,85 @@
+basePath: /api
+definitions:
+  categoryapp.CategoryDto:
+    properties:
+      category_id:
+        type: integer
+      created_at:
+        type: string
+      name:
+        type: string
+      parent_id:
+        type: integer
+      sort:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  handler.CreateReq:
+    properties:
+      name:
+        type: string
+      parentId:
+        type: integer
+      sort:
+        default: 0
+        type: integer
+    required:
+    - name
+    type: object
+  response.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: DDD 架构示例服务（用户 / 订单 / 分类）
+  title: Demo Service API
+  version: "1.0"
+paths:
+  /Category/Create:
+    post:
+      consumes:
+      - application/json
+      description: 创建一个新的商品分类；同名分类已存在时返回错误
+      parameters:
+      - description: 分类信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/categoryapp.CategoryDto'
+              type: object
+        "400":
+          description: 参数校验失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 创建分类
+      tags:
+      - 分类
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

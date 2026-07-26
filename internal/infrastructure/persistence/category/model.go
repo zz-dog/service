@@ -16,7 +16,7 @@ type CategoryPO struct {
 	UpdatedAt time.Time
 }
 
-func (CategoryPO) TableName(c *domaincategory.Category) string {
+func (CategoryPO) TableName() string {
 	return "categories"
 }
 
