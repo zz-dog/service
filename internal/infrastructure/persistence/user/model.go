@@ -42,7 +42,7 @@ type UserPO struct {
 	LastLoginAt *time.Time `gorm:"comment:最后登录时间"`
 }
 
-func TableName(UserPO) string { return "users" }
+func (UserPO) TableName() string { return "users" }
 
 // toDomain 将持久化对象转为领域实体。
 func toDomain(po *UserPO) *user.User {

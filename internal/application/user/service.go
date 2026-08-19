@@ -59,7 +59,7 @@ func (s *Service) Login(ctx context.Context, in LoginInput) (*LoginResult, error
 	if err != nil {
 		// 不暴露用户是否存在，统一返回凭证错误，避免用户枚举
 		if errors.Is(err, user.ErrUserNotFound) {
-			return nil, user.ErrInvalidCredentials
+			return nil, user.ErrUserNotFound
 		}
 		return nil, err
 	}

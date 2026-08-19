@@ -11,7 +11,7 @@ import (
 var DB *gorm.DB
 
 func InitMysql() {
-	db, err := gorm.Open(mysql.Open(Conf.MySQL.DSN), &gorm.Config{
+	db, err := gorm.Open(mysql.Open(Conf.MySQL.DSN()), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info), // 打印SQL日志
 	})
 	if err != nil {
