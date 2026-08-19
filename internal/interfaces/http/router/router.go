@@ -7,6 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	orderapp "github.com/wsc-zz/service/internal/application/order"
+	productapp "github.com/wsc-zz/service/internal/application/product"
+	specapp "github.com/wsc-zz/service/internal/application/spec"
 	userapp "github.com/wsc-zz/service/internal/application/user"
 	"github.com/wsc-zz/service/internal/interfaces/http/handler"
 	"github.com/wsc-zz/service/internal/interfaces/http/middleware"
@@ -19,7 +21,7 @@ import (
 
 // InitRouter 初始化路由，注入用户应用服务。
 
-func InitRouter(userSvc *userapp.Service, orderSvc *orderapp.Service, categorySvc *categoryapp.Service) *gin.Engine {
+func InitRouter(userSvc *userapp.Service, orderSvc *orderapp.Service, categorySvc *categoryapp.Service, productSvc *productapp.Service, specSvc *specapp.Service) *gin.Engine {
 	var r = gin.Default()
 	// 允许本地开发前端跨域访问
 	r.Use(cors.New(cors.Config{
@@ -34,6 +36,7 @@ func InitRouter(userSvc *userapp.Service, orderSvc *orderapp.Service, categorySv
 	h := handler.NewHandler(userSvc)
 	orderH := handler.NewOrderHandler(orderSvc)
 	categoryH := handler.NewCategoryHandler(categorySvc)
+	productH := handler.NewProductHandler(productSvc)
 	var apiGroup = r.Group("/api")
 	{
 		apiGroup.POST("/user/register", h.Register)
@@ -50,6 +53,7 @@ func InitRouter(userSvc *userapp.Service, orderSvc *orderapp.Service, categorySv
 		}
 	}
 	registerCatergoryRoutes(apiGroup, categoryH)
+	registerProductRouter(apiGroup, productH)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	return r
 }

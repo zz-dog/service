@@ -7,10 +7,10 @@ import (
 )
 
 type SKUInput struct {
-	SKUCode string `json:"skuCode"`
-	Spec    string `json:"spec"`
-	Price   int64  `json:"price"` // 分
-	Stock   int    `json:"stock"`
+	SKUCode string `json:"skuCode"` // 商品规格编码
+	Spec    string `json:"spec"`    // 规格
+	Price   int64  `json:"price"`   // 价格
+	Stock   int    `json:"stock"`   // 库存
 }
 type CreateProductInput struct {
 	CategoryID uint       `json:"categoryId"`

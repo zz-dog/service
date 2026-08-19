@@ -16,7 +16,12 @@ import (
 	"github.com/wsc-zz/service/internal/interfaces/http/router"
 
 	categoryapp "github.com/wsc-zz/service/internal/application/category"
+	productapp "github.com/wsc-zz/service/internal/application/product"
 	categorypo "github.com/wsc-zz/service/internal/infrastructure/persistence/category"
+	productpo "github.com/wsc-zz/service/internal/infrastructure/persistence/product"
+
+	specapp "github.com/wsc-zz/service/internal/application/spec"
+	specpo "github.com/wsc-zz/service/internal/infrastructure/persistence/spec"
 )
 
 // @title           Demo Service API
@@ -57,9 +62,14 @@ func main() {
 	categoryRepo := categorypo.NewCategoryRepository(global.DB)
 	categorySvc := categoryapp.NewService(categoryRepo)
 	//product
-	// productRpo := orderpo.NewProductRepository(global.DB)
+	productRepo := productpo.NewProductRepository(global.DB)
+	productSvc := productapp.NewService(productRepo)
+
+	//spec
+	specRepo := specpo.NewSpecRepository(global.DB)
+	specSvc := specapp.NewService(specRepo)
 	// 4. 启动 HTTP 服务
-	r := router.InitRouter(userSvc, orderSvc, categorySvc)
+	r := router.InitRouter(userSvc, orderSvc, categorySvc, productSvc, specSvc)
 	if err := r.Run(":" + fmt.Sprint(global.Conf.Service.Port)); err != nil {
 		panic(err)
 	}
