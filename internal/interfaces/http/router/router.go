@@ -12,6 +12,7 @@ import (
 	userapp "github.com/wsc-zz/service/internal/application/user"
 	"github.com/wsc-zz/service/internal/interfaces/http/handler"
 	"github.com/wsc-zz/service/internal/interfaces/http/middleware"
+	"github.com/wsc-zz/service/pkg/response"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -39,6 +40,11 @@ func InitRouter(userSvc *userapp.Service, orderSvc *orderapp.Service, categorySv
 	productH := handler.NewProductHandler(productSvc)
 	var apiGroup = r.Group("/api")
 	{
+		// 健康检查：供部署流水线 / 负载均衡探活使用，不校验 JWT
+		apiGroup.GET("/health", func(c *gin.Context) {
+			response.SuccessMsg(c, "ok", nil)
+		})
+
 		apiGroup.POST("/user/register", h.Register)
 		apiGroup.POST("/user/login", h.Login)
 

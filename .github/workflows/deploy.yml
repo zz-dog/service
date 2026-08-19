@@ -1,0 +1,77 @@
+# 部署流水线（暂时手动触发，服务器就绪后可改为自动）
+#
+# 使用前需要在 GitHub 仓库 Settings -> Secrets and variables -> Actions 配置：
+#   SERVER_HOST   服务器 IP 或域名
+#   SERVER_USER   SSH 用户名（如 root 或 deploy）
+#   SSH_KEY       SSH 私钥（~/.ssh/id_ed25519 的完整内容，服务器上要有对应公钥）
+#   SERVER_PORT   SSH 端口（可选，默认 22）
+#
+# 服务器上需要先完成：
+#   1. mkdir -p /opt/service && 将生产版 config/config.yaml 放到 /opt/service/config/
+#   2. 配好 systemd 服务 /etc/systemd/system/service.service（见 docs 或 README）
+#
+# 目前为手动触发（workflow_dispatch），等 CI 稳定后可放开下面的 push 触发。
+
+name: Deploy
+
+on:
+  workflow_dispatch: {}
+  # push:
+  #   branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build linux binary
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o service ./cmd/main.go
+
+      - name: Upload to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          source: service
+          target: /opt/service/
+
+      - name: Restart service
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            chmod +x /opt/service/service
+            systemctl restart service
+            sleep 2
+            systemctl is-active service || (journalctl -u service -n 50 --no-pager; exit 1)
+
+      - name: Health check
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            for i in $(seq 1 10); do
+              if curl -sf http://127.0.0.1:8080/api/health > /dev/null 2>&1; then
+                echo "health check passed"
+                exit 0
+              fi
+              sleep 3
+            done
+            echo "health check failed"
+            journalctl -u service -n 50 --no-pager
+            exit 1

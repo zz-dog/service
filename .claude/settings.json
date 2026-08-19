@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(git -C /c/Users/86176/Desktop/demo/service remote -v)"
-    ]
-  }
-}
