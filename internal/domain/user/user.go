@@ -74,6 +74,21 @@ func (u *User) IsDisabled() bool {
 	return u.Status == 0
 }
 
+// UpdateProfile 更新用户基础资料（昵称、手机号、邮箱、头像、性别、生日）。
+// 充血模型：性别取值等不变量在实体内集中校验，非法值直接拒绝修改。
+func (u *User) UpdateProfile(nickname, phone, email, avatar string, gender int8, birthday *time.Time) error {
+	if gender < 0 || gender > 2 {
+		return ErrInvalidGender
+	}
+	u.Nickname = nickname
+	u.Phone = phone
+	u.Email = email
+	u.Avatar = avatar
+	u.Gender = gender
+	u.Birthday = birthday
+	return nil
+}
+
 // RecordLogin 记录登录信息（更新最后登录 IP 与时间）。
 func (u *User) RecordLogin(ip string, at time.Time) {
 	u.LastLoginIP = ip

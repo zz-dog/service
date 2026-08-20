@@ -58,3 +58,31 @@ func (r *UserRepository) Save(ctx context.Context, u *user.User) error {
 	}
 	return r.db.WithContext(ctx).Save(po).Error
 }
+
+func (r *UserRepository) GetUserList(ctx context.Context, page, pageSize int) ([]*user.User, int, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 10
+	}
+
+	// total 是符合条件的总记录数，需单独 COUNT，不能用当前页的行数
+	var total int64
+	if err := r.db.WithContext(ctx).Model(&UserPO{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var pos []UserPO
+	offset := (page - 1) * pageSize
+	err := r.db.WithContext(ctx).Order("user_id").Limit(pageSize).Offset(offset).Find(&pos).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	users := make([]*user.User, len(pos))
+	for i, po := range pos {
+		users[i] = toDomain(&po)
+	}
+	return users, int(total), nil
+}
