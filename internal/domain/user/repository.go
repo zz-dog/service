@@ -11,4 +11,6 @@ type UserRepository interface {
 	FindByID(ctx context.Context, id uint) (*User, error)
 	// Save 新增或更新用户：主键为 0 时新增，否则更新全字段
 	Save(ctx context.Context, u *User) error
+
+	GetUserList(ctx context.Context, page, pageSize int) ([]*User, int, error)
 }

@@ -51,3 +51,21 @@ type LoginResult struct {
 	Token string  `json:"token"`
 	User  UserDTO `json:"user"`
 }
+
+type GetUserListInput struct {
+	Page     int `json:"page"`
+	PageSize int `json:"pageSize"`
+}
+type GetUserListResult struct {
+	Total int       `json:"total"`
+	Users []UserDTO `json:"users"`
+}
+
+type UpdateUserInput struct {
+	Nickname string     `json:"nickname"`
+	Phone    string     `json:"phone"`
+	Email    string     `json:"email"`
+	Avatar   string     `json:"avatar"`
+	Gender   int8       `json:"gender"`
+	Birthday *time.Time `json:"birthday"`
+}

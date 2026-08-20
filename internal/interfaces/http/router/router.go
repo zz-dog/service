@@ -48,6 +48,9 @@ func InitRouter(userSvc *userapp.Service, orderSvc *orderapp.Service, categorySv
 		apiGroup.POST("/user/register", h.Register)
 		apiGroup.POST("/user/login", h.Login)
 
+		// 用户资料：需要登录（JWT 中间件校验 token 并写入 userId）
+		apiGroup.PUT("/user/profile", middleware.JWTAuth(), h.UpdateUser) // 更新当前用户资料
+
 		// 订单：全部需要登录（JWT 中间件校验 token 并写入 userId）
 		orderGroup := apiGroup.Group("/order", middleware.JWTAuth())
 		{

@@ -87,6 +87,41 @@ func (s *Service) Login(ctx context.Context, in LoginInput) (*LoginResult, error
 	}, nil
 }
 
+func (s *Service) GetUserList(ctx context.Context, page, pageSize int) ([]UserDTO, int, error) {
+	users, total, err := s.repo.GetUserList(ctx, page, pageSize)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	userDTOs := make([]UserDTO, len(users))
+	for i, u := range users {
+		userDTOs[i] = toUserDTO(u)
+	}
+
+	return userDTOs, total, nil
+}
+
+// UpdateUser 更新指定用户的基础资料，成功返回更新后的用户视图。
+func (s *Service) UpdateUser(ctx context.Context, userID uint, in UpdateUserInput) (*UserDTO, error) {
+	u, err := s.repo.FindByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return nil, user.ErrUserNotFound
+		}
+		return nil, err
+	}
+
+	if err := u.UpdateProfile(in.Nickname, in.Phone, in.Email, in.Avatar, in.Gender, in.Birthday); err != nil {
+		return nil, err
+	}
+	if err := s.repo.Save(ctx, u); err != nil {
+		return nil, err
+	}
+
+	dto := toUserDTO(u)
+	return &dto, nil
+}
+
 // toUserDTO 将领域实体转为对外输出 DTO，避免泄漏领域实体结构与密码字段。
 func toUserDTO(u *user.User) UserDTO {
 	return UserDTO{

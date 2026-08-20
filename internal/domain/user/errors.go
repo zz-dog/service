@@ -10,4 +10,5 @@ var (
 	ErrUserAlreadyExists  = errors.New("用户已存在")
 	ErrUserDisabled       = errors.New("账号已被禁用")
 	ErrInvalidCredentials = errors.New("账号或密码错误")
+	ErrInvalidGender      = errors.New("性别取值不合法")
 )
