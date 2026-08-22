@@ -16,9 +16,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-          cache: true # 开启go缓存
+          cache: true
 
-      # 缓存依赖，大幅加速流水线
       - name: Cache Go modules
         uses: actions/cache@v4
         with:
@@ -32,10 +31,10 @@ jobs:
         run: go vet ./...
 
       - name: Lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: latest
-          args: --timeout=5m # 增加超时，大项目不会中断
+          version: v2.12.2
+          args: --timeout=5m
 
       - name: Test
         run: go test -v ./...
