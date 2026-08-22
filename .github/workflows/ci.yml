@@ -16,6 +16,14 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+          cache: true # 开启go缓存
+
+      # 缓存依赖，大幅加速流水线
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
       - name: Download dependencies
         run: go mod download
@@ -27,6 +35,7 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
+          args: --timeout=5m # 增加超时，大项目不会中断
 
       - name: Test
         run: go test -v ./...

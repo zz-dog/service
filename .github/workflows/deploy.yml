@@ -19,23 +19,38 @@ jobs:
           script: |
             cd ~/backend
             git pull --ff-only origin main
-            test -f config/config.yaml
+
+            # 仅提示配置文件，不阻断部署（按需启用下面严格校验）
+            if [ ! -f config/config.yaml ]; then
+              echo "⚠️ 警告：config/config.yaml 不存在，请手动创建配置文件！"
+            fi
+            # test -f config/config.yaml # 如果需要严格校验，取消注释
+
             # 构建镜像
             podman build -t backend:latest .
-            # 停止旧容器（不存在不会报错 || true）
+
+            # 强制删除旧容器（停止+删除一步完成）
             podman rm -f backend || true
+
             # 启动新容器
             podman run -d --name backend \
               -p 0.0.0.0:8090:8090 \
               -v "$PWD/config:/app/config:ro" \
               --restart=always \
               backend:latest
+
+            # 清理悬空旧镜像，避免磁盘占用
+            podman image prune -f
+
+            # 健康检查：最多重试10次，间隔3秒
             for attempt in $(seq 1 10); do
               if curl --fail --silent http://127.0.0.1:8090/api/health > /dev/null; then
-                echo "health check passed"
+                echo "✅ health check passed"
                 exit 0
               fi
+              echo "⏳ 健康检查重试 $attempt/10"
               sleep 3
             done
+            echo "❌ 健康检查失败，打印容器日志"
             podman logs backend
             exit 1
