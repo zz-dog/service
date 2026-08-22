@@ -37,7 +37,7 @@ func InitRouter(userSvc *userapp.Service, orderSvc *orderapp.Service, categorySv
 	h := handler.NewHandler(userSvc)
 	orderH := handler.NewOrderHandler(orderSvc)
 	categoryH := handler.NewCategoryHandler(categorySvc)
-	productH := handler.NewProductHandler(productSvc)
+	// productH := handler.NewProductHandler(productSvc)
 	var apiGroup = r.Group("/api")
 	{
 		// 健康检查：供部署流水线 / 负载均衡探活使用，不校验 JWT
