@@ -87,18 +87,27 @@ func (s *Service) Login(ctx context.Context, in LoginInput) (*LoginResult, error
 	}, nil
 }
 
-func (s *Service) GetUserList(ctx context.Context, page, pageSize int) ([]UserDTO, int, error) {
-	users, total, err := s.repo.GetUserList(ctx, page, pageSize)
+func (s *Service) GetUserList(ctx context.Context, in GetUserListInput) (GetUserListResult, error) {
+	users, total, err := s.repo.GetUserList(ctx, user.UserListQuery{
+		Page:     in.Page,
+		PageSize: in.PageSize,
+		UserID:   in.UserID,
+		Username: in.Username,
+	})
 	if err != nil {
-		return nil, 0, err
+		return GetUserListResult{}, err
 	}
 
+	// make 保证 Users 是非 nil 空切片：查询结果为空时 JSON 序列化为 [] 而非 null
 	userDTOs := make([]UserDTO, len(users))
 	for i, u := range users {
 		userDTOs[i] = toUserDTO(u)
 	}
 
-	return userDTOs, total, nil
+	return GetUserListResult{
+		Total: total,
+		List:  userDTOs,
+	}, nil
 }
 
 // UpdateUser 更新指定用户的基础资料，成功返回更新后的用户视图。
@@ -120,6 +129,20 @@ func (s *Service) UpdateUser(ctx context.Context, userID uint, in UpdateUserInpu
 
 	dto := toUserDTO(u)
 	return &dto, nil
+}
+func (s *Service) ChangeStatus(ctx context.Context, userID uint, status user.Status) error {
+	u, err := s.repo.FindByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return user.ErrUserNotFound
+		}
+		return err
+	}
+
+	u.Status = status
+	if err := s.repo.Save(ctx, u); err != nil {
+	}
+	return nil
 }
 
 // toUserDTO 将领域实体转为对外输出 DTO，避免泄漏领域实体结构与密码字段。

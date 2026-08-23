@@ -35,7 +35,7 @@ type UserPO struct {
 	Birthday *time.Time `gorm:"comment:生日，允许为空"`
 
 	// 账号状态
-	Status int8 `gorm:"tinyint;not null;default:1;comment:账号状态 1正常 0禁用"`
+	Status user.Status `gorm:"tinyint;not null;default:1;comment:账号状态 1正常 0禁用"`
 
 	// 登录记录
 	LastLoginIP string     `gorm:"size:64;default:'';comment:最后登录IP"`

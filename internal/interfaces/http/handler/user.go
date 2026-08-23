@@ -28,7 +28,6 @@ type registerRequest struct {
 	Username string `json:"username" binding:"required,min=2,max=10"`
 	Password string `json:"password" binding:"required,min=6,max=20"`
 	Phone    string `json:"phone" binding:"required,len=11"`
-	Nickname string `json:"nickname" binding:"required,min=2,max=10" `
 }
 
 // loginRequest 登录请求结构体
@@ -49,7 +48,6 @@ func (h *Handler) Register(c *gin.Context) {
 		Username: req.Username,
 		Password: req.Password,
 		Phone:    req.Phone,
-		Nickname: req.Nickname,
 	}
 	result, err := h.userSvc.Register(c.Request.Context(), in)
 	if err != nil {
@@ -80,8 +78,10 @@ func (h *Handler) Login(c *gin.Context) {
 }
 
 type getUserListRequest struct {
-	Page     int `form:"page" binding:"required,min=1"`
-	PageSize int `form:"page_size" binding:"required,min=1,max=100"`
+	Page     int    `form:"page" binding:"required,min=1"`
+	PageSize int    `form:"pageSize" binding:"required,min=1,max=100"`
+	UserID   uint   `form:"userId" `
+	Username string `form:"username"`
 }
 
 func (h *Handler) GetUserList(c *gin.Context) {
@@ -91,16 +91,18 @@ func (h *Handler) GetUserList(c *gin.Context) {
 		return
 	}
 
-	users, total, err := h.userSvc.GetUserList(c.Request.Context(), req.Page, req.PageSize)
+	result, err := h.userSvc.GetUserList(c.Request.Context(), userapp.GetUserListInput{
+		Page:     req.Page,
+		PageSize: req.PageSize,
+		UserID:   req.UserID,
+		Username: req.Username,
+	})
 	if err != nil {
 		h.writeError(c, err)
 		return
 	}
 
-	response.SuccessMsg(c, "getUserList", gin.H{
-		"users": users,
-		"total": total,
-	})
+	response.SuccessMsg(c, "getUserList", result)
 }
 
 // updateUserRequest 更新用户资料请求结构体
@@ -141,6 +143,25 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		return
 	}
 	response.SuccessMsg(c, "updateUser", result)
+}
+
+type changeStatusRequest struct {
+	Status domainuser.Status `json:"status" binding:"required"`
+	UserID uint              `json:"userId" binding:"required"`
+}
+
+func (h *Handler) ChangeStatus(c *gin.Context) {
+	var req changeStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		return
+	}
+	err := h.userSvc.ChangeStatus(c.Request.Context(), req.UserID, req.Status)
+	if err != nil {
+		h.writeError(c, err)
+		return
+	}
+	response.SuccessMsg(c, "changeStatus", nil)
 }
 
 // writeError 将领域/应用错误映射为对应的 HTTP 响应。

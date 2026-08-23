@@ -5,6 +5,8 @@ import "time"
 type LoginChannel int
 type Role int
 
+type Status int
+
 // 登录渠道
 const (
 	ChannelPassword LoginChannel = iota // 账号密码登录
@@ -14,6 +16,11 @@ const (
 const (
 	RoleUser  Role = iota // 普通用户
 	RoleAdmin             // 管理员
+)
+
+const (
+	StatusDisabled Status = iota
+	StatusEnabled         = 1
 )
 
 // User 是用户聚合根（领域实体）。
@@ -43,7 +50,7 @@ type User struct {
 	Birthday *time.Time
 	Role
 	// 账号状态：1 正常，0 禁用
-	Status int8
+	Status Status
 
 	// 登录记录
 	LastLoginIP string

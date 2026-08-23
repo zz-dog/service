@@ -59,23 +59,32 @@ func (r *UserRepository) Save(ctx context.Context, u *user.User) error {
 	return r.db.WithContext(ctx).Save(po).Error
 }
 
-func (r *UserRepository) GetUserList(ctx context.Context, page, pageSize int) ([]*user.User, int, error) {
-	if page < 1 {
-		page = 1
+func (r *UserRepository) GetUserList(ctx context.Context, q user.UserListQuery) ([]*user.User, int, error) {
+	if q.Page < 1 {
+		q.Page = 1
 	}
-	if pageSize < 1 {
-		pageSize = 10
+	if q.PageSize < 1 {
+		q.PageSize = 10
+	}
+
+	// 零值字段不参与过滤，条件在 COUNT 与分页查询间复用
+	tx := r.db.WithContext(ctx).Model(&UserPO{})
+	if q.UserID > 0 {
+		tx = tx.Where("user_id = ?", q.UserID)
+	}
+	if q.Username != "" {
+		tx = tx.Where("username = ?", q.Username)
 	}
 
 	// total 是符合条件的总记录数，需单独 COUNT，不能用当前页的行数
 	var total int64
-	if err := r.db.WithContext(ctx).Model(&UserPO{}).Count(&total).Error; err != nil {
+	if err := tx.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
 	var pos []UserPO
-	offset := (page - 1) * pageSize
-	err := r.db.WithContext(ctx).Order("user_id").Limit(pageSize).Offset(offset).Find(&pos).Error
+	offset := (q.Page - 1) * q.PageSize
+	err := tx.Order("user_id").Limit(q.PageSize).Offset(offset).Find(&pos).Error
 	if err != nil {
 		return nil, 0, err
 	}

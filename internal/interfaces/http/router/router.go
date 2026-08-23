@@ -12,7 +12,6 @@ import (
 	userapp "github.com/wsc-zz/service/internal/application/user"
 	"github.com/wsc-zz/service/internal/interfaces/http/handler"
 	"github.com/wsc-zz/service/internal/interfaces/http/middleware"
-	"github.com/wsc-zz/service/pkg/response"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -34,22 +33,11 @@ func InitRouter(userSvc *userapp.Service, orderSvc *orderapp.Service, categorySv
 		MaxAge:           12 * time.Hour,
 	}))
 
-	h := handler.NewHandler(userSvc)
 	orderH := handler.NewOrderHandler(orderSvc)
 	categoryH := handler.NewCategoryHandler(categorySvc)
 	// productH := handler.NewProductHandler(productSvc)
 	var apiGroup = r.Group("/api")
 	{
-		// 健康检查：供部署流水线 / 负载均衡探活使用，不校验 JWT
-		apiGroup.GET("/health", func(c *gin.Context) {
-			response.SuccessMsg(c, "ok", nil)
-		})
-
-		apiGroup.POST("/user/register", h.Register)
-		apiGroup.POST("/user/login", h.Login)
-
-		// 用户资料：需要登录（JWT 中间件校验 token 并写入 userId）
-		apiGroup.PUT("/user/profile", middleware.JWTAuth(), h.UpdateUser) // 更新当前用户资料
 
 		// 订单：全部需要登录（JWT 中间件校验 token 并写入 userId）
 		orderGroup := apiGroup.Group("/order", middleware.JWTAuth())
@@ -61,6 +49,7 @@ func InitRouter(userSvc *userapp.Service, orderSvc *orderapp.Service, categorySv
 			// orderGroup.POST("/:id/cancel", orderH.Cancel) // 取消订单
 		}
 	}
+	registerUserRoutes(apiGroup, userSvc)
 	registerCatergoryRoutes(apiGroup, categoryH)
 	// registerProductRouter(apiGroup, productH)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

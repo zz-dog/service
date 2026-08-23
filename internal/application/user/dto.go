@@ -41,7 +41,7 @@ type UserDTO struct {
 	Avatar       string            `json:"avatar"`
 	Gender       int8              `json:"gender"`
 	Birthday     *time.Time        `json:"birthday,omitempty"`
-	Status       int8              `json:"status"`
+	Status       user.Status       `json:"status"`
 	LastLoginIP  string            `json:"lastLoginIp"`
 	LastLoginAt  *time.Time        `json:"lastLoginAt,omitempty"`
 }
@@ -53,19 +53,28 @@ type LoginResult struct {
 }
 
 type GetUserListInput struct {
-	Page     int `json:"page"`
-	PageSize int `json:"pageSize"`
+	Page     int
+	PageSize int
+	UserID   uint
+	Username string
 }
+
+// GetUserListResult 用户列表用例输出，会序列化为响应体，保留 json 标签控制键名
 type GetUserListResult struct {
 	Total int       `json:"total"`
-	Users []UserDTO `json:"users"`
+	List  []UserDTO `json:"list"`
 }
 
 type UpdateUserInput struct {
-	Nickname string     `json:"nickname"`
-	Phone    string     `json:"phone"`
-	Email    string     `json:"email"`
-	Avatar   string     `json:"avatar"`
-	Gender   int8       `json:"gender"`
-	Birthday *time.Time `json:"birthday"`
+	Nickname string
+	Phone    string
+	Email    string
+	Avatar   string
+	Gender   int8
+	Birthday *time.Time
+}
+
+type ChangeStatusInput struct {
+	UserID uint
+	Status user.Status
 }

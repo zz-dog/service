@@ -34,9 +34,10 @@ func (c MySQLCfg) DSN() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=Local",
 		c.Username, c.Password, c.Host, c.Port, c.Database, c.Charset)
 }
+
 type JwtCfg struct {
-	Secret     string `yaml:"secret"`
-	ExpireHour int    `yaml:"expire_hour"`
+	Secret     string `yaml:"secret" mapstructure:"secret"`
+	ExpireHour int    `yaml:"expire_hour" mapstructure:"expire_hour"`
 }
 
 // findConfigFile 定位 config.yaml：
@@ -79,6 +80,12 @@ func InitViper() {
 	}
 	v.SetConfigFile(cfgPath)
 	v.SetConfigType("yaml")
+	if err := v.BindEnv("jwt.secret", "JWT_SECRET"); err != nil {
+		panic("绑定 JWT_SECRET 失败：" + err.Error())
+	}
+	if err := v.BindEnv("jwt.expire_hour", "JWT_EXPIRE_HOUR"); err != nil {
+		panic("绑定 JWT_EXPIRE_HOUR 失败：" + err.Error())
+	}
 	// 读取文件
 	if err := v.ReadInConfig(); err != nil {
 		panic("读取配置失败：" + err.Error())

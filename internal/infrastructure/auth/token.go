@@ -8,7 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/wsc-zz/service/global"
-	"github.com/wsc-zz/service/internal/application/user"
+	userapp "github.com/wsc-zz/service/internal/application/user"
 )
 
 // UserClaims JWT 载荷
@@ -30,14 +30,21 @@ func NewJWTTokenIssuer() *JWTTokenIssuer { return &JWTTokenIssuer{} }
 // Issue 为指定用户签发 token。
 func (t *JWTTokenIssuer) Issue(userID uint, username string) (string, error) {
 	secret := global.Conf.Jwt.Secret
+	if len(secret) < 32 {
+		return "", errors.New("JWT secret must be at least 32 bytes")
+	}
+	if global.Conf.Jwt.ExpireHour <= 0 {
+		return "", errors.New("JWT expiration must be positive")
+	}
 	expire := time.Hour * time.Duration(global.Conf.Jwt.ExpireHour)
+	now := time.Now()
 
 	claims := UserClaims{
 		UserID:   strconv.Itoa(int(userID)),
 		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expire)), // 过期时间
-			IssuedAt:  jwt.NewNumericDate(time.Now()),             // 签发时间
+			ExpiresAt: jwt.NewNumericDate(now.Add(expire)),
+			IssuedAt:  jwt.NewNumericDate(now),
 		},
 	}
 
@@ -48,7 +55,13 @@ func (t *JWTTokenIssuer) Issue(userID uint, username string) (string, error) {
 // ParseToken 解析并校验 token，供 HTTP 中间件使用。
 func ParseToken(tokenString string) (*UserClaims, error) {
 	secret := global.Conf.Jwt.Secret
+	if len(secret) < 32 {
+		return nil, errors.New("JWT secret must be at least 32 bytes")
+	}
 	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if token.Method != jwt.SigningMethodHS256 {
+			return nil, errors.New("unexpected JWT signing method")
+		}
 		return []byte(secret), nil
 	})
 	if err != nil {
