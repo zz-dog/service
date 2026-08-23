@@ -117,3 +117,20 @@ func (h *CategoryHandler) Delete(c *gin.Context) {
 	}
 	response.Success(c, nil)
 }
+
+type ListReq struct {
+	Page     int    `form:"page" binding:"required,min=1"`
+	PageSize int    `form:"pageSize" binding:"required,min=1,max=100"`
+	Name     string `form:"name"`
+}
+
+func (h *CategoryHandler) FindAll(c *gin.Context) {
+
+	cs, err := h.categorySvc.FindAll(c.Request.Context())
+	if err != nil {
+		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		return
+	}
+	response.Success(c, cs)
+
+}

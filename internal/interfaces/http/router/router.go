@@ -34,7 +34,7 @@ func InitRouter(userSvc *userapp.Service, orderSvc *orderapp.Service, categorySv
 	}))
 
 	orderH := handler.NewOrderHandler(orderSvc)
-	categoryH := handler.NewCategoryHandler(categorySvc)
+
 	// productH := handler.NewProductHandler(productSvc)
 	var apiGroup = r.Group("/api")
 	{
@@ -50,7 +50,7 @@ func InitRouter(userSvc *userapp.Service, orderSvc *orderapp.Service, categorySv
 		}
 	}
 	registerUserRoutes(apiGroup, userSvc)
-	registerCatergoryRoutes(apiGroup, categoryH)
+	registerCategoryRoutes(apiGroup, categorySvc)
 	// registerProductRouter(apiGroup, productH)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	return r

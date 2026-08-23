@@ -81,16 +81,19 @@ func (s *Service) Delete(ctx context.Context, id uint) error {
 }
 
 // List 获取分类列表
-
 func (s *Service) List(ctx context.Context) ([]*CategoryDto, error) {
-	categories, err := s.repo.FindAll(ctx)
+
+	return s.List(ctx)
+}
+
+func (s *Service) FindAll(ctx context.Context) ([]*CategoryDto, error) {
+
+	cs, err := s.repo.FindAll(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return toCategoryDTOs(categories), nil
+	return toCategoryDTOs(cs), nil
 }
-
-// toCategoryDTO 将分类聚合根转换为视图对象
 func toCategoryDTO(c *domain.Category) CategoryDto {
 	return CategoryDto{
 		CategoryID: c.CategoryID,
