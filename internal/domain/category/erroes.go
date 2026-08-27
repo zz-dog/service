@@ -7,4 +7,8 @@ var (
 	ErrCategoryNotFound      = errors.New("分类不存在")
 	ErrCategoryHasProduct    = errors.New("分类下还有商品，不能删除")
 	ErrCategoryAlreadyExists = errors.New("分类已存在")
+
+	ErrInvalidCategorySpec      = errors.New("绑定关系的分类ID或规格ID不能为0")
+	ErrCategorySpecAlreadyBound = errors.New("该规格已绑定到此分类")
+	ErrCategorySpecNotFound     = errors.New("分类未绑定该规格")
 )

@@ -2,6 +2,7 @@ package productpo
 
 import (
 	"context"
+	"errors"
 
 	domainproduct "github.com/wsc-zz/service/internal/domain/product"
 	"gorm.io/gorm"
@@ -17,37 +18,52 @@ func NewProductRepository(db *gorm.DB) *ProductRepository {
 	}
 }
 
-func (r *ProductRepository) FindByID(ctx context.Context, id uint) (*domainproduct.Product, error) {
+// preloadSKUs 预加载 SKU 及其规格项：Preload("SKUs").Preload("SKUs.SpecItems")
 
+func (r *ProductRepository) FindByID(ctx context.Context, id uint) (*domainproduct.Product, error) {
 	var po ProductPO
-	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&po).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+	err := r.db.WithContext(ctx).
+		Preload("SKUs").Preload("SKUs.SpecItems").
+		Where("product_id = ?", id).First(&po).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainproduct.ErrProductNotFound
 		}
+		return nil, err
 	}
 	return toProduct(po), nil
 }
 
 func (r *ProductRepository) FindBySKUCode(ctx context.Context, skuCode string) (*domainproduct.Product, error) {
-	var po ProductPO
-	if err := r.db.WithContext(ctx).Where("sku_code = ?", skuCode).First(&po).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+	// SKU 编码在 product_skus 上，先定位商品再加载聚合
+	var sku SKUPO
+	err := r.db.WithContext(ctx).Where("sku_code = ?", skuCode).First(&sku).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainproduct.ErrSKUNotFound
 		}
+		return nil, err
 	}
-	return toProduct(po), nil
+	return r.FindByID(ctx, sku.ProductID)
 }
+
 func (r *ProductRepository) Save(ctx context.Context, p *domainproduct.Product) error {
 	po := toPO(p)
-	return r.db.WithContext(ctx).Create(&po).Error
+	// FullSaveAssociations：更新时同步 Upsert 子表（SKU / 规格项）
+	return r.db.WithContext(ctx).
+		Session(&gorm.Session{FullSaveAssociations: true}).
+		Save(&po).Error
 }
-func (r *ProductRepository) Search(ctx context.Context, categoryID uint, keyword string, page, pageSize int) ([]*domainproduct.Product, int64, error) {
 
+func (r *ProductRepository) Search(ctx context.Context, categoryID uint, keyword string, page, pageSize int) ([]*domainproduct.Product, int64, error) {
 	var (
 		pos   []ProductPO
 		total int64
 	)
-	db := r.db.WithContext(ctx).Model(&ProductPO{}).Where("category_id = ?", categoryID)
+	db := r.db.WithContext(ctx).Model(&ProductPO{})
+	if categoryID > 0 {
+		db = db.Where("category_id = ?", categoryID)
+	}
 	if keyword != "" {
 		db = db.Where("name LIKE ?", "%"+keyword+"%")
 	}
@@ -55,7 +71,8 @@ func (r *ProductRepository) Search(ctx context.Context, categoryID uint, keyword
 		return nil, 0, err
 	}
 	offset := (page - 1) * pageSize
-	if err := db.Offset(offset).Limit(pageSize).Find(&pos).Error; err != nil {
+	if err := db.Preload("SKUs").Preload("SKUs.SpecItems").
+		Offset(offset).Limit(pageSize).Find(&pos).Error; err != nil {
 		return nil, 0, err
 	}
 	products := make([]*domainproduct.Product, 0, len(pos))
@@ -73,58 +90,103 @@ func (r *ProductRepository) CountByCategory(ctx context.Context, categoryID uint
 	return count, nil
 }
 
+// DeductStock 原子扣减 SKU 库存：条件更新 stock >= qty 防并发超卖。
+// 注意库存列在 product_skus 上，不在 products 上。
 func (r *ProductRepository) DeductStock(ctx context.Context, productID uint, skuCode string, qty int) error {
-	return r.db.WithContext(ctx).Model(&ProductPO{}).Where("id = ?", productID).Update("stock", gorm.Expr("stock - ?", qty)).Error
+	res := r.db.WithContext(ctx).Model(&SKUPO{}).
+		Where("product_id = ? AND sku_code = ?", productID, skuCode).
+		Where("stock >= ?", qty).
+		Update("stock", gorm.Expr("stock - ?", qty))
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		// 未命中：要么 SKU 不存在，要么库存不足
+		var sku SKUPO
+		if err := r.db.WithContext(ctx).
+			Where("product_id = ? AND sku_code = ?", productID, skuCode).
+			First(&sku).Error; err != nil {
+			return domainproduct.ErrSKUNotFound
+		}
+		return domainproduct.ErrInsufficientStock
+	}
+	return nil
 }
 
 func toProduct(p ProductPO) *domainproduct.Product {
 	return &domainproduct.Product{
-		ProductID:  p.ProductID,    // 商品ID
-		CategoryID: p.CategoryID,   // 分类ID
-		Name:       p.Name,         // 商品名称
-		Desc:       p.Desc,         // 商品描述
-		Status:     p.Status,       // 上下架状态
-		SKUs:       toSKUs(p.SKUs), // 商品规格
-		CreatedAt:  p.CreatedAt,    // 创建时间
-		UpdatedAt:  p.UpdatedAt,    // 更新时间
+		ProductID:  p.ProductID,
+		CategoryID: p.CategoryID,
+		Name:       p.Name,
+		Desc:       p.Desc,
+		Status:     p.Status,
+		SKUs:       toSKUs(p.SKUs),
+		CreatedAt:  p.CreatedAt,
+		UpdatedAt:  p.UpdatedAt,
 	}
 }
 
 func toSKUs(s []SKUPO) []domainproduct.SKU {
-	var taget = make([]domainproduct.SKU, len(s))
+	var target = make([]domainproduct.SKU, len(s))
 	for i, sku := range s {
-		taget[i] = domainproduct.SKU{
+		target[i] = domainproduct.SKU{
 			SKUCode:   sku.SKUCode,
-			Spec:      sku.Spec,
+			SpecItems: toSpecItems(sku.SpecItems),
 			Price:     sku.Price,
 			Stock:     sku.Stock,
 			CreatedAt: sku.CreatedAt,
 			UpdatedAt: sku.UpdatedAt,
 		}
 	}
-	return taget
+	return target
+}
+
+func toSpecItems(items []SKUSpecItemPO) []domainproduct.SpecItem {
+	var target = make([]domainproduct.SpecItem, len(items))
+	for i, item := range items {
+		target[i] = domainproduct.SpecItem{
+			SpecID:    item.SpecID,
+			ValueID:   item.ValueID,
+			SpecName:  item.SpecName,
+			ValueName: item.ValueName,
+		}
+	}
+	return target
 }
 
 func toPO(p *domainproduct.Product) ProductPO {
 	return ProductPO{
-		ProductID:  p.ProductID,     // 商品ID
-		CategoryID: p.CategoryID,    // 分类ID
-		Name:       p.Name,          // 商品名称
-		Desc:       p.Desc,          // 商品描述
-		Status:     p.Status,        // 上下架状态
-		SKUs:       toSKUPO(p.SKUs), // 商品规格
+		ProductID:  p.ProductID,
+		CategoryID: p.CategoryID,
+		Name:       p.Name,
+		Desc:       p.Desc,
+		Status:     p.Status,
+		SKUs:       toSKUPO(p.SKUs),
 	}
 }
 
 func toSKUPO(s []domainproduct.SKU) []SKUPO {
-	var taget = make([]SKUPO, len(s))
+	var target = make([]SKUPO, len(s))
 	for i, sku := range s {
-		taget[i] = SKUPO{
-			SKUCode: sku.SKUCode,
-			Spec:    sku.Spec,
-			Price:   sku.Price,
-			Stock:   sku.Stock,
+		target[i] = SKUPO{
+			SKUCode:   sku.SKUCode,
+			Price:     sku.Price,
+			Stock:     sku.Stock,
+			SpecItems: toSpecItemPO(sku.SpecItems),
 		}
 	}
-	return taget
+	return target
+}
+
+func toSpecItemPO(items []domainproduct.SpecItem) []SKUSpecItemPO {
+	var target = make([]SKUSpecItemPO, len(items))
+	for i, item := range items {
+		target[i] = SKUSpecItemPO{
+			SpecID:    item.SpecID,
+			ValueID:   item.ValueID,
+			SpecName:  item.SpecName,
+			ValueName: item.ValueName,
+		}
+	}
+	return target
 }

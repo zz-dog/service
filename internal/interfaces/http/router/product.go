@@ -2,12 +2,14 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	productapp "github.com/wsc-zz/service/internal/application/product"
 	"github.com/wsc-zz/service/internal/interfaces/http/handler"
 )
 
-func registerProductRouter(r *gin.RouterGroup, h *handler.ProductHandler) {
-	productApi := r.Group("/Product")
+func registerProductRouter(r *gin.RouterGroup, productSvc *productapp.Service) {
+	h := handler.NewProductHandler(productSvc)
+	productApi := r.Group("/product")
 	{
-		productApi.POST("/Create", h.Create)
+		productApi.POST("/create", h.Create)
 	}
 }

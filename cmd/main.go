@@ -44,6 +44,12 @@ func main() {
 		&orderpo.OrderPO{},
 		&orderpo.OrderItemPO{},
 		&categorypo.CategoryPO{},
+		&categorypo.CategorySpecPO{},
+		&specpo.SpecPO{},
+		&specpo.SpecValuePO{},
+		&productpo.ProductPO{},
+		&productpo.SKUPO{},
+		&productpo.SKUSpecItemPO{},
 	); err != nil {
 		global.Logger.Error("数据表迁移失败", zap.Error(err))
 		panic("数据表迁移失败:" + err.Error())
@@ -60,14 +66,17 @@ func main() {
 	orderSvc := orderapp.NewService(orderRepo)
 
 	categoryRepo := categorypo.NewCategoryRepository(global.DB)
-	categorySvc := categoryapp.NewService(categoryRepo)
-	//product
-	productRepo := productpo.NewProductRepository(global.DB)
-	productSvc := productapp.NewService(productRepo)
+	categorySpecRepo := categorypo.NewCategorySpecRepository(global.DB)
 
 	//spec
 	specRepo := specpo.NewSpecRepository(global.DB)
 	specSvc := specapp.NewService(specRepo)
+
+	categorySvc := categoryapp.NewService(categoryRepo, specRepo, categorySpecRepo)
+	//product
+	productRepo := productpo.NewProductRepository(global.DB)
+	productSvc := productapp.NewService(productRepo)
+
 	// 4. 启动 HTTP 服务
 	r := router.InitRouter(userSvc, orderSvc, categorySvc, productSvc, specSvc)
 	if err := r.Run(":" + fmt.Sprint(global.Conf.Service.Port)); err != nil {

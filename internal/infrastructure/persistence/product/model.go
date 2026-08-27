@@ -7,13 +7,24 @@ import (
 )
 
 type SKUPO struct {
-	ProductID uint      `gorm:"index;comment:商品ID"`
-	SKUCode   string    `gorm:"primaryKey;comment:规格编码"`
-	Spec      string    `gorm:"size:128;comment:规格"` // 规格类如：颜色，尺寸等
-	Price     int64     `gorm:"comment:单价(分)"`       // 单价(分)
-	Stock     int       `gorm:"comment:库存"`          // 库存
-	CreatedAt time.Time // 创建时间
-	UpdatedAt time.Time // 更新时间
+	ProductID uint   `gorm:"index;comment:商品ID"`
+	SKUCode   string `gorm:"primaryKey;size:64;comment:规格编码"`
+	Price     int64  `gorm:"comment:单价(分)"`
+	Stock     int    `gorm:"comment:库存"`
+	// 规格项：引用规格库的维度+值（含名称快照）
+	SpecItems []SKUSpecItemPO `gorm:"foreignKey:SKUCode;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;comment:SKU规格组合"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+// SKUSpecItemPO SKU 规格项：联合主键 (sku_code, spec_id)。
+// 一个 SKU 每个维度最多一项（领域层已校验）。
+type SKUSpecItemPO struct {
+	SKUCode   string `gorm:"primaryKey;size:64;comment:SKU编码"`
+	SpecID    uint   `gorm:"primaryKey;comment:规格维度ID"`
+	ValueID   uint   `gorm:"index;comment:规格值ID"`
+	SpecName  string `gorm:"size:128;comment:维度名快照"`
+	ValueName string `gorm:"size:128;comment:值名快照"`
 }
 
 type ProductPO struct {
@@ -27,5 +38,6 @@ type ProductPO struct {
 	Status     domainproduct.Status `gorm:"tinyint;not null;default:1;comment:商品状态 1上架 0下架"`
 }
 
-func (ProductPO) TableName() string { return "products" }
-func (SKUPO) TableName() string     { return "product_skus" }
+func (ProductPO) TableName() string     { return "products" }
+func (SKUPO) TableName() string         { return "product_skus" }
+func (SKUSpecItemPO) TableName() string { return "sku_spec_items" }

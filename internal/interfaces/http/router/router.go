@@ -51,7 +51,7 @@ func InitRouter(userSvc *userapp.Service, orderSvc *orderapp.Service, categorySv
 	}
 	registerUserRoutes(apiGroup, userSvc)
 	registerCategoryRoutes(apiGroup, categorySvc)
-	// registerProductRouter(apiGroup, productH)
+	registerProductRouter(apiGroup, productSvc)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	return r
 }

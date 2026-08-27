@@ -30,23 +30,47 @@ func (s *Service) Create(ctx context.Context, in CreateProductInput) (*ProductDT
 func toDomainSKUs(in []SKUInput) []domainproduct.SKU {
 	skus := make([]domainproduct.SKU, 0, len(in))
 	for _, s := range in {
+		items := make([]domainproduct.SpecItem, 0, len(s.SpecItems))
+		for _, item := range s.SpecItems {
+			items = append(items, domainproduct.SpecItem{
+				SpecID:    item.SpecID,
+				ValueID:   item.ValueID,
+				SpecName:  item.SpecName,
+				ValueName: item.ValueName,
+			})
+		}
 		skus = append(skus, domainproduct.SKU{
-			SKUCode: s.SKUCode,
-			Spec:    s.Spec,
-			Price:   s.Price,
-			Stock:   s.Stock,
+			SKUCode:   s.SKUCode,
+			SpecItems: items,
+			Price:     s.Price,
+			Stock:     s.Stock,
 		})
 	}
 	return skus
 }
+
+func toSpecItemDTOs(items []domainproduct.SpecItem) []SpecItemDTO {
+	dtos := make([]SpecItemDTO, 0, len(items))
+	for _, item := range items {
+		dtos = append(dtos, SpecItemDTO{
+			SpecID:    item.SpecID,
+			ValueID:   item.ValueID,
+			SpecName:  item.SpecName,
+			ValueName: item.ValueName,
+		})
+	}
+	return dtos
+}
+
 func toProductDTO(p *domainproduct.Product) ProductDTO {
 	skus := make([]SKUDTO, 0, len(p.SKUs))
 	for _, s := range p.SKUs {
 		skus = append(skus, SKUDTO{
-			SKUCode: s.SKUCode,
-			Spec:    s.Spec,
-			Price:   s.Price,
-			Stock:   s.Stock,
+			SKUCode:   s.SKUCode,
+			SpecItems: toSpecItemDTOs(s.SpecItems),
+			SpecDesc:  s.SpecDesc(),
+			Price:     s.Price,
+			Stock:     s.Stock,
 		})
 	}
 	return ProductDTO{

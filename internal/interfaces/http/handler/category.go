@@ -134,3 +134,92 @@ func (h *CategoryHandler) FindAll(c *gin.Context) {
 	response.Success(c, cs)
 
 }
+
+type BindSpecReq struct {
+	CategoryID uint `json:"categoryId" binding:"required"`
+	SpecID     uint `json:"specId" binding:"required"`
+	Sort       int  `json:"sort"`
+	Required   bool `json:"required"`
+}
+
+// BindSpec 绑定规格到分类
+// @Summary      绑定规格到分类
+// @Description  建立分类与规格维度的多对多绑定；重复绑定返回错误
+// @Tags         分类
+// @Accept       json
+// @Produce      json
+// @Param        request  body      BindSpecReq  true  "绑定信息"
+// @Success      200      {object}  response.Response{data=categoryapp.CategorySpecDto}
+// @Router       /category/bindSpec [post]
+func (h *CategoryHandler) BindSpec(c *gin.Context) {
+	var req BindSpecReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		return
+	}
+
+	in := categoryapp.BindSpecInput{
+		CategoryID: req.CategoryID,
+		SpecID:     req.SpecID,
+		Sort:       req.Sort,
+		Required:   req.Required,
+	}
+	resp, err := h.categorySvc.BindSpec(c.Request.Context(), in)
+	if err != nil {
+		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		return
+	}
+	response.Success(c, resp)
+}
+
+// UnbindSpec 解除分类与规格的绑定
+// @Summary      解除规格绑定
+// @Description  删除分类与规格维度的绑定关系
+// @Tags         分类
+// @Produce      json
+// @Param        categoryId  query  int  true  "分类ID"
+// @Param        specId      query  int  true  "规格ID"
+// @Success      200  {object}  response.Response
+// @Router       /category/unbindSpec [delete]
+func (h *CategoryHandler) UnbindSpec(c *gin.Context) {
+	categoryID, err := strconv.ParseUint(c.Query("categoryId"), 10, 64)
+	if err != nil || categoryID == 0 {
+		response.BadRequest(c, http.StatusBadRequest, "分类ID格式错误")
+		return
+	}
+	specID, err := strconv.ParseUint(c.Query("specId"), 10, 64)
+	if err != nil || specID == 0 {
+		response.BadRequest(c, http.StatusBadRequest, "规格ID格式错误")
+		return
+	}
+
+	in := categoryapp.UnbindSpecInput{CategoryID: uint(categoryID), SpecID: uint(specID)}
+	if err := h.categorySvc.UnbindSpec(c.Request.Context(), in); err != nil {
+		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		return
+	}
+	response.Success(c, nil)
+}
+
+// ListSpecs 查询分类下绑定的规格
+// @Summary      查询分类绑定的规格
+// @Description  返回分类下全部绑定的规格维度（含规格值、排序、是否必选）
+// @Tags         分类
+// @Produce      json
+// @Param        id  path  int  true  "分类ID"
+// @Success      200  {object}  response.Response{data=[]categoryapp.CategorySpecDto}
+// @Router       /category/findSpecs/{id} [get]
+func (h *CategoryHandler) ListSpecs(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.BadRequest(c, http.StatusBadRequest, "分类ID格式错误")
+		return
+	}
+
+	specs, err := h.categorySvc.ListSpecs(c.Request.Context(), uint(id))
+	if err != nil {
+		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		return
+	}
+	response.Success(c, specs)
+}

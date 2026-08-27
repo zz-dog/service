@@ -11,9 +11,8 @@ type CategoryPO struct {
 	Name       string `gorm:"size:32;uniqueIndex;comment:分类名称"`
 	ParentID   uint   `gorm:"index;default:0;comment:父级分类ID"`
 	Sort       int    `gorm:"default:0;comment:排序"`
-
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 func (CategoryPO) TableName() string {

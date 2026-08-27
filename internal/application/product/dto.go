@@ -6,11 +6,19 @@ import (
 	domainproduct "github.com/wsc-zz/service/internal/domain/product"
 )
 
+// SpecItemInput SKU 规格项输入：引用规格库维度/值，名称可选（不传则由应用层从规格库补全）
+type SpecItemInput struct {
+	SpecID    uint   `json:"specId"`    // 规格维度ID
+	ValueID   uint   `json:"valueId"`   // 规格值ID
+	SpecName  string `json:"specName"`  // 维度名（快照）
+	ValueName string `json:"valueName"` // 值名（快照）
+}
+
 type SKUInput struct {
-	SKUCode string `json:"skuCode"` // 商品规格编码
-	Spec    string `json:"spec"`    // 规格
-	Price   int64  `json:"price"`   // 价格
-	Stock   int    `json:"stock"`   // 库存
+	SKUCode   string          `json:"skuCode"`   // 商品规格编码
+	SpecItems []SpecItemInput `json:"specItems"` // 规格组合
+	Price     int64           `json:"price"`     // 价格
+	Stock     int             `json:"stock"`     // 库存
 }
 type CreateProductInput struct {
 	CategoryID uint       `json:"categoryId"`
@@ -36,11 +44,19 @@ type SearchProductInput struct {
 	PageSize   int
 }
 
+type SpecItemDTO struct {
+	SpecID    uint   `json:"specId"`
+	ValueID   uint   `json:"valueId"`
+	SpecName  string `json:"specName"`
+	ValueName string `json:"valueName"`
+}
+
 type SKUDTO struct {
-	SKUCode string `json:"skuCode"`
-	Spec    string `json:"spec"`
-	Price   int64  `json:"price"`
-	Stock   int    `json:"stock"`
+	SKUCode   string        `json:"skuCode"`
+	SpecItems []SpecItemDTO `json:"specItems"`
+	SpecDesc  string        `json:"specDesc"` // 展示文案，如 "红色 / L码"
+	Price     int64         `json:"price"`
+	Stock     int           `json:"stock"`
 }
 type ProductDTO struct {
 	ProductID  uint                 `json:"productId"`

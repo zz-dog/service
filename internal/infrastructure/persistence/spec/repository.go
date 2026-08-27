@@ -2,6 +2,7 @@ package specpo
 
 import (
 	"context"
+	"errors"
 
 	domainSpec "github.com/wsc-zz/service/internal/domain/spec"
 	"gorm.io/gorm"
@@ -18,12 +19,13 @@ func NewSpecRepository(db *gorm.DB) *SpecRepository {
 func (r *SpecRepository) FindByID(ctx context.Context, id uint) (*domainSpec.Spec, error) {
 
 	var po SpecPO
-	err := r.db.WithContext(ctx).Where("id = ?", id).First(&po).Error
+	err := r.db.WithContext(ctx).Where("spec_id = ?", id).First(&po).Error
 	// 处理未找到记录的情况
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainSpec.ErrSpecNotFound
 		}
+		return nil, err
 	}
 	return toSpec(&po), nil
 }
@@ -34,9 +36,10 @@ func (r *SpecRepository) FindByName(ctx context.Context, name string) (*domainSp
 	err := r.db.WithContext(ctx).Where("name = ?", name).First(&po).Error
 	// 处理未找到记录的情况
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainSpec.ErrSpecNotFound
 		}
+		return nil, err
 	}
 	return toSpec(&po), nil
 }
@@ -46,7 +49,7 @@ func (r *SpecRepository) Save(ctx context.Context, spec *domainSpec.Spec) error 
 }
 
 func (r *SpecRepository) Delete(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Where("id = ?", id).Delete(&SpecPO{}).Error
+	return r.db.WithContext(ctx).Where("spec_id = ?", id).Delete(&SpecPO{}).Error
 }
 
 func toSpecValues(vaules []SpecValuePO) []domainSpec.SpecValue {
