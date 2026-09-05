@@ -3,13 +3,16 @@ package product
 import "errors"
 
 var (
-	ErrProductNotFound    = errors.New("商品不存在")
-	ErrSKUNotFound        = errors.New("商品规格不存在")
+	ErrProductNotFound = errors.New("商品不存在")
+	ErrSKUNotFound     = errors.New("商品规格不存在")
 	ErrCategoryNotFound   = errors.New("分类不存在")
 	ErrInsufficientStock  = errors.New("库存不足")
 	ErrProductOffShelf    = errors.New("商品已下架")
 	ErrEmptySKUs          = errors.New("商品至少需要一个规格")
-	ErrDuplicateSKUCode   = errors.New("商品规格编码重复")
+	// ErrSKUCodeMismatch SKU 编码与规格组合派生的编码不一致（编码应由服务端派生，不收自定义值）
+	ErrSKUCodeMismatch = errors.New("SKU编码与规格组合不一致")
+	// ErrDuplicateSpecCombination 多个 SKU 规格组合相同（编码为组合派生，等价于编码重复）
+	ErrDuplicateSpecCombination = errors.New("SKU规格组合重复")
 	ErrInvalidPrice       = errors.New("价格必须大于0")
 	ErrInvalidStock       = errors.New("库存不能为负数")
 	ErrEmptySKUCode       = errors.New("规格编码不能为空")

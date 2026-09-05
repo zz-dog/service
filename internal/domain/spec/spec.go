@@ -51,15 +51,34 @@ func (a *Spec) findValueByName(name string) (int, bool) {
 }
 
 // AddValue 添加标准值；名称为空或重复则报错。
-func (a *Spec) AddValue(name string) error {
+func (a *Spec) AddValue(name string, sort int) error {
 	if name == "" {
 		return ErrEmptySpecValueName
 	}
 	if _, ok := a.findValueByName(name); ok {
 		return ErrDuplicateSpecValue
 	}
-	a.Values = append(a.Values, SpecValue{SpecID: a.SpecID, Name: name})
+	a.Values = append(a.Values, SpecValue{SpecID: a.SpecID, Name: name, Sort: sort})
 	return nil
+}
+
+// UpdateValue 更新已有规格值的名称与排序；值不存在或新名称与其他值重复则报错。
+func (a *Spec) UpdateValue(valueID uint, name string, sort int) error {
+	if name == "" {
+		return ErrEmptySpecValueName
+	}
+	for i, v := range a.Values {
+		if v.ValueID != valueID {
+			continue
+		}
+		if j, ok := a.findValueByName(name); ok && j != i {
+			return ErrDuplicateSpecValue
+		}
+		a.Values[i].Name = name
+		a.Values[i].Sort = sort
+		return nil
+	}
+	return ErrSpecValueNotFound
 }
 
 // RemoveValue 按 ID 删除标准值；不存在则报错。

@@ -4,26 +4,46 @@ import (
 	"context"
 
 	domainorder "github.com/wsc-zz/service/internal/domain/order"
+	domainproduct "github.com/wsc-zz/service/internal/domain/product"
 )
 
 type Service struct {
-	repo domainorder.OrderRepository
+	repo        domainorder.OrderRepository
+	productRepo domainproduct.ProductRepository
 }
 
 // NewService 构造应用服务，注入订单仓储。
-func NewService(repo domainorder.OrderRepository) *Service {
-	return &Service{repo: repo}
+func NewService(repo domainorder.OrderRepository, productRepo domainproduct.ProductRepository) *Service {
+	return &Service{repo: repo, productRepo: productRepo}
 }
 
 // Create 创建订单，成功返回订单视图。
 func (s *Service) Create(ctx context.Context, in CreateOrderInput) (*OrderDTO, error) {
 	items := make([]domainorder.OrderItem, 0, len(in.Items))
 	for _, it := range in.Items {
+		product, err := s.productRepo.FindByProductAndSKUCode(ctx, it.ProductID, it.SKUCode)
+		if err != nil {
+			return nil, err
+		}
+		var sku *domainproduct.SKU
+		for i := range product.SKUs {
+			if product.SKUs[i].SKUCode == it.SKUCode {
+				sku = &product.SKUs[i]
+				break
+			}
+		}
+		if sku == nil {
+			return nil, domainproduct.ErrSKUNotFound
+		}
+		if err := s.productRepo.DeductStock(ctx, it.ProductID, it.SKUCode, it.Quantity); err != nil {
+			return nil, err
+		}
 		items = append(items, domainorder.OrderItem{
 			ProductID:   it.ProductID,
-			ProductName: it.ProductName,
+			SKUCode:     it.SKUCode,
+			ProductName: product.Name,
 			Quantity:    it.Quantity,
-			Price:       it.Price,
+			Price:       sku.Price,
 		})
 	}
 	o, err := domainorder.NewOrder(in.UserID, items, in.ConsigneeName, in.ConsigneePhone, in.ConsigneeAddress)
@@ -55,6 +75,7 @@ func toOrderDTO(o *domainorder.Order) OrderDTO {
 	for _, it := range o.Items {
 		items = append(items, OrderItemDTO{
 			ProductID:   it.ProductID,
+			SKUCode:     it.SKUCode,
 			ProductName: it.ProductName,
 			Quantity:    it.Quantity,
 			Price:       it.Price,

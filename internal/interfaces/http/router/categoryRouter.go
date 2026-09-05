@@ -2,11 +2,20 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/wsc-zz/service/global"
 	categoryapp "github.com/wsc-zz/service/internal/application/category"
+	categorypo "github.com/wsc-zz/service/internal/infrastructure/persistence/category"
+	specpo "github.com/wsc-zz/service/internal/infrastructure/persistence/spec"
 	"github.com/wsc-zz/service/internal/interfaces/http/handler"
 )
 
-func registerCategoryRoutes(router *gin.RouterGroup, categorySvc *categoryapp.Service) {
+func registerCategoryRoutes(router *gin.RouterGroup) {
+	categoryRepo := categorypo.NewCategoryRepository(global.DB)
+	categorySpecRepo := categorypo.NewCategorySpecRepository(global.DB)
+
+	//spec
+	specRepo := specpo.NewSpecRepository(global.DB)
+	categorySvc := categoryapp.NewService(categoryRepo, specRepo, categorySpecRepo)
 	h := handler.NewCategoryHandler(categorySvc)
 	categoryApi := router.Group("/category")
 	{

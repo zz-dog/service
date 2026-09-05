@@ -2,6 +2,7 @@ package order
 
 type OrderItem struct {
 	ProductID   uint   // 商品ID
+	SKUCode     string // 商品规格编码
 	ProductName string // 商品名称
 	Quantity    int    // 商品数量
 	Price       int64  // 单价，单位：分

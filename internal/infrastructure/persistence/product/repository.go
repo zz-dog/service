@@ -34,10 +34,12 @@ func (r *ProductRepository) FindByID(ctx context.Context, id uint) (*domainprodu
 	return toProduct(po), nil
 }
 
-func (r *ProductRepository) FindBySKUCode(ctx context.Context, skuCode string) (*domainproduct.Product, error) {
+func (r *ProductRepository) FindByProductAndSKUCode(ctx context.Context, productID uint, skuCode string) (*domainproduct.Product, error) {
 	// SKU 编码在 product_skus 上，先定位商品再加载聚合
 	var sku SKUPO
-	err := r.db.WithContext(ctx).Where("sku_code = ?", skuCode).First(&sku).Error
+	err := r.db.WithContext(ctx).
+		Where("product_id = ? AND sku_code = ?", productID, skuCode).
+		First(&sku).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainproduct.ErrSKUNotFound
@@ -47,39 +49,25 @@ func (r *ProductRepository) FindBySKUCode(ctx context.Context, skuCode string) (
 	return r.FindByID(ctx, sku.ProductID)
 }
 
+// Create 新增商品聚合：纯插入语义，落库后回填生成的 ProductID 和时间戳。
+// 与 Save（Upsert）区分，创建流程不会误更新已有商品。
+func (r *ProductRepository) Create(ctx context.Context, p *domainproduct.Product) error {
+	po := toPO(p)
+	if err := r.db.WithContext(ctx).Create(&po).Error; err != nil {
+		return err
+	}
+	p.ProductID = po.ProductID
+	p.CreatedAt = po.CreatedAt
+	p.UpdatedAt = po.UpdatedAt
+	return nil
+}
+
 func (r *ProductRepository) Save(ctx context.Context, p *domainproduct.Product) error {
 	po := toPO(p)
 	// FullSaveAssociations：更新时同步 Upsert 子表（SKU / 规格项）
 	return r.db.WithContext(ctx).
 		Session(&gorm.Session{FullSaveAssociations: true}).
 		Save(&po).Error
-}
-
-func (r *ProductRepository) Search(ctx context.Context, categoryID uint, keyword string, page, pageSize int) ([]*domainproduct.Product, int64, error) {
-	var (
-		pos   []ProductPO
-		total int64
-	)
-	db := r.db.WithContext(ctx).Model(&ProductPO{})
-	if categoryID > 0 {
-		db = db.Where("category_id = ?", categoryID)
-	}
-	if keyword != "" {
-		db = db.Where("name LIKE ?", "%"+keyword+"%")
-	}
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-	offset := (page - 1) * pageSize
-	if err := db.Preload("SKUs").Preload("SKUs.SpecItems").
-		Offset(offset).Limit(pageSize).Find(&pos).Error; err != nil {
-		return nil, 0, err
-	}
-	products := make([]*domainproduct.Product, 0, len(pos))
-	for _, po := range pos {
-		products = append(products, toProduct(po))
-	}
-	return products, total, nil
 }
 
 func (r *ProductRepository) CountByCategory(ctx context.Context, categoryID uint) (int64, error) {
@@ -112,7 +100,39 @@ func (r *ProductRepository) DeductStock(ctx context.Context, productID uint, sku
 	}
 	return nil
 }
+func (r *ProductRepository) List(ctx context.Context, q domainproduct.ListQuery) ([]*domainproduct.Product, int, error) {
+	var (
+		pos   []ProductPO
+		total int64
+	)
+	db := r.db.WithContext(ctx).Model(&ProductPO{})
+	if q.CategoryID > 0 {
+		db = db.Where("category_id = ?", q.CategoryID)
+	}
+	if q.Name != "" {
+		db = db.Where("name LIKE ?", "%"+q.Name+"%")
+	}
+	if q.ProductID > 0 {
+		db = db.Where("product_id = ?", q.ProductID)
+	}
+	if q.Status > 0 {
+		db = db.Where("status = ?", q.Status)
+	}
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	offset := (q.Page - 1) * q.PageSize
+	if err := db.Preload("SKUs").Preload("SKUs.SpecItems").
+		Offset(offset).Limit(q.PageSize).Find(&pos).Error; err != nil {
+		return nil, 0, err
+	}
+	products := make([]*domainproduct.Product, 0, len(pos))
+	for _, po := range pos {
+		products = append(products, toProduct(po))
+	}
+	return products, int(total), nil
 
+}
 func toProduct(p ProductPO) *domainproduct.Product {
 	return &domainproduct.Product{
 		ProductID:  p.ProductID,

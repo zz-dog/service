@@ -1,6 +1,8 @@
 package product
 
 import (
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -20,12 +22,28 @@ type SpecItem struct {
 // 一个 SKU 由若干规格项组合而成（红色+L码 = 一个 SKU）。
 // 没有独立身份，作为 Product 聚合根的一部分存在。
 type SKU struct {
-	SKUCode   string     // 规格编码，商品内唯一，如 "RED-L"
+	// SKUCode 规格编码，商品内唯一。不收客户端自定义值，
+	// 由规格组合派生（见 DeriveSKUCode），同组合必同码。
+	SKUCode   string     // 规格编码，如 "10-20"（值ID按维度ID排序拼接）
 	SpecItems []SpecItem // 规格组合，如 [{颜色:红色},{尺码:L}]
 	Price     int64      // 单价，单位：分
 	Stock     int        // 库存
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+// DeriveSKUCode 从规格组合派生 SKU 编码：值ID 按维度ID升序拼接。
+// 编码是组合的确定性函数——同组合必同码，组合唯一则编码唯一。
+// 客户端不传编码，服务端在装配 SKU 时调用。
+func DeriveSKUCode(items []SpecItem) string {
+	sorted := make([]SpecItem, len(items))
+	copy(sorted, items)
+	sort.Slice(sorted, func(i, j int) bool { return sorted[i].SpecID < sorted[j].SpecID })
+	ids := make([]string, 0, len(sorted))
+	for _, item := range sorted {
+		ids = append(ids, strconv.FormatUint(uint64(item.ValueID), 10))
+	}
+	return strings.Join(ids, "-")
 }
 
 // SpecDesc 拼接展示文案，如 "红色 / L码"（替代原 Spec 自由文本字段）。

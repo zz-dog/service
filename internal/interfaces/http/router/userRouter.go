@@ -2,13 +2,23 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/wsc-zz/service/global"
 	userapp "github.com/wsc-zz/service/internal/application/user"
+	"github.com/wsc-zz/service/internal/infrastructure/auth"
+	userpo "github.com/wsc-zz/service/internal/infrastructure/persistence/user"
+	"github.com/wsc-zz/service/internal/infrastructure/security"
 	"github.com/wsc-zz/service/internal/interfaces/http/handler"
 	"github.com/wsc-zz/service/internal/interfaces/http/middleware"
 	"github.com/wsc-zz/service/pkg/response"
 )
 
-func registerUserRoutes(r *gin.RouterGroup, userSvc *userapp.Service) {
+func registerUserRoutes(r *gin.RouterGroup) {
+
+	userRepo := userpo.NewUserRepository(global.DB)
+	hasher := security.NewBcryptHasher()
+	tokenIssuer := auth.NewJWTTokenIssuer()
+
+	userSvc := userapp.NewService(userRepo, hasher, tokenIssuer)
 	h := handler.NewHandler(userSvc)
 	apiGroup := r.Group("/user")
 	// 健康检查：供部署流水线 / 负载均衡探活使用，不校验 JWT

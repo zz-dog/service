@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	orderapp "github.com/wsc-zz/service/internal/application/order"
 	domainorder "github.com/wsc-zz/service/internal/domain/order"
+	domainproduct "github.com/wsc-zz/service/internal/domain/product"
 	"github.com/wsc-zz/service/pkg/response"
 	"github.com/wsc-zz/service/pkg/validator"
 )
@@ -24,10 +25,9 @@ func NewOrderHandler(orderSvc *orderapp.Service) *OrderHandler {
 // ---- 请求结构体（带 gin binding 标签，仅接口层感知 Web 框架）----
 
 type orderItemRequest struct {
-	ProductID   uint   `json:"productId" binding:"required"`
-	ProductName string `json:"productName" binding:"required"`
-	Quantity    int    `json:"quantity" binding:"required,min=1"`
-	Price       int64  `json:"price" binding:"required,min=1"` // 单位：分
+	ProductID uint   `json:"productId" binding:"required"`
+	SKUCode   string `json:"skuCode" binding:"required"`
+	Quantity  int    `json:"quantity" binding:"required,min=1"`
 }
 type createOrderRequest struct {
 	Items            []orderItemRequest `json:"items" binding:"required,min=1,dive"`
@@ -55,10 +55,9 @@ func (h *OrderHandler) Create(c *gin.Context) {
 	items := make([]orderapp.OrderItemInput, 0, len(req.Items))
 	for _, it := range req.Items {
 		items = append(items, orderapp.OrderItemInput{
-			ProductID:   it.ProductID,
-			ProductName: it.ProductName,
-			Quantity:    it.Quantity,
-			Price:       it.Price,
+			ProductID: it.ProductID,
+			SKUCode:   it.SKUCode,
+			Quantity:  it.Quantity,
 		})
 	}
 	result, err := h.orderSvc.Create(c.Request.Context(), orderapp.CreateOrderInput{
@@ -122,6 +121,12 @@ func (h *OrderHandler) writeError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, domainorder.ErrOrderNotFound):
 		response.NotFound(c, http.StatusNotFound, err.Error())
+	case errors.Is(err, domainproduct.ErrProductNotFound),
+		errors.Is(err, domainproduct.ErrSKUNotFound):
+		response.NotFound(c, http.StatusNotFound, err.Error())
+	case errors.Is(err, domainproduct.ErrProductOffShelf),
+		errors.Is(err, domainproduct.ErrInsufficientStock):
+		response.BadRequest(c, http.StatusBadRequest, err.Error())
 	case errors.Is(err, domainorder.ErrInvalidStatusTransition),
 		errors.Is(err, domainorder.ErrOrderAlreadyCancelled),
 		errors.Is(err, domainorder.ErrEmptyOrderItems),

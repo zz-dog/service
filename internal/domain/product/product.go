@@ -25,23 +25,13 @@ type Product struct {
 }
 
 // NewProduct 创建商品（默认上架）。
-// 充血构造函数：校验名称、SKU 列表、SKU 编码不重复。
+// 充血构造函数：校验名称、SKU 列表、SKU 编码与规格组合一致且不重复。
 func NewProduct(categoryID uint, name, desc string, skus []SKU) (*Product, error) {
 	if name == "" {
 		return nil, ErrEmptyProductName
 	}
-	if len(skus) == 0 {
-		return nil, ErrEmptySKUs
-	}
-	seen := make(map[string]bool, len(skus))
-	for _, s := range skus {
-		if err := s.validate(); err != nil {
-			return nil, err
-		}
-		if seen[s.SKUCode] {
-			return nil, ErrDuplicateSKUCode
-		}
-		seen[s.SKUCode] = true
+	if err := validateSKUs(skus); err != nil {
+		return nil, err
 	}
 	return &Product{
 		CategoryID: categoryID,
@@ -53,33 +43,48 @@ func NewProduct(categoryID uint, name, desc string, skus []SKU) (*Product, error
 }
 
 // UpdateInfo 修改商品基础信息（名称、描述、分类）。
-func (p *Product) UpdateInfo(categoryID uint, name, desc string) error {
+func (p *Product) UpdateInfo(categoryID uint, name, desc string, Urls []string) error {
 	if name == "" {
 		return ErrEmptyProductName
 	}
 	p.CategoryID = categoryID
 	p.Name = name
 	p.Desc = desc
+	if len(Urls) > 0 {
+		p.Urls = Urls
+	}
 	return nil
 }
 
 // ReplaceSKUs 替换全部 SKU（管理端重新设置规格）。
-// 校验编码不重复。
+// 校验编码与规格组合一致且不重复。
 func (p *Product) ReplaceSKUs(skus []SKU) error {
+	if err := validateSKUs(skus); err != nil {
+		return err
+	}
+	p.SKUs = skus
+	return nil
+}
+
+// validateSKUs 校验 SKU 列表：非空、字段合法、编码与规格组合一一对应、组合不重复。
+// 编码由 DeriveSKUCode 派生，组合重复等价于编码重复，一并拒绝。
+func validateSKUs(skus []SKU) error {
 	if len(skus) == 0 {
 		return ErrEmptySKUs
 	}
 	seen := make(map[string]bool, len(skus))
 	for _, s := range skus {
 		if err := s.validate(); err != nil {
-			return nil
+			return err
+		}
+		if s.SKUCode != DeriveSKUCode(s.SpecItems) {
+			return ErrSKUCodeMismatch
 		}
 		if seen[s.SKUCode] {
-			return ErrDuplicateSKUCode
+			return ErrDuplicateSpecCombination
 		}
 		seen[s.SKUCode] = true
 	}
-	p.SKUs = skus
 	return nil
 }
 

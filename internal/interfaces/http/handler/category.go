@@ -36,7 +36,7 @@ type CreateReq struct {
 // @Success      200      {object}  response.Response{data=categoryapp.CategoryDto}
 // @Failure      400      {object}  response.Response  "参数校验失败"
 // @Failure      500      {object}  response.Response  "服务器内部错误"
-// @Router       /Category/Create [post]
+// @Router       /category/create [post]
 func (h *CategoryHandler) Create(c *gin.Context) {
 	var req CreateReq
 	// 绑定参数
@@ -104,6 +104,16 @@ func (h *CategoryHandler) Update(c *gin.Context) {
 	response.Success(c, resp)
 }
 
+// Delete 删除分类
+// @Summary      删除分类
+// @Description  根据分类ID删除分类
+// @Tags         分类
+// @Produce      json
+// @Param        id  path  int  true  "分类ID"
+// @Success      200  {object}  response.Response
+// @Failure      400  {object}  response.Response  "分类ID格式错误"
+// @Failure      500  {object}  response.Response  "服务器内部错误"
+// @Router       /category/{id} [delete]
 func (h *CategoryHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -118,12 +128,14 @@ func (h *CategoryHandler) Delete(c *gin.Context) {
 	response.Success(c, nil)
 }
 
-type ListReq struct {
-	Page     int    `form:"page" binding:"required,min=1"`
-	PageSize int    `form:"pageSize" binding:"required,min=1,max=100"`
-	Name     string `form:"name"`
-}
-
+// FindAll 查询所有分类
+// @Summary      查询所有分类
+// @Description  返回全部分类列表（不分页）
+// @Tags         分类
+// @Produce      json
+// @Success      200  {object}  response.Response{data=[]categoryapp.CategoryDto}
+// @Failure      500  {object}  response.Response  "服务器内部错误"
+// @Router       /category/findAll [get]
 func (h *CategoryHandler) FindAll(c *gin.Context) {
 
 	cs, err := h.categorySvc.FindAll(c.Request.Context())
@@ -136,10 +148,10 @@ func (h *CategoryHandler) FindAll(c *gin.Context) {
 }
 
 type BindSpecReq struct {
-	CategoryID uint `json:"categoryId" binding:"required"`
-	SpecID     uint `json:"specId" binding:"required"`
-	Sort       int  `json:"sort"`
-	Required   bool `json:"required"`
+	CategoryID uint `json:"categoryId" binding:"required"` // 分类ID
+	SpecID     uint `json:"specId" binding:"required"`     // 规格ID
+	Sort       int  `json:"sort"`                          // 排序
+	Required   bool `json:"required"`                      // 是否必填
 }
 
 // BindSpec 绑定规格到分类

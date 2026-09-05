@@ -144,11 +144,24 @@ func (s *Service) ListSpecs(ctx context.Context, categoryID uint) ([]*CategorySp
 	if err != nil {
 		return nil, err
 	}
+	// 批量取规格，避免循环内逐条查询的 N+1
+	specIDs := make([]uint, 0, len(bindings))
+	for _, b := range bindings {
+		specIDs = append(specIDs, b.SpecID)
+	}
+	specs, err := s.specRepo.FindByIDs(ctx, specIDs)
+	if err != nil {
+		return nil, err
+	}
+	specByID := make(map[uint]*domainSpec.Spec, len(specs))
+	for _, spec := range specs {
+		specByID[spec.SpecID] = spec
+	}
 	dtos := make([]*CategorySpecDto, 0, len(bindings))
 	for _, b := range bindings {
-		spec, err := s.specRepo.FindByID(ctx, b.SpecID)
-		if err != nil {
-			return nil, err
+		spec, ok := specByID[b.SpecID]
+		if !ok {
+			return nil, domainSpec.ErrSpecNotFound
 		}
 		dtos = append(dtos, toCategorySpecDTO(b, spec))
 	}

@@ -15,7 +15,53 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/Category/Create": {
+        "/category/bindSpec": {
+            "post": {
+                "description": "建立分类与规格维度的多对多绑定；重复绑定返回错误",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "分类"
+                ],
+                "summary": "绑定规格到分类",
+                "parameters": [
+                    {
+                        "description": "绑定信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.BindSpecReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/categoryapp.CategorySpecDto"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/category/create": {
             "post": {
                 "description": "创建一个新的商品分类；同名分类已存在时返回错误",
                 "consumes": [
@@ -72,29 +118,867 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/category/findAll": {
+            "get": {
+                "description": "返回全部分类列表（不分页）",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "分类"
+                ],
+                "summary": "查询所有分类",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/categoryapp.CategoryDto"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/category/findSpecs/{id}": {
+            "get": {
+                "description": "返回分类下全部绑定的规格维度（含规格值、排序、是否必选）",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "分类"
+                ],
+                "summary": "查询分类绑定的规格",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "分类ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/categoryapp.CategorySpecDto"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/category/unbindSpec": {
+            "delete": {
+                "description": "删除分类与规格维度的绑定关系",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "分类"
+                ],
+                "summary": "解除规格绑定",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "分类ID",
+                        "name": "categoryId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "规格ID",
+                        "name": "specId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/category/{id}": {
+            "put": {
+                "description": "根据分类ID更新分类信息，支持部分更新（未传字段不修改）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "分类"
+                ],
+                "summary": "更新分类",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "分类ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "分类信息（均为可选字段）",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/categoryapp.CategoryDto"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "参数校验失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "根据分类ID删除分类",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "分类"
+                ],
+                "summary": "删除分类",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "分类ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "分类ID格式错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/product/create": {
+            "post": {
+                "description": "创建商品及其 SKU；SKU 编码和规格名称由服务端生成",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "商品"
+                ],
+                "summary": "创建商品",
+                "parameters": [
+                    {
+                        "description": "商品信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.createProductReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/productapp.ProductDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "参数校验失败或商品信息无效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/product/list": {
+            "post": {
+                "description": "根据分类、商品ID或名称筛选商品并分页返回",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "商品"
+                ],
+                "summary": "分页查询商品",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "分类ID",
+                        "name": "categoryId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "商品ID",
+                        "name": "productId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "商品名称",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "每页数量",
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/productapp.ProductListResult"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "查询参数校验失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/product/update": {
+            "post": {
+                "description": "根据商品ID更新商品的分类、名称、描述和图片地址",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "商品"
+                ],
+                "summary": "更新商品",
+                "parameters": [
+                    {
+                        "description": "商品更新信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.updateProductReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/productapp.ProductDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "参数校验失败或商品信息无效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/spec/delete/{id}": {
+            "delete": {
+                "description": "根据规格ID删除规格维度",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "规格"
+                ],
+                "summary": "删除规格",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "规格ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "规格ID格式错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/spec/findById/{id}": {
+            "get": {
+                "description": "根据规格ID查询规格详情（含规格值列表）",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "规格"
+                ],
+                "summary": "根据ID查询规格",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "规格ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/specapp.SpecDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "规格ID格式错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/spec/findByName/{name}": {
+            "get": {
+                "description": "根据规格名称精确查询规格详情（含规格值列表）",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "规格"
+                ],
+                "summary": "根据名称查询规格",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "规格名称",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/specapp.SpecDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/spec/list": {
+            "get": {
+                "description": "分页查询规格维度列表，支持按名称模糊搜索；返回列表与总数",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "规格"
+                ],
+                "summary": "分页查询规格列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "页码（默认1）",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "每页数量（默认10，最大100）",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "规格名称（模糊搜索）",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "规格ID",
+                        "name": "specId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/specapp.ListDto"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "参数校验失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/spec/register": {
+            "post": {
+                "description": "创建一个新的规格维度（如颜色、尺寸等），可同时传入规格值列表一次性创建；同名规格已存在时返回错误",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "规格"
+                ],
+                "summary": "创建规格",
+                "parameters": [
+                    {
+                        "description": "规格信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/specapp.SpecDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "参数校验失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/spec/update/{id}": {
+            "put": {
+                "description": "根据规格ID更新规格维度及规格值。Values 须传该规格的完整值列表：带ID的值被更新、不带ID的值被新增、库中缺席的值被删除；单事务保证一致",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "规格"
+                ],
+                "summary": "整包更新规格",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "规格ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "规格信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/specapp.SpecDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "参数校验失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
         "categoryapp.CategoryDto": {
             "type": "object",
             "properties": {
-                "category_id": {
+                "categoryId": {
                     "type": "integer"
                 },
-                "created_at": {
+                "createdAt": {
                     "type": "string"
                 },
                 "name": {
                     "type": "string"
                 },
-                "parent_id": {
+                "parentId": {
                     "type": "integer"
                 },
                 "sort": {
                     "type": "integer"
                 },
-                "updated_at": {
+                "updatedAt": {
                     "type": "string"
+                }
+            }
+        },
+        "categoryapp.CategorySpecDto": {
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "type": "integer"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "spec_id": {
+                    "type": "integer"
+                },
+                "spec_name": {
+                    "type": "string"
+                },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/categoryapp.SpecValueDto"
+                    }
+                }
+            }
+        },
+        "categoryapp.SpecValueDto": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "value_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.BindSpecReq": {
+            "type": "object",
+            "required": [
+                "categoryId",
+                "specId"
+            ],
+            "properties": {
+                "categoryId": {
+                    "description": "分类ID",
+                    "type": "integer"
+                },
+                "required": {
+                    "description": "是否必填",
+                    "type": "boolean"
+                },
+                "sort": {
+                    "description": "排序",
+                    "type": "integer"
+                },
+                "specId": {
+                    "description": "规格ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.CreateInput": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SpecValueInput"
+                    }
                 }
             }
         },
@@ -116,6 +1000,257 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.SkU": {
+            "type": "object",
+            "required": [
+                "price",
+                "specItems"
+            ],
+            "properties": {
+                "price": {
+                    "description": "价格",
+                    "type": "integer"
+                },
+                "specItems": {
+                    "description": "SKUCode 不收客户端值，由服务端从规格组合派生，创建后在响应中返回",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/handler.specItemReq"
+                    }
+                },
+                "stock": {
+                    "description": "库存",
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
+        "handler.SpecValueInput": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.UpdateInput": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.UpdateValueInput"
+                    }
+                }
+            }
+        },
+        "handler.UpdateReq": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "sort": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.UpdateValueInput": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "specValueId": {
+                    "description": "规格值ID，0 表示新增",
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.createProductReq": {
+            "type": "object",
+            "required": [
+                "categoryId",
+                "name",
+                "skus"
+            ],
+            "properties": {
+                "categoryId": {
+                    "description": "分类ID",
+                    "type": "integer"
+                },
+                "desc": {
+                    "description": "商品描述",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "商品名称",
+                    "type": "string"
+                },
+                "skus": {
+                    "description": "商品规格",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SkU"
+                    }
+                }
+            }
+        },
+        "handler.specItemReq": {
+            "type": "object",
+            "required": [
+                "specId",
+                "valueId"
+            ],
+            "properties": {
+                "specId": {
+                    "description": "规格维度ID",
+                    "type": "integer"
+                },
+                "valueId": {
+                    "description": "规格值ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.updateProductReq": {
+            "type": "object",
+            "required": [
+                "productId"
+            ],
+            "properties": {
+                "categoryId": {
+                    "type": "integer"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "urls": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "productapp.ProductDTO": {
+            "type": "object",
+            "properties": {
+                "categoryId": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "productId": {
+                    "type": "integer"
+                },
+                "skus": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/productapp.SKUDTO"
+                    }
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "productapp.ProductListResult": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/productapp.ProductDTO"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "productapp.SKUDTO": {
+            "type": "object",
+            "properties": {
+                "price": {
+                    "type": "integer"
+                },
+                "skuCode": {
+                    "type": "string"
+                },
+                "specDesc": {
+                    "description": "展示文案，如 \"红色 / L码\"",
+                    "type": "string"
+                },
+                "specItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/productapp.SpecItemDTO"
+                    }
+                },
+                "stock": {
+                    "type": "integer"
+                }
+            }
+        },
+        "productapp.SpecItemDTO": {
+            "type": "object",
+            "properties": {
+                "specId": {
+                    "type": "integer"
+                },
+                "specName": {
+                    "type": "string"
+                },
+                "valueId": {
+                    "type": "integer"
+                },
+                "valueName": {
+                    "type": "string"
+                }
+            }
+        },
         "response.Response": {
             "type": "object",
             "properties": {
@@ -125,6 +1260,64 @@ const docTemplate = `{
                 "data": {},
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "specapp.ListDto": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/specapp.SpecDTO"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "specapp.SpecDTO": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "name": {
+                    "description": "规格名称",
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "specId": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/specapp.SpecValueDTO"
+                    }
+                }
+            }
+        },
+        "specapp.SpecValueDTO": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "specId": {
+                    "type": "integer"
+                },
+                "specValueId": {
+                    "type": "integer"
                 }
             }
         }

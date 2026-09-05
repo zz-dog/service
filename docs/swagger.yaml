@@ -2,18 +2,75 @@ basePath: /api
 definitions:
   categoryapp.CategoryDto:
     properties:
-      category_id:
+      categoryId:
         type: integer
-      created_at:
+      createdAt:
         type: string
       name:
         type: string
-      parent_id:
+      parentId:
         type: integer
       sort:
         type: integer
-      updated_at:
+      updatedAt:
         type: string
+    type: object
+  categoryapp.CategorySpecDto:
+    properties:
+      category_id:
+        type: integer
+      required:
+        type: boolean
+      sort:
+        type: integer
+      spec_id:
+        type: integer
+      spec_name:
+        type: string
+      values:
+        items:
+          $ref: '#/definitions/categoryapp.SpecValueDto'
+        type: array
+    type: object
+  categoryapp.SpecValueDto:
+    properties:
+      name:
+        type: string
+      sort:
+        type: integer
+      value_id:
+        type: integer
+    type: object
+  handler.BindSpecReq:
+    properties:
+      categoryId:
+        description: 分类ID
+        type: integer
+      required:
+        description: 是否必填
+        type: boolean
+      sort:
+        description: 排序
+        type: integer
+      specId:
+        description: 规格ID
+        type: integer
+    required:
+    - categoryId
+    - specId
+    type: object
+  handler.CreateInput:
+    properties:
+      name:
+        type: string
+      sort:
+        type: integer
+      values:
+        items:
+          $ref: '#/definitions/handler.SpecValueInput'
+        type: array
+    required:
+    - name
     type: object
   handler.CreateReq:
     properties:
@@ -27,6 +84,175 @@ definitions:
     required:
     - name
     type: object
+  handler.SkU:
+    properties:
+      price:
+        description: 价格
+        type: integer
+      specItems:
+        description: SKUCode 不收客户端值，由服务端从规格组合派生，创建后在响应中返回
+        items:
+          $ref: '#/definitions/handler.specItemReq'
+        minItems: 1
+        type: array
+      stock:
+        description: 库存
+        minimum: 0
+        type: integer
+    required:
+    - price
+    - specItems
+    type: object
+  handler.SpecValueInput:
+    properties:
+      name:
+        type: string
+      sort:
+        type: integer
+    required:
+    - name
+    type: object
+  handler.UpdateInput:
+    properties:
+      name:
+        type: string
+      sort:
+        type: integer
+      values:
+        items:
+          $ref: '#/definitions/handler.UpdateValueInput'
+        type: array
+    required:
+    - name
+    type: object
+  handler.UpdateReq:
+    properties:
+      name:
+        type: string
+      parentId:
+        type: integer
+      sort:
+        type: integer
+    type: object
+  handler.UpdateValueInput:
+    properties:
+      name:
+        type: string
+      sort:
+        type: integer
+      specValueId:
+        description: 规格值ID，0 表示新增
+        type: integer
+    required:
+    - name
+    type: object
+  handler.createProductReq:
+    properties:
+      categoryId:
+        description: 分类ID
+        type: integer
+      desc:
+        description: 商品描述
+        type: string
+      name:
+        description: 商品名称
+        type: string
+      skus:
+        description: 商品规格
+        items:
+          $ref: '#/definitions/handler.SkU'
+        type: array
+    required:
+    - categoryId
+    - name
+    - skus
+    type: object
+  handler.specItemReq:
+    properties:
+      specId:
+        description: 规格维度ID
+        type: integer
+      valueId:
+        description: 规格值ID
+        type: integer
+    required:
+    - specId
+    - valueId
+    type: object
+  handler.updateProductReq:
+    properties:
+      categoryId:
+        type: integer
+      desc:
+        type: string
+      name:
+        type: string
+      productId:
+        type: integer
+      urls:
+        items:
+          type: string
+        type: array
+    required:
+    - productId
+    type: object
+  productapp.ProductDTO:
+    properties:
+      categoryId:
+        type: integer
+      createdAt:
+        type: string
+      desc:
+        type: string
+      name:
+        type: string
+      productId:
+        type: integer
+      skus:
+        items:
+          $ref: '#/definitions/productapp.SKUDTO'
+        type: array
+      status:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  productapp.ProductListResult:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/productapp.ProductDTO'
+        type: array
+      total:
+        type: integer
+    type: object
+  productapp.SKUDTO:
+    properties:
+      price:
+        type: integer
+      skuCode:
+        type: string
+      specDesc:
+        description: 展示文案，如 "红色 / L码"
+        type: string
+      specItems:
+        items:
+          $ref: '#/definitions/productapp.SpecItemDTO'
+        type: array
+      stock:
+        type: integer
+    type: object
+  productapp.SpecItemDTO:
+    properties:
+      specId:
+        type: integer
+      specName:
+        type: string
+      valueId:
+        type: integer
+      valueName:
+        type: string
+    type: object
   response.Response:
     properties:
       code:
@@ -35,6 +261,44 @@ definitions:
       message:
         type: string
     type: object
+  specapp.ListDto:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/specapp.SpecDTO'
+        type: array
+      total:
+        type: integer
+    type: object
+  specapp.SpecDTO:
+    properties:
+      createdAt:
+        type: string
+      name:
+        description: 规格名称
+        type: string
+      sort:
+        type: integer
+      specId:
+        type: integer
+      updatedAt:
+        type: string
+      values:
+        items:
+          $ref: '#/definitions/specapp.SpecValueDTO'
+        type: array
+    type: object
+  specapp.SpecValueDTO:
+    properties:
+      name:
+        type: string
+      sort:
+        type: integer
+      specId:
+        type: integer
+      specValueId:
+        type: integer
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -42,7 +306,100 @@ info:
   title: Demo Service API
   version: "1.0"
 paths:
-  /Category/Create:
+  /category/{id}:
+    delete:
+      description: 根据分类ID删除分类
+      parameters:
+      - description: 分类ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 分类ID格式错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 删除分类
+      tags:
+      - 分类
+    put:
+      consumes:
+      - application/json
+      description: 根据分类ID更新分类信息，支持部分更新（未传字段不修改）
+      parameters:
+      - description: 分类ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 分类信息（均为可选字段）
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/categoryapp.CategoryDto'
+              type: object
+        "400":
+          description: 参数校验失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 更新分类
+      tags:
+      - 分类
+  /category/bindSpec:
+    post:
+      consumes:
+      - application/json
+      description: 建立分类与规格维度的多对多绑定；重复绑定返回错误
+      parameters:
+      - description: 绑定信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.BindSpecReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/categoryapp.CategorySpecDto'
+              type: object
+      summary: 绑定规格到分类
+      tags:
+      - 分类
+  /category/create:
     post:
       consumes:
       - application/json
@@ -77,6 +434,404 @@ paths:
       summary: 创建分类
       tags:
       - 分类
+  /category/findAll:
+    get:
+      description: 返回全部分类列表（不分页）
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/categoryapp.CategoryDto'
+                  type: array
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 查询所有分类
+      tags:
+      - 分类
+  /category/findSpecs/{id}:
+    get:
+      description: 返回分类下全部绑定的规格维度（含规格值、排序、是否必选）
+      parameters:
+      - description: 分类ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/categoryapp.CategorySpecDto'
+                  type: array
+              type: object
+      summary: 查询分类绑定的规格
+      tags:
+      - 分类
+  /category/unbindSpec:
+    delete:
+      description: 删除分类与规格维度的绑定关系
+      parameters:
+      - description: 分类ID
+        in: query
+        name: categoryId
+        required: true
+        type: integer
+      - description: 规格ID
+        in: query
+        name: specId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 解除规格绑定
+      tags:
+      - 分类
+  /product/create:
+    post:
+      consumes:
+      - application/json
+      description: 创建商品及其 SKU；SKU 编码和规格名称由服务端生成
+      parameters:
+      - description: 商品信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createProductReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/productapp.ProductDTO'
+              type: object
+        "400":
+          description: 参数校验失败或商品信息无效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 创建商品
+      tags:
+      - 商品
+  /product/list:
+    post:
+      description: 根据分类、商品ID或名称筛选商品并分页返回
+      parameters:
+      - description: 分类ID
+        in: query
+        name: categoryId
+        type: integer
+      - description: 商品ID
+        in: query
+        name: productId
+        type: integer
+      - description: 商品名称
+        in: query
+        name: name
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/productapp.ProductListResult'
+              type: object
+        "400":
+          description: 查询参数校验失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 分页查询商品
+      tags:
+      - 商品
+  /product/update:
+    post:
+      consumes:
+      - application/json
+      description: 根据商品ID更新商品的分类、名称、描述和图片地址
+      parameters:
+      - description: 商品更新信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateProductReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/productapp.ProductDTO'
+              type: object
+        "400":
+          description: 参数校验失败或商品信息无效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 更新商品
+      tags:
+      - 商品
+  /spec/delete/{id}:
+    delete:
+      description: 根据规格ID删除规格维度
+      parameters:
+      - description: 规格ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 规格ID格式错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 删除规格
+      tags:
+      - 规格
+  /spec/findById/{id}:
+    get:
+      description: 根据规格ID查询规格详情（含规格值列表）
+      parameters:
+      - description: 规格ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/specapp.SpecDTO'
+              type: object
+        "400":
+          description: 规格ID格式错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 根据ID查询规格
+      tags:
+      - 规格
+  /spec/findByName/{name}:
+    get:
+      description: 根据规格名称精确查询规格详情（含规格值列表）
+      parameters:
+      - description: 规格名称
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/specapp.SpecDTO'
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 根据名称查询规格
+      tags:
+      - 规格
+  /spec/list:
+    get:
+      description: 分页查询规格维度列表，支持按名称模糊搜索；返回列表与总数
+      parameters:
+      - description: 页码（默认1）
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量（默认10，最大100）
+        in: query
+        name: pageSize
+        type: integer
+      - description: 规格名称（模糊搜索）
+        in: query
+        name: name
+        type: string
+      - description: 规格ID
+        in: query
+        name: specId
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/specapp.ListDto'
+              type: object
+        "400":
+          description: 参数校验失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 分页查询规格列表
+      tags:
+      - 规格
+  /spec/register:
+    post:
+      consumes:
+      - application/json
+      description: 创建一个新的规格维度（如颜色、尺寸等），可同时传入规格值列表一次性创建；同名规格已存在时返回错误
+      parameters:
+      - description: 规格信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/specapp.SpecDTO'
+              type: object
+        "400":
+          description: 参数校验失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 创建规格
+      tags:
+      - 规格
+  /spec/update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: 根据规格ID更新规格维度及规格值。Values 须传该规格的完整值列表：带ID的值被更新、不带ID的值被新增、库中缺席的值被删除；单事务保证一致
+      parameters:
+      - description: 规格ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 规格信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/specapp.SpecDTO'
+              type: object
+        "400":
+          description: 参数校验失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 整包更新规格
+      tags:
+      - 规格
 securityDefinitions:
   ApiKeyAuth:
     in: header

@@ -34,6 +34,7 @@ type OrderItemPO struct {
 	ItemID      uint   `gorm:"primaryKey;autoIncrement;comment:明细主键"`
 	OrderID     uint   `gorm:"index;comment:所属订单ID"`
 	ProductID   uint   `gorm:"comment:商品ID"`
+	SKUCode     string `gorm:"size:64;comment:商品规格编码"`
 	ProductName string `gorm:"size:128;comment:商品名称"`
 	Quantity    int    `gorm:"comment:购买数量"`
 	Price       int64  `gorm:"comment:单价(分)"`
@@ -52,6 +53,7 @@ func toDomain(po *OrderPO) *domainorder.Order {
 	for _, ip := range po.Items {
 		items = append(items, domainorder.OrderItem{
 			ProductID:   ip.ProductID,
+			SKUCode:     ip.SKUCode,
 			ProductName: ip.ProductName,
 			Quantity:    ip.Quantity,
 			Price:       ip.Price,
@@ -98,6 +100,7 @@ func toItemsPO(items []domainorder.OrderItem) []OrderItemPO {
 	for _, it := range items {
 		result = append(result, OrderItemPO{
 			ProductID:   it.ProductID,
+			SKUCode:     it.SKUCode,
 			ProductName: it.ProductName,
 			Quantity:    it.Quantity,
 			Price:       it.Price,

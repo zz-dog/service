@@ -3,33 +3,33 @@ package categoryapp
 import "time"
 
 type CreateCategoryInput struct {
-	Name     string `json:"name"`
-	ParentID uint   `json:"parent_id"`
-	Sort     int    `json:"sort"`
+	Name     string
+	ParentID uint
+	Sort     int
 }
 
 type UpdateCategoryInput struct {
-	CategoryID uint    `json:"category_id"`
-	Name       *string `json:"name"`      // 可选，nil 表示不修改
-	ParentID   *uint   `json:"parent_id"` // 可选，nil 表示不修改
-	Sort       *int    `json:"sort"`      // 可选，nil 表示不修改
+	CategoryID uint
+	Name       *string
+	ParentID   *uint
+	Sort       *int
 }
 type DeleteCategoryInput struct {
 	CategoryID uint `json:"category_id"`
 }
 type CategoryDto struct {
-	CategoryID uint      `json:"category_id"`
+	CategoryID uint      `json:"categoryId"`
 	Name       string    `json:"name"`
-	ParentID   uint      `json:"parent_id"`
+	ParentID   uint      `json:"parentId"`
 	Sort       int       `json:"sort"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	CreatedAt  time.Time `json:"createdAt"`
+	UpdatedAt  time.Time `json:"updatedAt"`
 }
 
 // BindSpecInput 绑定规格到分类
 type BindSpecInput struct {
-	CategoryID uint `json:"category_id"`
-	SpecID     uint `json:"spec_id"`
+	CategoryID uint `json:"categoryId"`
+	SpecID     uint `json:"specId"`
 	Sort       int  `json:"sort"`
 	Required   bool `json:"required"`
 }
