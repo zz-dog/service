@@ -76,7 +76,17 @@ func (o *Order) Pay() error {
 	return nil
 }
 
-// CanCancel 是否可取消（供展示层判断按钮可用性）
+func (o *Order) Cancel() error {
+	if !o.CanCancel() {
+		return ErrInvalidStatusTransition
+	}
+	o.Status = StatusCancelled
+	now := time.Now()
+	o.CancelledAt = &now
+	return nil
+}
+
+// CanCancel 是否可取消
 func (o *Order) CanCancel() bool {
-	return o.Status == StatusPending || o.Status == StatusPaid
+	return o.Status == StatusPending
 }

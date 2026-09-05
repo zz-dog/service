@@ -81,6 +81,9 @@ func (r *ProductRepository) CountByCategory(ctx context.Context, categoryID uint
 // DeductStock 原子扣减 SKU 库存：条件更新 stock >= qty 防并发超卖。
 // 注意库存列在 product_skus 上，不在 products 上。
 func (r *ProductRepository) DeductStock(ctx context.Context, productID uint, skuCode string, qty int) error {
+	if qty <= 0 {
+		return domainproduct.ErrInvalidStock
+	}
 	res := r.db.WithContext(ctx).Model(&SKUPO{}).
 		Where("product_id = ? AND sku_code = ?", productID, skuCode).
 		Where("stock >= ?", qty).
@@ -100,6 +103,24 @@ func (r *ProductRepository) DeductStock(ctx context.Context, productID uint, sku
 	}
 	return nil
 }
+
+// RestockStock 恢复 SKU 库存。
+func (r *ProductRepository) RestockStock(ctx context.Context, productID uint, skuCode string, qty int) error {
+	if qty <= 0 {
+		return domainproduct.ErrInvalidStock
+	}
+	res := r.db.WithContext(ctx).Model(&SKUPO{}).
+		Where("product_id = ? AND sku_code = ?", productID, skuCode).
+		Update("stock", gorm.Expr("stock + ?", qty))
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return domainproduct.ErrSKUNotFound
+	}
+	return nil
+}
+
 func (r *ProductRepository) List(ctx context.Context, q domainproduct.ListQuery) ([]*domainproduct.Product, int, error) {
 	var (
 		pos   []ProductPO

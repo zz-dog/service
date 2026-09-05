@@ -35,10 +35,6 @@ type createOrderRequest struct {
 	ConsigneePhone   string             `json:"consigneePhone" binding:"required"`
 	ConsigneeAddress string             `json:"consigneeAddress" binding:"required"`
 }
-type listOrdersRequest struct {
-	Page     int `form:"page" binding:"omitempty,min=1"`
-	PageSize int `form:"pageSize" binding:"omitempty,min=1,max=100"`
-}
 
 // Create 创建订单
 func (h *OrderHandler) Create(c *gin.Context) {
@@ -60,6 +56,8 @@ func (h *OrderHandler) Create(c *gin.Context) {
 			Quantity:  it.Quantity,
 		})
 	}
+
+	// 调用应用层服务创建订单
 	result, err := h.orderSvc.Create(c.Request.Context(), orderapp.CreateOrderInput{
 		UserID:           userID,
 		Items:            items,
@@ -74,27 +72,53 @@ func (h *OrderHandler) Create(c *gin.Context) {
 	response.SuccessMsg(c, "createOrder", result)
 }
 
-// GetByID 查询订单详情
-func (h *OrderHandler) GetByID(c *gin.Context) {
-	userID, ok := getCurrentUserID(c)
-	if !ok {
-		response.Unauthorized(c, http.StatusUnauthorized, "用户未登录")
+// Cancel 取消订单
+type CancelOrderRequest struct {
+	OrderID uint `json:"orderId" binding:"required"`
+	UserID  uint `json:"userId" binding:"required"`
+}
+
+func (h *OrderHandler) Cancel(c *gin.Context) {
+	var req CancelOrderRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
 		return
 	}
-	orderID, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		response.BadRequest(c, http.StatusBadRequest, "订单ID格式错误")
-		return
-	}
-	result, err := h.orderSvc.GetByID(c.Request.Context(), orderapp.GetOrderInput{
-		OrderID: uint(orderID),
-		UserID:  userID,
+	err := h.orderSvc.CancelOrder(c.Request.Context(), orderapp.CancelOrderInput{
+		OrderID: req.OrderID,
+		UserID:  req.UserID,
 	})
 	if err != nil {
 		h.writeError(c, err)
 		return
 	}
-	response.SuccessMsg(c, "getOrder", result)
+	response.SuccessMsg(c, "cancelOrder", "订单取消成功")
+}
+
+type OrderListRequest struct {
+	Page     int  `json:"page" binding:"omitempty,min=1"`
+	PageSize int  `json:"pageSize" binding:"omitempty,min=1,max=100"`
+	Status   int  `json:"status" binding:"omitempty,oneof=0 1 2"` // 可选，若不传则查询所有状态的订单
+	UserID   uint `json:"userId" binding:"required"`
+}
+
+func (h *OrderHandler) List(c *gin.Context) {
+	var req OrderListRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		return
+	}
+	result, err := h.orderSvc.List(c.Request.Context(), orderapp.QueryOrdersInput{
+		UserID:   req.UserID,
+		Page:     req.Page,
+		PageSize: req.PageSize,
+		Status:   req.Status,
+	})
+	if err != nil {
+		h.writeError(c, err)
+		return
+	}
+	response.SuccessMsg(c, "queryOrders", result)
 }
 
 // getCurrentUserID 从 gin 上下文取 JWT 中间件写入的 userID。
@@ -115,6 +139,8 @@ func getCurrentUserID(c *gin.Context) (uint, bool) {
 	}
 	return uint(id), true
 }
+
+//
 
 // writeError 将领域/应用错误映射为对应的 HTTP 响应。
 func (h *OrderHandler) writeError(c *gin.Context, err error) {

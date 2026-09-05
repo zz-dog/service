@@ -1,6 +1,8 @@
 package orderapp
 
-import "time"
+import (
+	"time"
+)
 
 type OrderItemInput struct {
 	ProductID uint
@@ -39,6 +41,7 @@ type QueryOrdersInput struct {
 	UserID   uint
 	Page     int
 	PageSize int
+	Status   int // 可选，若不传则查询所有状态的订单
 }
 
 // OrderItemDTO 订单明细视图
@@ -72,8 +75,6 @@ type OrderDTO struct {
 
 // OrderListResult 订单分页结果
 type OrderListResult struct {
-	List     []OrderDTO `json:"list"`
-	Total    int64      `json:"total"`
-	Page     int        `json:"page"`
-	PageSize int        `json:"pageSize"`
+	List  []OrderDTO `json:"list"`
+	Total int        `json:"total"`
 }

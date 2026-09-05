@@ -15,6 +15,8 @@ type ProductRepository interface {
 	Save(ctx context.Context, p *Product) error
 	// DeductStock 原子扣减某 SKU 库存，并发安全；库存不足返回 ErrInsufficientStock
 	DeductStock(ctx context.Context, productID uint, skuCode string, qty int) error
+	// RestockStock 恢复某 SKU 库存
+	RestockStock(ctx context.Context, productID uint, skuCode string, qty int) error
 	// CountByCategory 统计某分类下的商品数量（删除分类前校验）
 	CountByCategory(ctx context.Context, categoryID uint) (int64, error)
 	List(ctx context.Context, q ListQuery) ([]*Product, int, error)
