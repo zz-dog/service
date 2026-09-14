@@ -11,13 +11,39 @@ import (
 var Conf Config
 
 type Config struct {
-	Service ServerCfg `yaml:"service"`
-	MySQL   MySQLCfg  `yaml:"mysql"`
-	Jwt     JwtCfg    `yaml:"jwt"`
+	Service ServerCfg  `yaml:"service"`
+	Gateway GatewayCfg `yaml:"gateway"`
+	Nacos   NacosCfg   `yaml:"nacos"`
+	MySQL   MySQLCfg   `yaml:"mysql"`
+	Jwt     JwtCfg     `yaml:"jwt"`
 }
 
 type ServerCfg struct {
-	Port int `yaml:"port"`
+	Name string `yaml:"name"`
+	Port int    `yaml:"port"`
+}
+
+// GatewayCfg 网关配置：路由表（路径前缀 → 服务名）+ Nacos 未启用时的兜底地址
+type GatewayCfg struct {
+	Port   int            `yaml:"port" mapstructure:"port"`
+	Routes []GatewayRoute `yaml:"routes" mapstructure:"routes"`
+}
+
+type GatewayRoute struct {
+	Prefix       string `yaml:"prefix" mapstructure:"prefix"`                // 匹配的路径前缀，长前缀优先
+	ServiceName  string `yaml:"service" mapstructure:"service"`              // 目标服务在 Nacos 中注册的名字
+	FallbackAddr string `yaml:"fallback_addr" mapstructure:"fallback_addr"`  // 兜底地址(ip:port)，Nacos 未启用或无实例时使用
+}
+
+type NacosCfg struct {
+	Enabled    bool   `yaml:"enabled" mapstructure:"enabled"`
+	ServerAddr string `yaml:"server_addr" mapstructure:"server_addr"`
+	ServerPort uint64 `yaml:"server_port" mapstructure:"server_port"`
+	Namespace  string `yaml:"namespace_id" mapstructure:"namespace_id"`
+	Username   string `yaml:"username" mapstructure:"username"`
+	Password   string `yaml:"password" mapstructure:"password"`
+	GroupName  string `yaml:"group_name" mapstructure:"group_name"`
+	ServiceIP  string `yaml:"service_ip" mapstructure:"service_ip"`
 }
 
 type MySQLCfg struct {
@@ -85,6 +111,22 @@ func InitViper() {
 	}
 	if err := v.BindEnv("jwt.expire_hour", "JWT_EXPIRE_HOUR"); err != nil {
 		panic("绑定 JWT_EXPIRE_HOUR 失败：" + err.Error())
+	}
+	for key, env := range map[string]string{
+		"service.name":       "SERVICE_NAME",
+		"service.port":       "SERVICE_PORT",
+		"nacos.enabled":      "NACOS_ENABLED",
+		"nacos.server_addr":  "NACOS_SERVER_ADDR",
+		"nacos.server_port":  "NACOS_SERVER_PORT",
+		"nacos.namespace_id": "NACOS_NAMESPACE_ID",
+		"nacos.username":     "NACOS_USERNAME",
+		"nacos.password":     "NACOS_PASSWORD",
+		"nacos.group_name":   "NACOS_GROUP_NAME",
+		"nacos.service_ip":   "SERVICE_IP",
+	} {
+		if err := v.BindEnv(key, env); err != nil {
+			panic("绑定环境变量失败：" + env + ": " + err.Error())
+		}
 	}
 	// 读取文件
 	if err := v.ReadInConfig(); err != nil {

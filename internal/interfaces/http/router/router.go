@@ -31,7 +31,6 @@ func InitRouter() *gin.Engine {
 	RegisterSpecRoutes(apiGroup)
 	registerProductRouter(apiGroup)
 	registerOrderRoutes(apiGroup)
-	registerUserRoutes(apiGroup)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	return r
 }

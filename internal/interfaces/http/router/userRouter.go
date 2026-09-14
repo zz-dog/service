@@ -33,3 +33,8 @@ func registerUserRoutes(r *gin.RouterGroup) {
 	// 用户资料：需要登录（JWT 中间件校验 token 并写入 userId）
 	apiGroup.PUT("/user/profile", middleware.JWTAuth(), h.UpdateUser) // 更新当前用户资料
 }
+
+// RegisterIdentityRoutes 注册 identity 服务的用户接口，不包含其他业务域路由。
+func RegisterIdentityRoutes(apiGroup *gin.RouterGroup) {
+	registerUserRoutes(apiGroup)
+}
