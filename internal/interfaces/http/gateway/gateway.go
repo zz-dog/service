@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"sort"
 	"strings"
+	"sync"
 )
 
 // Resolver 按服务名解析出一个可用实例地址（ip:port）
@@ -24,18 +25,14 @@ type Route struct {
 
 // Gateway 反向代理网关：按最长前缀匹配路由，转发前按服务名解析实例地址
 type Gateway struct {
-	routes   []Route // 按前缀长度降序，长前缀优先
+	mu       sync.RWMutex
+	routes   []Route // 按前缀长度降序，长前缀优先；可通过 UpdateRoutes 热更新
 	resolver Resolver
 	proxy    *httputil.ReverseProxy
 }
 
 func New(routes []Route, resolver Resolver) *Gateway {
-	sorted := append([]Route(nil), routes...)
-	sort.Slice(sorted, func(i, j int) bool {
-		return len(sorted[i].Prefix) > len(sorted[j].Prefix)
-	})
-
-	g := &Gateway{routes: sorted, resolver: resolver}
+	g := &Gateway{resolver: resolver}
 	g.proxy = &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			// 目标地址由 ServeHTTP 解析后经 context 传入
@@ -53,7 +50,23 @@ func New(routes []Route, resolver Resolver) *Gateway {
 			writeError(w, http.StatusBadGateway, "上游服务不可用")
 		},
 	}
+	g.UpdateRoutes(routes)
 	return g
+}
+
+// UpdateRoutes 热更新路由表（按前缀长度降序，长前缀优先）；
+// 空路由将被忽略，避免误下发的空配置清空全部转发规则
+func (g *Gateway) UpdateRoutes(routes []Route) {
+	if len(routes) == 0 {
+		return
+	}
+	sorted := append([]Route(nil), routes...)
+	sort.Slice(sorted, func(i, j int) bool {
+		return len(sorted[i].Prefix) > len(sorted[j].Prefix)
+	})
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.routes = sorted
 }
 
 type targetKey struct{}
@@ -72,7 +85,7 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	addr, err := g.resolver.Resolve(serviceName)
 	if err != nil {
-		// 服务在 Nacos 上无健康实例且无兜底地址
+		// 服务在 Nacos 上无健康实例
 		writeError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
@@ -81,6 +94,8 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // match 最长前缀匹配：/api/user/xxx 命中 /api/user 而非 /api
 func (g *Gateway) match(path string) (string, bool) {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
 	for _, route := range g.routes {
 		if route.Prefix == "/" || strings.HasPrefix(path, route.Prefix) {
 			return route.ServiceName, true

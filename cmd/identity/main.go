@@ -16,6 +16,7 @@ import (
 
 	"github.com/wsc-zz/service/global"
 	"github.com/wsc-zz/service/internal/infrastructure/discovery/nacos"
+	nacosconfig "github.com/wsc-zz/service/internal/infrastructure/configcenter/nacos"
 	userpo "github.com/wsc-zz/service/internal/infrastructure/persistence/user"
 	identityrouter "github.com/wsc-zz/service/internal/interfaces/http/router"
 )
@@ -23,6 +24,18 @@ import (
 func main() {
 	global.InitViper()
 	global.InitZap()
+
+	// 配置中心：拉取远程配置覆盖本地；拉取失败时 fail-fast
+	nacosCfg, err := nacosconfig.NewConfigClient()
+	if err != nil {
+		global.Logger.Error("Nacos 配置中心客户端创建失败", zap.Error(err))
+		panic(err)
+	}
+	if err := nacosCfg.Load(); err != nil {
+		global.Logger.Error("加载 Nacos 远程配置失败", zap.Error(err))
+		panic(err)
+	}
+
 	global.InitMysql()
 
 	// identity 服务默认端口 8081（config.yaml 的 service.port 属于 main 服务），可用 SERVICE_PORT 覆盖

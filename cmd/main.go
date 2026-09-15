@@ -15,6 +15,7 @@ import (
 
 	"github.com/wsc-zz/service/global"
 	"github.com/wsc-zz/service/internal/infrastructure/discovery/nacos"
+	nacosconfig "github.com/wsc-zz/service/internal/infrastructure/configcenter/nacos"
 	orderpo "github.com/wsc-zz/service/internal/infrastructure/persistence/order"
 
 	userpo "github.com/wsc-zz/service/internal/infrastructure/persistence/user"
@@ -36,9 +37,22 @@ import (
 // @name                         Authorization
 
 func main() {
-	// 1. 初始化基础设施：配置、日志、数据库
+	// 1. 初始化基础设施：配置、日志、远程配置、数据库
 	global.InitViper()
 	global.InitZap()
+
+	// 配置中心：拉取远程配置覆盖本地（远端键覆盖本地同名键，环境变量仍最高优先）；
+	// 启用了 Nacos 但拉取失败时 fail-fast，避免拿着本地旧配置悄悄启动
+	nacosCfg, err := nacosconfig.NewConfigClient()
+	if err != nil {
+		global.Logger.Error("Nacos 配置中心客户端创建失败", zap.Error(err))
+		panic(err)
+	}
+	if err := nacosCfg.Load(); err != nil {
+		global.Logger.Error("加载 Nacos 远程配置失败", zap.Error(err))
+		panic(err)
+	}
+
 	global.InitMysql()
 
 	// 2. 自动迁移持久化对象，确保表已创建/更新

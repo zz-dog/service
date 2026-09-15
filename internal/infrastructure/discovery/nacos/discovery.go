@@ -18,7 +18,7 @@ type Discovery struct {
 	client naming_client.INamingClient
 }
 
-// NewDiscovery 创建服务发现客户端；Nacos 未启用时返回 (nil, nil)，此时 Resolve 走兜底地址
+// NewDiscovery 创建服务发现客户端；Nacos 未启用时返回 (nil, nil)，由调用方决定是否 fail-fast
 func NewDiscovery() (*Discovery, error) {
 	if !global.Conf.Nacos.Enabled {
 		return nil, nil
@@ -42,33 +42,29 @@ func (d *Discovery) Select(serviceName string) ([]model.Instance, error) {
 	})
 }
 
-// Resolver 带轮询负载均衡的服务地址解析器：
-// Nacos 可用时按服务名轮询健康实例，否则退回配置的兜底地址。
+// Resolver 带轮询负载均衡的服务地址解析器：按服务名轮询 Nacos 上的健康实例。
 type Resolver struct {
 	discovery *Discovery
-	fallback  map[string]string // 服务名 → 兜底地址(ip:port)，Nacos 未启用或无可用实例时使用
 
 	mu       sync.Mutex
 	counters map[string]uint64 // 服务名 → 轮询计数
 }
 
-func NewResolver(discovery *Discovery, fallback map[string]string) *Resolver {
-	return &Resolver{discovery: discovery, fallback: fallback, counters: make(map[string]uint64)}
+func NewResolver(discovery *Discovery) *Resolver {
+	return &Resolver{discovery: discovery, counters: make(map[string]uint64)}
 }
 
-// Resolve 解析出一个可用实例地址，无可用实例时返回错误
+// Resolve 在健康实例间轮询，解析出一个可用实例地址，无可用实例时返回错误
 func (r *Resolver) Resolve(serviceName string) (string, error) {
-	if instances, err := r.discovery.Select(serviceName); err != nil {
-		// 发现失败不阻断请求，退回兜底地址
-		global.Logger.Warn("Nacos 服务发现失败，尝试兜底地址", zap.String("service", serviceName), zap.Error(err))
-	} else if len(instances) > 0 {
-		return instanceAddr(instances[r.next(serviceName, len(instances))]), nil
+	instances, err := r.discovery.Select(serviceName)
+	if err != nil {
+		global.Logger.Error("Nacos 服务发现失败", zap.String("service", serviceName), zap.Error(err))
+		return "", fmt.Errorf("查询服务 %s 实例失败: %w", serviceName, err)
 	}
-
-	if addr, ok := r.fallback[serviceName]; ok {
-		return addr, nil
+	if len(instances) == 0 {
+		return "", fmt.Errorf("服务 %s 无可用实例", serviceName)
 	}
-	return "", fmt.Errorf("服务 %s 无可用实例", serviceName)
+	return instanceAddr(instances[r.next(serviceName, len(instances))]), nil
 }
 
 // next 轮询计数器：同一服务在多个实例间轮流分发

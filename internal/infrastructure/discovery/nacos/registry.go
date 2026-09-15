@@ -73,14 +73,14 @@ func Register() (*Registry, error) {
 	}
 
 	registered, err := client.RegisterInstance(vo.RegisterInstanceParam{
-		Ip:          ip,
-		Port:        uint64(port),
-		Weight:      1,
-		Enable:      true,
-		Healthy:     true,
-		ServiceName: serviceName,
-		GroupName:   groupName,
-		Ephemeral:   true,
+		Ip:          ip,           // 默认使用本机 IP
+		Port:        uint64(port), // 默认使用本服务端口
+		Weight:      1,            // 默认权重
+		Enable:      true,         // 默认启用
+		Healthy:     true,         // 默认健康
+		ServiceName: serviceName,  // 默认服务名
+		GroupName:   groupName,    //	默认分组
+		Ephemeral:   true,         // 默认临时实例
 	})
 	if err != nil {
 		return nil, fmt.Errorf("注册 Nacos 服务失败: %w", err)

@@ -4,11 +4,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/viper"
 )
 
 var Conf Config
+
+// confViper 全局配置读写实例：InitViper 装载本地文件，
+// MergeRemoteConfig 在此之上合并 Nacos 配置中心下发的远端配置
+var confViper *viper.Viper
 
 type Config struct {
 	Service ServerCfg  `yaml:"service"`
@@ -23,16 +28,15 @@ type ServerCfg struct {
 	Port int    `yaml:"port"`
 }
 
-// GatewayCfg 网关配置：路由表（路径前缀 → 服务名）+ Nacos 未启用时的兜底地址
+// GatewayCfg 网关配置：路由表（路径前缀 → 服务名），目标地址由 Nacos 服务发现解析
 type GatewayCfg struct {
 	Port   int            `yaml:"port" mapstructure:"port"`
 	Routes []GatewayRoute `yaml:"routes" mapstructure:"routes"`
 }
 
 type GatewayRoute struct {
-	Prefix       string `yaml:"prefix" mapstructure:"prefix"`                // 匹配的路径前缀，长前缀优先
-	ServiceName  string `yaml:"service" mapstructure:"service"`              // 目标服务在 Nacos 中注册的名字
-	FallbackAddr string `yaml:"fallback_addr" mapstructure:"fallback_addr"`  // 兜底地址(ip:port)，Nacos 未启用或无实例时使用
+	Prefix      string `yaml:"prefix" mapstructure:"prefix"`   // 匹配的路径前缀，长前缀优先
+	ServiceName string `yaml:"service" mapstructure:"service"` // 目标服务在 Nacos 中注册的名字
 }
 
 type NacosCfg struct {
@@ -43,7 +47,9 @@ type NacosCfg struct {
 	Username   string `yaml:"username" mapstructure:"username"`
 	Password   string `yaml:"password" mapstructure:"password"`
 	GroupName  string `yaml:"group_name" mapstructure:"group_name"`
-	ServiceIP  string `yaml:"service_ip" mapstructure:"service_ip"`
+	// 配置中心 Data ID，默认 service-config.yaml；mysql/gateway/jwt 等配置可放此处，远端覆盖本地同名键
+	ConfigDataId string `yaml:"config_data_id" mapstructure:"config_data_id"`
+	ServiceIP    string `yaml:"service_ip" mapstructure:"service_ip"`
 }
 
 type MySQLCfg struct {
@@ -99,6 +105,7 @@ func findConfigFile() string {
 // InitViper 加载yaml配置
 func InitViper() {
 	v := viper.New()
+	confViper = v
 	// 指定配置文件路径
 	cfgPath := findConfigFile()
 	if cfgPath == "" {
@@ -121,8 +128,9 @@ func InitViper() {
 		"nacos.namespace_id": "NACOS_NAMESPACE_ID",
 		"nacos.username":     "NACOS_USERNAME",
 		"nacos.password":     "NACOS_PASSWORD",
-		"nacos.group_name":   "NACOS_GROUP_NAME",
-		"nacos.service_ip":   "SERVICE_IP",
+		"nacos.group_name":     "NACOS_GROUP_NAME",
+		"nacos.config_data_id": "NACOS_CONFIG_DATA_ID",
+		"nacos.service_ip":     "SERVICE_IP",
 	} {
 		if err := v.BindEnv(key, env); err != nil {
 			panic("绑定环境变量失败：" + env + ": " + err.Error())
@@ -136,4 +144,17 @@ func InitViper() {
 	if err := v.Unmarshal(&Conf); err != nil {
 		panic("解析配置失败：" + err.Error())
 	}
+}
+
+// MergeRemoteConfig 把配置中心下发的 YAML 合并进当前配置：
+// 远端键覆盖本地同名键（切片整体替换），环境变量绑定仍然最高优先。
+// 供启动时一次性合并与网关路由热更新复用。
+func MergeRemoteConfig(content string) error {
+	if err := confViper.MergeConfig(strings.NewReader(content)); err != nil {
+		return fmt.Errorf("合并远程配置失败: %w", err)
+	}
+	if err := confViper.Unmarshal(&Conf); err != nil {
+		return fmt.Errorf("解析远程配置失败: %w", err)
+	}
+	return nil
 }
