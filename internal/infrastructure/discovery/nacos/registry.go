@@ -111,6 +111,10 @@ func localIPv4() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	// 优先私网地址（RFC1918），其次任意非链路本地地址。
+	// 169.254.x.x 是 Windows 断开网卡/虚拟网卡（如 Wi-Fi Direct）的自动配置地址，
+	// 注册出去后调用方会连接黑洞直至 TCP 超时，必须跳过
+	var fallback string
 	for _, networkInterface := range interfaces {
 		addresses, err := networkInterface.Addrs()
 		if err != nil {
@@ -118,10 +122,24 @@ func localIPv4() (string, error) {
 		}
 		for _, address := range addresses {
 			ipNet, ok := address.(*net.IPNet)
-			if ok && ipNet.IP.To4() != nil && !ipNet.IP.IsLoopback() {
-				return ipNet.IP.To4().String(), nil
+			if !ok {
+				continue
+			}
+			ip := ipNet.IP.To4()
+			if ip == nil || ip.IsLoopback() || ip.IsLinkLocalUnicast() {
+				continue
+			}
+			text := ip.String()
+			if ip.IsPrivate() {
+				return text, nil
+			}
+			if fallback == "" {
+				fallback = text
 			}
 		}
+	}
+	if fallback != "" {
+		return fallback, nil
 	}
 	return "", fmt.Errorf("未找到可注册到 Nacos 的本机 IPv4 地址")
 }

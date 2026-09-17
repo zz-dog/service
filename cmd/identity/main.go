@@ -15,8 +15,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/wsc-zz/service/global"
-	"github.com/wsc-zz/service/internal/infrastructure/discovery/nacos"
 	nacosconfig "github.com/wsc-zz/service/internal/infrastructure/configcenter/nacos"
+	"github.com/wsc-zz/service/internal/infrastructure/discovery/nacos"
 	userpo "github.com/wsc-zz/service/internal/infrastructure/persistence/user"
 	identityrouter "github.com/wsc-zz/service/internal/interfaces/http/router"
 )
@@ -54,6 +54,7 @@ func main() {
 	}
 
 	r := gin.Default()
+	r.Use(identityrouter.CORSMiddleware())
 	identityrouter.RegisterIdentityRoutes(r.Group("/api"))
 
 	// 先监听端口，服务可达后再注册 Nacos，避免注册后请求打到尚未监听的实例
