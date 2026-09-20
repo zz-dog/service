@@ -7,6 +7,8 @@ import (
 	categorypo "github.com/wsc-zz/service/internal/infrastructure/persistence/category"
 	specpo "github.com/wsc-zz/service/internal/infrastructure/persistence/spec"
 	"github.com/wsc-zz/service/internal/interfaces/http/handler"
+
+	categoryCache "github.com/wsc-zz/service/internal/infrastructure/cache/redis"
 )
 
 func registerCategoryRoutes(router *gin.RouterGroup) {
@@ -15,7 +17,8 @@ func registerCategoryRoutes(router *gin.RouterGroup) {
 
 	//spec
 	specRepo := specpo.NewSpecRepository(global.DB)
-	categorySvc := categoryapp.NewService(categoryRepo, specRepo, categorySpecRepo)
+	categoryCache := categoryCache.NewCategoryCache(global.RedisClient)
+	categorySvc := categoryapp.NewService(categoryRepo, specRepo, categorySpecRepo, categoryCache)
 	h := handler.NewCategoryHandler(categorySvc)
 	categoryApi := router.Group("/category")
 	{

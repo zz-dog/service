@@ -21,6 +21,16 @@ type Config struct {
 	Nacos   NacosCfg   `yaml:"nacos"`
 	MySQL   MySQLCfg   `yaml:"mysql"`
 	Jwt     JwtCfg     `yaml:"jwt"`
+	Redis   RedisCfg   `yaml:"redis"`
+}
+
+type RedisCfg struct {
+	Host     string `yaml:"host" mapstructure:"host"`
+	Port     int    `yaml:"port" mapstructure:"port"`
+	Password string `yaml:"password" mapstructure:"password"`
+	DB       int    `yaml:"db" mapstructure:"db"`
+	PoolSize int    `yaml:"pool_size" mapstructure:"pool_size"` // 连接池最大连接数
+	MinIdle  int    `yaml:"min_idle" mapstructure:"min_idle"`   // 连接池中空闲连接数
 }
 
 type ServerCfg struct {
@@ -104,10 +114,10 @@ func findConfigFile() string {
 
 // InitViper 加载yaml配置
 func InitViper() {
-	v := viper.New()
-	confViper = v
+	v := viper.New() // 创建一个 viper 实例
+	confViper = v    // 绑定到全局变量 confViper
 	// 指定配置文件路径
-	cfgPath := findConfigFile()
+	cfgPath := findConfigFile() // 查找 config/config.yaml
 	if cfgPath == "" {
 		panic("读取配置失败：未找到 config/config.yaml（已搜索当前目录及可执行文件目录的各级上级目录）")
 	}
@@ -119,15 +129,20 @@ func InitViper() {
 	if err := v.BindEnv("jwt.expire_hour", "JWT_EXPIRE_HOUR"); err != nil {
 		panic("绑定 JWT_EXPIRE_HOUR 失败：" + err.Error())
 	}
+
+	// 绑定 Redis 密码环境变量，优先级低于环境变量
+	if err := v.BindEnv("redis.password", "REDIS_PASSWORD"); err != nil {
+		panic("绑定 REDIS_PASSWORD 失败：" + err.Error())
+	}
 	for key, env := range map[string]string{
-		"service.name":       "SERVICE_NAME",
-		"service.port":       "SERVICE_PORT",
-		"nacos.enabled":      "NACOS_ENABLED",
-		"nacos.server_addr":  "NACOS_SERVER_ADDR",
-		"nacos.server_port":  "NACOS_SERVER_PORT",
-		"nacos.namespace_id": "NACOS_NAMESPACE_ID",
-		"nacos.username":     "NACOS_USERNAME",
-		"nacos.password":     "NACOS_PASSWORD",
+		"service.name":         "SERVICE_NAME",
+		"service.port":         "SERVICE_PORT",
+		"nacos.enabled":        "NACOS_ENABLED",
+		"nacos.server_addr":    "NACOS_SERVER_ADDR",
+		"nacos.server_port":    "NACOS_SERVER_PORT",
+		"nacos.namespace_id":   "NACOS_NAMESPACE_ID",
+		"nacos.username":       "NACOS_USERNAME",
+		"nacos.password":       "NACOS_PASSWORD",
 		"nacos.group_name":     "NACOS_GROUP_NAME",
 		"nacos.config_data_id": "NACOS_CONFIG_DATA_ID",
 		"nacos.service_ip":     "SERVICE_IP",

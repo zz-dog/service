@@ -12,10 +12,11 @@ type Service struct {
 	repo        domain.CategoryRepository
 	specRepo    domainSpec.SpecRepository // 绑定时校验规格存在、列表时取规格详情
 	bindingRepo domain.CategorySpecRepository
+	cache       CategoryCache // 分类列表缓存
 }
 
-func NewService(repo domain.CategoryRepository, specRepo domainSpec.SpecRepository, bindingRepo domain.CategorySpecRepository) *Service {
-	return &Service{repo: repo, specRepo: specRepo, bindingRepo: bindingRepo}
+func NewService(repo domain.CategoryRepository, specRepo domainSpec.SpecRepository, bindingRepo domain.CategorySpecRepository, cache CategoryCache) *Service {
+	return &Service{repo: repo, specRepo: specRepo, bindingRepo: bindingRepo, cache: cache}
 }
 
 // 创建分类
@@ -42,6 +43,7 @@ func (s *Service) Create(ctx context.Context, in CreateCategoryInput) (*Category
 	}
 
 	dto := toCategoryDTO(c)
+	_ = s.cache.Invalidate(ctx)
 	return &dto, nil
 }
 
@@ -70,6 +72,7 @@ func (s *Service) Update(ctx context.Context, in UpdateCategoryInput) (*Category
 		return nil, err
 	}
 	dto := toCategoryDTO(c)
+	_ = s.cache.Invalidate(ctx)
 	return &dto, nil
 }
 
@@ -84,7 +87,11 @@ func (s *Service) Delete(ctx context.Context, id uint) error {
 	if err := s.bindingRepo.DeleteByCategoryID(ctx, c.CategoryID); err != nil {
 		return err
 	}
-	return s.repo.Delete(ctx, c.CategoryID)
+	if err := s.repo.Delete(ctx, c.CategoryID); err != nil {
+		return err
+	}
+	_ = s.cache.Invalidate(ctx)
+	return nil
 }
 
 // List 获取分类列表
@@ -93,12 +100,19 @@ func (s *Service) List(ctx context.Context) ([]*CategoryDto, error) {
 }
 
 func (s *Service) FindAll(ctx context.Context) ([]*CategoryDto, error) {
+	if cached, ok, _ := s.cache.GetCategories(ctx); ok {
+		return cached, nil
+	}
 
 	cs, err := s.repo.FindAll(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return toCategoryDTOs(cs), nil
+	dtos := toCategoryDTOs(cs)
+
+	// 回填缓存:失败不影响本次响应,由 TTL 兜底
+	_ = s.cache.SetCategories(ctx, dtos)
+	return dtos, nil
 }
 
 // BindSpec 绑定规格到分类：校验双方存在且未重复绑定后保存关系

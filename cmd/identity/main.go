@@ -36,7 +36,8 @@ func main() {
 		panic(err)
 	}
 
-	global.InitMysql()
+	global.InitMysql() //连接数据库
+	global.InitRedis() //连接 Redis
 
 	// identity 服务默认端口 8081（config.yaml 的 service.port 属于 main 服务），可用 SERVICE_PORT 覆盖
 	port := 8081

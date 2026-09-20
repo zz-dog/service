@@ -14,8 +14,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/wsc-zz/service/global"
-	"github.com/wsc-zz/service/internal/infrastructure/discovery/nacos"
 	nacosconfig "github.com/wsc-zz/service/internal/infrastructure/configcenter/nacos"
+	"github.com/wsc-zz/service/internal/infrastructure/discovery/nacos"
 	orderpo "github.com/wsc-zz/service/internal/infrastructure/persistence/order"
 
 	userpo "github.com/wsc-zz/service/internal/infrastructure/persistence/user"
@@ -53,7 +53,8 @@ func main() {
 		panic(err)
 	}
 
-	global.InitMysql()
+	global.InitMysql() // 连接数据库
+	global.InitRedis() // 连接 Redis
 
 	// 2. 自动迁移持久化对象，确保表已创建/更新
 	if err := global.DB.AutoMigrate(
