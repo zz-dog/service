@@ -181,3 +181,15 @@ func (h *Handler) writeError(c *gin.Context, err error) {
 		response.ServerError(c, http.StatusInternalServerError, err.Error())
 	}
 }
+
+func (h *Handler) Logout(c *gin.Context) {
+	jti, _ := c.Get("jti")
+	exp, _ := c.Get("tokenExp")
+	jtiStr, _ := jti.(string)
+	expAt, _ := exp.(time.Time)
+	if err := h.userSvc.Logout(c.Request.Context(), jtiStr, expAt); err != nil {
+		response.ServerError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	response.SuccessMsg(c, "logout", nil)
+}

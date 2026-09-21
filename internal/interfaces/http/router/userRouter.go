@@ -17,8 +17,8 @@ func registerUserRoutes(r *gin.RouterGroup) {
 	userRepo := userpo.NewUserRepository(global.DB)
 	hasher := security.NewBcryptHasher()
 	tokenIssuer := auth.NewJWTTokenIssuer()
-
-	userSvc := userapp.NewService(userRepo, hasher, tokenIssuer)
+	tokenBlacklist := NewTokenBlacklist()
+	userSvc := userapp.NewService(userRepo, hasher, tokenIssuer, tokenBlacklist)
 	h := handler.NewHandler(userSvc)
 	apiGroup := r.Group("/user")
 	// 健康检查：供部署流水线 / 负载均衡探活使用，不校验 JWT
@@ -28,10 +28,10 @@ func registerUserRoutes(r *gin.RouterGroup) {
 
 	apiGroup.POST("/register", h.Register)
 	apiGroup.POST("/login", h.Login)
-	apiGroup.GET("/list", middleware.JWTAuth(), h.GetUserList)
-	apiGroup.PUT("/status", middleware.JWTAuth(), h.ChangeStatus)
+	apiGroup.GET("/list", middleware.JWTAuth(tokenBlacklist), h.GetUserList)
+	apiGroup.PUT("/status", middleware.JWTAuth(tokenBlacklist), h.ChangeStatus)
 	// 用户资料：需要登录（JWT 中间件校验 token 并写入 userId）
-	apiGroup.PUT("/user/profile", middleware.JWTAuth(), h.UpdateUser) // 更新当前用户资料
+	apiGroup.PUT("/user/profile", middleware.JWTAuth(tokenBlacklist), h.UpdateUser) // 更新当前用户资料
 }
 
 // RegisterIdentityRoutes 注册 identity 服务的用户接口，不包含其他业务域路由。

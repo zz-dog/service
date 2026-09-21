@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 
 	"github.com/wsc-zz/service/global"
 	userapp "github.com/wsc-zz/service/internal/application/user"
@@ -43,8 +44,9 @@ func (t *JWTTokenIssuer) Issue(userID uint, username string) (string, error) {
 		UserID:   strconv.Itoa(int(userID)),
 		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(now.Add(expire)),
-			IssuedAt:  jwt.NewNumericDate(now),
+			ID:        uuid.NewString(),
+			ExpiresAt: jwt.NewNumericDate(now.Add(expire)), // 设置过期时间
+			IssuedAt:  jwt.NewNumericDate(now),             // 签发时间
 		},
 	}
 

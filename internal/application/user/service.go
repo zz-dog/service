@@ -22,11 +22,12 @@ type Service struct {
 	repo        user.UserRepository
 	hasher      user.PasswordHasher
 	tokenIssuer TokenIssuer
+	blacklist   TokenBlacklist
 }
 
 // NewService 构造应用服务，注入仓储、密码哈希器、令牌签发器。
-func NewService(repo user.UserRepository, hasher user.PasswordHasher, tokenIssuer TokenIssuer) *Service {
-	return &Service{repo: repo, hasher: hasher, tokenIssuer: tokenIssuer}
+func NewService(repo user.UserRepository, hasher user.PasswordHasher, tokenIssuer TokenIssuer, blacklist TokenBlacklist) *Service {
+	return &Service{repo: repo, hasher: hasher, tokenIssuer: tokenIssuer, blacklist: blacklist}
 }
 
 // Register 注册新用户，成功返回创建出的用户视图（不含密码）。
@@ -143,6 +144,12 @@ func (s *Service) ChangeStatus(ctx context.Context, userID uint, status user.Sta
 	if err := s.repo.Save(ctx, u); err != nil {
 	}
 	return nil
+}
+func (s *Service) Logout(ctx context.Context, jti string, expiresAt time.Time) error {
+	if jti == "" || !expiresAt.After(time.Now()) {
+		return nil
+	}
+	return s.blacklist.Revoke(ctx, jti, time.Until(expiresAt))
 }
 
 // toUserDTO 将领域实体转为对外输出 DTO，避免泄漏领域实体结构与密码字段。
