@@ -12,6 +12,10 @@ import (
 	transaction "github.com/wsc-zz/service/internal/infrastructure/persistence/transaction"
 	"github.com/wsc-zz/service/internal/interfaces/http/handler"
 	"go.uber.org/zap"
+
+	middleware "github.com/wsc-zz/service/internal/interfaces/http/middleware"
+
+	redisCache "github.com/wsc-zz/service/internal/infrastructure/cache/redis"
 )
 
 func registerOrderRoutes(api *gin.RouterGroup) {
@@ -30,10 +34,12 @@ func registerOrderRoutes(api *gin.RouterGroup) {
 	}()
 
 	// 注册订单相关路由
+	blacklist := NewTokenBlacklist()
+	limiter := redisCache.NewDedupStore(global.RedisClient)
 	h := handler.NewOrderHandler(orderSvc)
-	orderApi := api.Group("/orders")
+	orderApi := api.Group("/orders", middleware.JWTAuth(blacklist))
 	{
-		orderApi.POST("create", h.Create)
+		orderApi.POST("create", middleware.OrderCreateGuard(limiter, 3*time.Second), h.Create)
 		orderApi.POST("cancel", h.Cancel)
 		orderApi.POST("list", h.List)
 	}
