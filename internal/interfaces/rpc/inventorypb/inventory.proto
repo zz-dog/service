@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package inventory.v1;
+
+option go_package = "github.com/wsc-zz/service/internal/interfaces/rpc/inventorypb;inventorypb";
+
+// InventoryService 库存域对订单域开放的 RPC 契约。
+// 契约变更规则:order 和 catalog 必须同一次提交里同步改,靠编译期报错保证两边一致。
+service InventoryService {
+  // DeductBatch 批量扣减库存,任一明细失败则整体失败(catalog 本地事务保证全有或全无)。
+  // 幂等:同一 request_id 重复调用不重复扣减,返回首次的快照结果。
+  rpc DeductBatch(DeductBatchRequest) returns (DeductBatchResponse);
+  // RestockBatch 批量回补库存(下单补偿 / 取消订单 / 超时取消共用)。
+  // 幂等:同一 request_id 的回补只生效一次。
+  rpc RestockBatch(RestockBatchRequest) returns (RestockBatchResponse);
+}
+
+message DeductItem {
+  uint64 product_id = 1; // SKU 编码仅商品内唯一,必须配合商品 ID 定位(与领域层约定一致)
+  string sku_code = 2;
+  int32 quantity = 3;
+}
+
+message DeductBatchRequest {
+  string request_id = 1;          // 订单侧生成,幂等与配对的锚点
+  repeated DeductItem items = 2;
+}
+
+message DeductedItem {
+  uint64 product_id = 1;
+  string sku_code = 2;
+  string product_name = 3; // 名称快照,订单明细展示用
+  int64 unit_price = 4;    // 单价快照,单位:分(与领域层 SKU.Price 一致)
+  int32 quantity = 5;
+}
+
+message DeductBatchResponse {
+  repeated DeductedItem items = 1;
+}
+
+message RestockBatchRequest {
+  string request_id = 1; // 复用对应 DeductBatch 的 request_id,实现配对与幂等
+  repeated DeductItem items = 2;
+}
+
+message RestockBatchResponse {}
