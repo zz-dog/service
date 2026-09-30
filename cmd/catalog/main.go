@@ -18,8 +18,13 @@ import (
 	productpo "github.com/wsc-zz/service/internal/infrastructure/persistence/product"
 	specpo "github.com/wsc-zz/service/internal/infrastructure/persistence/spec"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	router "github.com/wsc-zz/service/internal/interfaces/http/router"
+	"github.com/wsc-zz/service/internal/interfaces/rpc/inventorypb"
+
+	"github.com/wsc-zz/service/internal/interfaces/rpc/inventory"
 )
 
 func main() {
@@ -73,19 +78,45 @@ func main() {
 	}
 	srv := &http.Server{Handler: r} // 服务
 
-	registry, err := nacos.Register() // 注册服务
-
-	if err != nil {
-		global.Logger.Error("Nacos 注册失败", zap.Error(err))
-	}
-
 	go func() {
-
 		if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			global.Logger.Error("HTTP 服务异常退出", zap.Error(err))
 			panic(err)
 		}
 	}()
+
+	//RPC 服务
+	rpcPort := 9082
+
+	//如果配置了环境变量 SERVICE_RPC_PORT，则使用其值作为端口
+	if v := os.Getenv("SERVICE_RPC_PORT"); v != "" {
+		if parsed, err := strconv.Atoi(v); err == nil && parsed > 0 {
+			rpcPort = parsed
+		}
+	}
+	global.Conf.Service.RpcPort = rpcPort
+	global.Conf.Service.RpcName = "catalogRpc"
+	global.Conf.Service.RpcEnabled = true
+	grpcServer := grpc.NewServer()
+	inventorypb.RegisterInventoryServiceServer(grpcServer, inventory.NewServer(global.DB))
+	reflection.Register(grpcServer)
+	grpcListener, err := net.Listen("tcp", ":"+strconv.Itoa(rpcPort))
+
+	if err != nil {
+		global.Logger.Error("GRPC 端口监听失败", zap.Int("port", rpcPort), zap.Error(err))
+		panic("GRPC 端口监听失败: " + err.Error())
+	}
+	go func() {
+		if err := grpcServer.Serve(grpcListener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+			global.Logger.Error("GRPC 服务异常退出", zap.Error(err))
+			panic(err)
+		}
+	}()
+
+	registry, err := nacos.Register() // 注册服
+	if err != nil {
+		global.Logger.Error("Nacos 注册失败", zap.Error(err))
+	}
 
 	// 等待退出信号：先注销 Nacos（停止接入新流量），再优雅关闭 HTTP（处理完存量请求）
 	quit := make(chan os.Signal, 1)

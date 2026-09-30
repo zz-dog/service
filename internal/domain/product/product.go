@@ -97,8 +97,8 @@ func (p *Product) OffShelf() { p.Status = StatusOffShelf }
 // IsOnShelf 是否上架
 func (p *Product) IsOnShelf() bool { return p.Status == StatusOnShelf }
 
-// findSKU 按 code 找 SKU
-func (p *Product) findSKU(code string) (int, bool) {
+// FindSKU 按 code 找 SKU的索引
+func (p *Product) FindSKU(code string) (int, bool) {
 	for i, s := range p.SKUs {
 		if s.SKUCode == code {
 			return i, true
@@ -117,7 +117,7 @@ func (p *Product) DeductStock(skuCode string, qty int) error {
 	if qty <= 0 {
 		return ErrInvalidStock
 	}
-	idx, ok := p.findSKU(skuCode)
+	idx, ok := p.FindSKU(skuCode)
 	if !ok {
 		return ErrSKUNotFound
 	}
@@ -133,7 +133,7 @@ func (p *Product) Restock(skuCode string, qty int) error {
 	if qty <= 0 {
 		return ErrInvalidStock
 	}
-	idx, ok := p.findSKU(skuCode)
+	idx, ok := p.FindSKU(skuCode)
 	if !ok {
 		return ErrSKUNotFound
 	}

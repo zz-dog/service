@@ -17,6 +17,9 @@ type Registry struct {
 	ip          string
 	port        uint64
 	groupName   string
+	RpcEnabled  bool
+	RpcName     string
+	RpcPort     uint64
 }
 
 // newNamingClient 按配置创建 Nacos 命名客户端，服务注册与发现共用
@@ -43,11 +46,10 @@ func groupNameOrDefault() string {
 	return global.Conf.Nacos.GroupName
 }
 
-func Register() (*Registry, error) {
-	if !global.Conf.Nacos.Enabled {
-		return nil, nil
+func registerService(client naming_client.INamingClient, serviceName string, port int, isRpc bool) (*Registry, error) {
+	if serviceName == "" || port == 0 {
+		return nil, fmt.Errorf("服务名或端口不能为空")
 	}
-
 	ip := global.Conf.Nacos.ServiceIP
 	if ip == "" {
 		var err error
@@ -57,20 +59,6 @@ func Register() (*Registry, error) {
 		}
 	}
 	groupName := groupNameOrDefault()
-
-	client, err := newNamingClient()
-	if err != nil {
-		return nil, fmt.Errorf("创建 Nacos 客户端失败: %w", err)
-	}
-
-	port := global.Conf.Service.Port
-	if port == 0 {
-		return nil, fmt.Errorf("服务端口不能为空")
-	}
-	serviceName := global.Conf.Service.Name
-	if serviceName == "" {
-		return nil, fmt.Errorf("服务名不能为空")
-	}
 
 	registered, err := client.RegisterInstance(vo.RegisterInstanceParam{
 		Ip:          ip,           // 默认使用本机 IP
@@ -82,14 +70,42 @@ func Register() (*Registry, error) {
 		GroupName:   groupName,    //	默认分组
 		Ephemeral:   true,         // 默认临时实例
 	})
-	if err != nil {
-		return nil, fmt.Errorf("注册 Nacos 服务失败: %w", err)
+	if err != nil || !registered {
+		return nil, fmt.Errorf("注册 Nacos 服务实例失败: %w", err)
 	}
 	if !registered {
-		return nil, fmt.Errorf("注册 Nacos 服务失败: Nacos 未确认注册结果")
+		return nil, fmt.Errorf("注册 Nacos 服务实例失败: Nacos 未确认注册结果")
 	}
+	if isRpc == false {
+		return &Registry{client: client, serviceName: serviceName, ip: ip, port: uint64(port), groupName: groupName}, nil
 
-	return &Registry{client: client, serviceName: serviceName, ip: ip, port: uint64(port), groupName: groupName}, nil
+	}
+	return &Registry{client: client, RpcName: serviceName, ip: ip, RpcPort: uint64(port), groupName: groupName}, nil
+}
+
+func Register() (*Registry, error) {
+	if !global.Conf.Nacos.Enabled {
+		return nil, nil
+	}
+	client, err := newNamingClient()
+	if err != nil {
+		return nil, fmt.Errorf("创建 Nacos 客户端失败: %w", err)
+	}
+	register, err := registerService(client, global.Conf.Service.Name, global.Conf.Service.Port, false)
+	if err != nil {
+		return nil, err
+	}
+	if !global.Conf.Service.RpcEnabled {
+		return register, err
+	}
+	recRegister, err := registerService(client, global.Conf.Service.RpcName, global.Conf.Service.RpcPort, true)
+	register.RpcEnabled = true
+	register.RpcName = recRegister.RpcName
+	register.RpcPort = recRegister.RpcPort
+	if err != nil {
+		return nil, err
+	}
+	return register, err
 }
 
 func (r *Registry) Deregister() error {
@@ -103,7 +119,20 @@ func (r *Registry) Deregister() error {
 		GroupName:   r.groupName,
 		Ephemeral:   true,
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	if r.RpcEnabled {
+		_, err := r.client.DeregisterInstance(vo.DeregisterInstanceParam{
+			Ip:          r.ip,
+			Port:        r.RpcPort,
+			ServiceName: r.RpcName,
+			GroupName:   r.groupName,
+			Ephemeral:   true,
+		})
+		return err
+	}
+	return nil
 }
 
 func localIPv4() (string, error) {

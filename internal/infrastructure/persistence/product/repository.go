@@ -37,6 +37,8 @@ func (r *ProductRepository) FindByID(ctx context.Context, id uint) (*domainprodu
 func (r *ProductRepository) FindByProductAndSKUCode(ctx context.Context, productID uint, skuCode string) (*domainproduct.Product, error) {
 	// SKU 编码在 product_skus 上，先定位商品再加载聚合
 	var sku SKUPO
+
+	// 纯查询语义
 	err := r.db.WithContext(ctx).
 		Where("product_id = ? AND sku_code = ?", productID, skuCode).
 		First(&sku).Error
