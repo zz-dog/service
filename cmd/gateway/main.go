@@ -53,14 +53,6 @@ func main() {
 		panic(err)
 	}
 
-	// 端口默认 9000
-	port := global.Conf.Gateway.Port
-	if port == 0 {
-		port = 9000
-	}
-	global.Conf.Service.Name = "gateway"
-	global.Conf.Service.Port = port
-
 	// 服务发现客户端：网关转发完全依赖 Nacos 解析上游地址，未启用时 fail-fast
 	discovery, err := nacos.NewDiscovery()
 	if err != nil {
@@ -104,9 +96,9 @@ func main() {
 	}
 
 	// 先监听端口，服务可达后再注册 Nacos
-	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
+	listener, err := net.Listen("tcp", ":"+strconv.Itoa(global.Conf.Gateway.ServicePort))
 	if err != nil {
-		global.Logger.Error("端口监听失败", zap.Int("port", port), zap.Error(err))
+		global.Logger.Error("端口监听失败", zap.Int("port", global.Conf.Gateway.ServicePort), zap.Error(err))
 		panic("端口监听失败: " + err.Error())
 	}
 	srv := &http.Server{Handler: gw}
@@ -116,6 +108,7 @@ func main() {
 		global.Logger.Error("Nacos 注册失败", zap.Error(err))
 		panic(err)
 	}
+	registry.ServiceRegister(global.Conf.Gateway.ServiceName, global.Conf.Gateway.ServicePort)
 
 	go func() {
 		if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -123,7 +116,7 @@ func main() {
 			panic(err)
 		}
 	}()
-	global.Logger.Info("gateway 服务启动成功", zap.Int("port", port))
+	global.Logger.Info("gateway 服务启动成功", zap.Int("port", global.Conf.Gateway.ServicePort))
 
 	// 优雅退出：先注销 Nacos，再关闭 HTTP
 	quit := make(chan os.Signal, 1)

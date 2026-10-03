@@ -11,6 +11,7 @@ type OrderPO struct {
 	OrderID     uint   `gorm:"primaryKey;autoIncrement;comment:订单主键"`
 	OrderNo     string `gorm:"size:32;uniqueIndex;comment:订单号"`
 	UserID      uint   `gorm:"index;comment:下单用户ID"`
+	RequestID   string `gorm:"size:64;uniqueIndex;comment:请求ID,幂等保证"`
 	Status      int    `gorm:"tinyint;not null;default:1;comment:订单状态 1待支付 2已支付 3已发货 4已完成 5已取消"`
 	TotalAmount int64  `gorm:"comment:总金额(分)"`
 
@@ -81,6 +82,7 @@ func toPO(o *domainorder.Order) *OrderPO {
 		OrderID:          o.OrderID,
 		OrderNo:          o.OrderNo,
 		UserID:           o.UserID,
+		RequestID:        o.RequestID,
 		Status:           o.Status,
 		TotalAmount:      o.TotalAmount,
 		ConsigneeName:    o.ConsigneeName,

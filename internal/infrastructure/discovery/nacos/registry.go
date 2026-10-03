@@ -15,7 +15,7 @@ type Registry struct {
 	client      naming_client.INamingClient
 	serviceName string
 	ip          string
-	port        uint64
+	servicePort uint64
 	groupName   string
 	RpcEnabled  bool
 	RpcName     string
@@ -46,75 +46,78 @@ func groupNameOrDefault() string {
 	return global.Conf.Nacos.GroupName
 }
 
-func registerService(client naming_client.INamingClient, serviceName string, port int, isRpc bool) (*Registry, error) {
-	if serviceName == "" || port == 0 {
-		return nil, fmt.Errorf("服务名或端口不能为空")
+func (r *Registry) ServiceRegister(serviceName string, port int) error {
+
+	registered, err := r.client.RegisterInstance(vo.RegisterInstanceParam{
+		Ip:          r.ip,         // 默认使用本机 IP
+		Port:        uint64(port), // 默认使用本服务端port
+		Weight:      1,            // 默认权重
+		Enable:      true,         // 默认启用
+		Healthy:     true,         // 默认健康
+		ServiceName: serviceName,  // 默认服务名
+		GroupName:   r.groupName,  //	默认分组
+		Ephemeral:   true,         // 默认临时实例
+	})
+	if err != nil || !registered {
+		return fmt.Errorf("注册 Nacos 服务实例失败: %w", err)
 	}
+	if !registered {
+		return fmt.Errorf("注册 Nacos 服务实例失败: Nacos 未确认注册结果")
+	}
+
+	return nil
+}
+func Register() (*Registry, error) {
+	groupName := groupNameOrDefault()
+	client, err := newNamingClient()
+	if err != nil {
+		return nil, fmt.Errorf("创建 Nacos 客户端失败: %w", err)
+	}
+	ip := global.Conf.Nacos.ServiceIP
+
+	return &Registry{client: client, ip: ip, groupName: groupName}, nil
+
+}
+func (r *Registry) RpcRegister(RpcName string, RpcPort int) error {
+
 	ip := global.Conf.Nacos.ServiceIP
 	if ip == "" {
 		var err error
 		ip, err = localIPv4()
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 	groupName := groupNameOrDefault()
 
-	registered, err := client.RegisterInstance(vo.RegisterInstanceParam{
-		Ip:          ip,           // 默认使用本机 IP
-		Port:        uint64(port), // 默认使用本服务端口
-		Weight:      1,            // 默认权重
-		Enable:      true,         // 默认启用
-		Healthy:     true,         // 默认健康
-		ServiceName: serviceName,  // 默认服务名
-		GroupName:   groupName,    //	默认分组
-		Ephemeral:   true,         // 默认临时实例
+	registered, err := r.client.RegisterInstance(vo.RegisterInstanceParam{
+		Ip:          ip,              // 默认使用本机 IP
+		Port:        uint64(RpcPort), // 默认使用本服务端口
+		Weight:      1,               // 默认权重
+		Enable:      true,            // 默认启用
+		Healthy:     true,            // 默认健康
+		ServiceName: r.RpcName,       // 默认服务名
+		GroupName:   groupName,       //	默认分组
+		Ephemeral:   true,            // 默认临时实例
 	})
 	if err != nil || !registered {
-		return nil, fmt.Errorf("注册 Nacos 服务实例失败: %w", err)
+		return fmt.Errorf("注册 Nacos 服务实例失败: %w", err)
 	}
 	if !registered {
-		return nil, fmt.Errorf("注册 Nacos 服务实例失败: Nacos 未确认注册结果")
+		return fmt.Errorf("注册 Nacos 服务实例失败: Nacos 未确认注册结果")
 	}
-	if isRpc == false {
-		return &Registry{client: client, serviceName: serviceName, ip: ip, port: uint64(port), groupName: groupName}, nil
-
-	}
-	return &Registry{client: client, RpcName: serviceName, ip: ip, RpcPort: uint64(port), groupName: groupName}, nil
+	r.RpcName = RpcName
+	r.RpcPort = uint64(RpcPort)
+	r.RpcEnabled = true
+	return nil
 }
-
-func Register() (*Registry, error) {
-	if !global.Conf.Nacos.Enabled {
-		return nil, nil
-	}
-	client, err := newNamingClient()
-	if err != nil {
-		return nil, fmt.Errorf("创建 Nacos 客户端失败: %w", err)
-	}
-	register, err := registerService(client, global.Conf.Service.Name, global.Conf.Service.Port, false)
-	if err != nil {
-		return nil, err
-	}
-	if !global.Conf.Service.RpcEnabled {
-		return register, err
-	}
-	recRegister, err := registerService(client, global.Conf.Service.RpcName, global.Conf.Service.RpcPort, true)
-	register.RpcEnabled = true
-	register.RpcName = recRegister.RpcName
-	register.RpcPort = recRegister.RpcPort
-	if err != nil {
-		return nil, err
-	}
-	return register, err
-}
-
 func (r *Registry) Deregister() error {
 	if r == nil {
 		return nil
 	}
 	_, err := r.client.DeregisterInstance(vo.DeregisterInstanceParam{
 		Ip:          r.ip,
-		Port:        r.port,
+		Port:        r.servicePort,
 		ServiceName: r.serviceName,
 		GroupName:   r.groupName,
 		Ephemeral:   true,

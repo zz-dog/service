@@ -8,6 +8,7 @@ import (
 type Order struct {
 	OrderID     uint   // 订单ID，数据库自增主键
 	UserID      uint   // 用户ID
+	RequestID   string // 请求ID，幂等保证
 	OrderNo     string // 订单号，业务唯一
 	Status      int    // 订单状态：0-待支付，1-已支付，2-已取消
 	TotalAmount int64  // 总金额，单位：分

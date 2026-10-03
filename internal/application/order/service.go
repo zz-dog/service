@@ -4,102 +4,68 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/wsc-zz/service/global"
 	domainOrder "github.com/wsc-zz/service/internal/domain/order"
-	domainproduct "github.com/wsc-zz/service/internal/domain/product"
+	"go.uber.org/zap"
 )
 
 type Service struct {
-	repo        domainOrder.OrderRepository
-	productRepo domainproduct.ProductRepository
-	txRunner    TransactionRunner
-}
+	repo domainOrder.OrderRepository
 
-type TransactionRunner interface {
-	Run(ctx context.Context, fn func(domainOrder.OrderRepository, domainproduct.ProductRepository) error) error
+	inventory InventoryService
 }
 
 // NewService 构造应用服务，注入订单仓储。
-func NewService(repo domainOrder.OrderRepository, productRepo domainproduct.ProductRepository, txRunner TransactionRunner) *Service {
-	return &Service{repo: repo, productRepo: productRepo, txRunner: txRunner}
+func NewService(repo domainOrder.OrderRepository, inventory InventoryService) *Service {
+	return &Service{repo: repo, inventory: inventory}
 }
 
 // Create 创建订单，成功返回订单视图。
-func (s *Service) Create(ctx context.Context, in CreateOrderInput) (*OrderDTO, error) {
-	var result *OrderDTO
-	err := s.txRunner.Run(ctx, func(orderRepo domainOrder.OrderRepository, productRepo domainproduct.ProductRepository) error {
-		items := make([]domainOrder.OrderItem, 0, len(in.Items))
-		for _, it := range in.Items {
-			product, err := productRepo.FindByProductAndSKUCode(ctx, it.ProductID, it.SKUCode)
-			if err != nil {
-				return err
-			}
-			var sku *domainproduct.SKU
-			for i := range product.SKUs {
-				if product.SKUs[i].SKUCode == it.SKUCode {
-					sku = &product.SKUs[i]
-					break
-				}
-			}
-			if sku == nil {
-				return domainproduct.ErrSKUNotFound
-			}
-			if err := productRepo.DeductStock(ctx, it.ProductID, it.SKUCode, it.Quantity); err != nil {
-				return err
-			}
-			items = append(items, domainOrder.OrderItem{
-				ProductID:   it.ProductID,
-				SKUCode:     it.SKUCode,
-				ProductName: product.Name,
-				Quantity:    it.Quantity,
-				Price:       sku.Price,
-			})
-		}
-		o, err := domainOrder.NewOrder(in.UserID, items, in.ConsigneeName, in.ConsigneePhone, in.ConsigneeAddress)
-		if err != nil {
-			return err
-		}
-		if err := orderRepo.Save(ctx, o); err != nil {
-			return err
-		}
-		dto := toOrderDTO(o)
-		result = &dto
-		return nil
-	})
+func (s *Service) Create(ctx context.Context, in CreateOrderInput) (OrderDTO, error) {
+
+	// 事务处理：扣库存 + 创建订单
+	requestID := uuid.NewString()
+	deducted, err := s.inventory.DeductBatch(ctx, requestID, toInventoryItem(in.Items))
 	if err != nil {
-		return nil, err
+		return OrderDTO{}, err
 	}
-	return result, nil
+	orderItems := deductedTOdomainOrderItem(deducted)
+	o, err := domainOrder.NewOrder(in.UserID, orderItems, in.ConsigneeName, in.ConsigneePhone, in.ConsigneeAddress)
+	if err == nil {
+		o.RequestID = requestID
+		err = s.repo.Save(ctx, o)
+	}
+	if err != nil {
+		// 创建订单失败，恢复库存
+		if errr := s.inventory.RestockBatch(ctx, requestID, toInventoryItem(in.Items)); errr != nil {
+			global.Logger.Error("下单补偿回补失败,待对账处理",
+				zap.String("request_id", requestID), zap.Error(errr))
+		}
+		return OrderDTO{}, err
+	}
+
+	return toOrderDTO(o), nil
 }
 func (s *Service) CancelOrder(ctx context.Context, in CancelOrderInput) error {
-	return s.txRunner.Run(ctx, func(orderRepo domainOrder.OrderRepository, productRepo domainproduct.ProductRepository) error {
-		o, err := orderRepo.FindByID(ctx, in.OrderID)
-		if err != nil {
-			return err
-		}
-		if o.UserID != in.UserID {
-			return domainOrder.ErrOrderNotFound
-		}
-		if !o.CanCancel() {
-			return domainOrder.ErrInvalidStatusTransition
-		}
-		changed, err := orderRepo.CancelPending(ctx, o.OrderID, time.Time{})
-		if err != nil {
-			return err
-		}
-		if !changed {
-			return domainOrder.ErrInvalidStatusTransition
-		}
+	o, err := s.repo.FindByID(ctx, in.OrderID)
+	if err != nil {
+		return err
+	}
+	if o.UserID != in.UserID {
+		return domainOrder.ErrOrderNotFound
+	}
+	changed, err := s.repo.CancelPending(ctx, o.OrderID, time.Now())
+	if err != nil || !changed {
+		return err
+	}
 
-		for _, it := range o.Items {
-			// 恢复库存
-			if err := productRepo.RestockStock(ctx, it.ProductID, it.SKUCode, it.Quantity); err != nil {
-				return err
-			}
-
-		}
-		return nil
-	})
-
+	if err := s.inventory.RestockBatch(ctx, o.RequestID, orderItemToInventoryItem(o.Items)); err != nil {
+		global.Logger.Error("取消订单补偿回补失败,待对账处理",
+			zap.String("request_id", o.RequestID), zap.Error(err))
+		return err
+	}
+	return nil
 }
 
 // AutoCancelExpired 自动取消超过 timeout 仍未支付的订单。
@@ -109,26 +75,17 @@ func (s *Service) AutoCancelExpired(ctx context.Context, timeout time.Duration) 
 		return err
 	}
 	for _, order := range orders {
-		err := s.txRunner.Run(ctx, func(orderRepo domainOrder.OrderRepository, productRepo domainproduct.ProductRepository) error {
-			current, err := orderRepo.FindByID(ctx, order.OrderID)
-			if err != nil {
-				return err
-			}
-			before := time.Now().Add(-timeout)
-			changed, err := orderRepo.CancelPending(ctx, current.OrderID, before)
-			if err != nil || !changed {
-				return err
-			}
-			for _, item := range current.Items {
-				if err := productRepo.RestockStock(ctx, item.ProductID, item.SKUCode, item.Quantity); err != nil {
-					return err
-				}
-			}
-			return nil
-		})
-		if err != nil {
+		changed, err := s.repo.CancelPending(ctx, order.OrderID, time.Now())
+		if err != nil || !changed {
+			global.Logger.Error("自动取消订单失败", zap.Uint("order_id", order.OrderID), zap.Error(err))
+			continue
+		}
+		if err := s.inventory.RestockBatch(ctx, order.RequestID, orderItemToInventoryItem(order.Items)); err != nil {
+			global.Logger.Error("取消订单补偿回补失败,待对账处理",
+				zap.String("request_id", order.RequestID), zap.Error(err))
 			return err
 		}
+
 	}
 	return nil
 }
@@ -182,4 +139,42 @@ func toOrderDTO(o *domainOrder.Order) OrderDTO {
 		PaidAt:           o.PaidAt,
 		CancelledAt:      o.CancelledAt,
 	}
+}
+
+func toInventoryItem(items []OrderItemInput) []InventoryItem {
+	var result = make([]InventoryItem, 0, len(items))
+	for _, item := range items {
+		result = append(result, InventoryItem{
+			ProductID: item.ProductID,
+			Quantity:  item.Quantity,
+			SKUCode:   item.SKUCode,
+		})
+	}
+	return result
+}
+
+func deductedTOdomainOrderItem(items []DeductedItem) []domainOrder.OrderItem {
+	var result = make([]domainOrder.OrderItem, 0, len(items))
+	for _, item := range items {
+		result = append(result, domainOrder.OrderItem{
+			ProductID:   item.ProductID,
+			SKUCode:     item.SKUCode,
+			ProductName: item.ProductName,
+			Quantity:    item.Quantity,
+			Price:       item.UnitPrice,
+		})
+	}
+	return result
+}
+
+func orderItemToInventoryItem(items []domainOrder.OrderItem) []InventoryItem {
+	var result = make([]InventoryItem, 0, len(items))
+	for _, item := range items {
+		result = append(result, InventoryItem{
+			ProductID: item.ProductID,
+			Quantity:  item.Quantity,
+			SKUCode:   item.SKUCode,
+		})
+	}
+	return result
 }

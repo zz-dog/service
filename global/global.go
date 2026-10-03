@@ -16,12 +16,22 @@ var Conf Config
 var confViper *viper.Viper
 
 type Config struct {
-	Service ServerCfg  `yaml:"service"`
-	Gateway GatewayCfg `yaml:"gateway"`
-	Nacos   NacosCfg   `yaml:"nacos"`
-	MySQL   MySQLCfg   `yaml:"mysql"`
-	Jwt     JwtCfg     `yaml:"jwt"`
-	Redis   RedisCfg   `yaml:"redis"`
+	Gateway  GatewayCfg    `yaml:"gateway"`
+	Nacos    NacosCfg      `yaml:"nacos"`
+	MySQL    MySQLCfg      `yaml:"mysql"`
+	Jwt      JwtCfg        `yaml:"jwt"`
+	Redis    RedisCfg      `yaml:"redis"`
+	Catalog  ServiceConfig `yaml:"catalog"`
+	Identity ServiceConfig `yaml:"identity"`
+}
+
+type ServiceConfig struct {
+	RpcEnabled  bool   `yaml:"rpc_enabled" mapstructure:"rpc_enabled"`
+	RpcAddr     string `yaml:"grpc_addr" mapstructure:"grpc_addr"`
+	RpcPort     int    `yaml:"rpc_port" mapstructure:"rpc_port"`
+	RpcName     string `yaml:"rpc_name" mapstructure:"rpc_name"`
+	ServiceName string `yaml:"service_name" mapstructure:"service_name"`
+	ServicePort int    `yaml:"service_port" mapstructure:"service_port"`
 }
 
 type RedisCfg struct {
@@ -43,8 +53,9 @@ type ServerCfg struct {
 
 // GatewayCfg 网关配置：路由表（路径前缀 → 服务名），目标地址由 Nacos 服务发现解析
 type GatewayCfg struct {
-	Port   int            `yaml:"port" mapstructure:"port"`
-	Routes []GatewayRoute `yaml:"routes" mapstructure:"routes"`
+	ServiceName string         `yaml:"service_name" mapstructure:"service_name"`
+	ServicePort int            `yaml:"service_port" mapstructure:"service_port"`
+	Routes      []GatewayRoute `yaml:"routes" mapstructure:"routes"`
 }
 
 type GatewayRoute struct {
@@ -126,39 +137,7 @@ func InitViper() {
 	}
 	v.SetConfigFile(cfgPath)
 	v.SetConfigType("yaml")
-	if err := v.BindEnv("jwt.secret", "JWT_SECRET"); err != nil {
-		panic("绑定 JWT_SECRET 失败：" + err.Error())
-	}
-	if err := v.BindEnv("jwt.expire_hour", "JWT_EXPIRE_HOUR"); err != nil {
-		panic("绑定 JWT_EXPIRE_HOUR 失败：" + err.Error())
-	}
 
-	// 绑定 Redis 密码环境变量，优先级低于环境变量
-	if err := v.BindEnv("redis.password", "REDIS_PASSWORD"); err != nil {
-		panic("绑定 REDIS_PASSWORD 失败：" + err.Error())
-	}
-
-	//
-	for key, env := range map[string]string{
-		"service.name":         "SERVICE_NAME",
-		"service.port":         "SERVICE_PORT",
-		"service.rpc_port":     "SERVICE_RPC_PORT",
-		"service.rpc_name":     "SERVICE_RPC_NAME",
-		"service.rpc_enabled":  "SERVICE_RPC_ENABLED",
-		"nacos.enabled":        "NACOS_ENABLED",
-		"nacos.server_addr":    "NACOS_SERVER_ADDR",
-		"nacos.server_port":    "NACOS_SERVER_PORT",
-		"nacos.namespace_id":   "NACOS_NAMESPACE_ID",
-		"nacos.username":       "NACOS_USERNAME",
-		"nacos.password":       "NACOS_PASSWORD",
-		"nacos.group_name":     "NACOS_GROUP_NAME",
-		"nacos.config_data_id": "NACOS_CONFIG_DATA_ID",
-		"nacos.service_ip":     "SERVICE_IP",
-	} {
-		if err := v.BindEnv(key, env); err != nil {
-			panic("绑定环境变量失败：" + env + ": " + err.Error())
-		}
-	}
 	// 读取文件
 	if err := v.ReadInConfig(); err != nil {
 		panic("读取配置失败：" + err.Error())

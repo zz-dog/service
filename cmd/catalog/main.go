@@ -44,17 +44,6 @@ func main() {
 	global.InitMysql() //连接数据库
 	global.InitRedis() //连接 Redis
 
-	port := 8082
-	if value := os.Getenv("SERVICE_PORT"); value != "" {
-		if parsed, err := strconv.Atoi(value); err == nil && parsed > 0 {
-			port = parsed
-		}
-	}
-
-	// 设置服务端口
-	global.Conf.Service.Port = port
-	global.Conf.Service.Name = "catalog"
-
 	if err := global.DB.AutoMigrate(
 		&categorypo.CategoryPO{},
 		&categorypo.CategorySpecPO{},
@@ -71,9 +60,9 @@ func main() {
 
 	r := router.InitCatalogRouter()
 
-	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
+	listener, err := net.Listen("tcp", ":"+strconv.Itoa(global.Conf.Catalog.ServicePort))
 	if err != nil {
-		global.Logger.Error("端口监听失败", zap.Int("port", port), zap.Error(err))
+		global.Logger.Error("端口监听失败", zap.Int("port", global.Conf.Catalog.ServicePort), zap.Error(err))
 		panic("端口监听失败: " + err.Error())
 	}
 	srv := &http.Server{Handler: r} // 服务
@@ -85,35 +74,28 @@ func main() {
 		}
 	}()
 
-	//RPC 服务
-	rpcPort := 9082
+	if global.Conf.Catalog.RpcEnabled {
+		grpcServer := grpc.NewServer()
+		inventorypb.RegisterInventoryServiceServer(grpcServer, inventory.NewServer(global.DB))
+		reflection.Register(grpcServer)
+		grpcListener, err := net.Listen("tcp", ":"+strconv.Itoa(global.Conf.Catalog.RpcPort))
 
-	//如果配置了环境变量 SERVICE_RPC_PORT，则使用其值作为端口
-	if v := os.Getenv("SERVICE_RPC_PORT"); v != "" {
-		if parsed, err := strconv.Atoi(v); err == nil && parsed > 0 {
-			rpcPort = parsed
+		if err != nil {
+			global.Logger.Error("GRPC 端口监听失败", zap.Int("port", global.Conf.Catalog.RpcPort), zap.Error(err))
+			panic("GRPC 端口监听失败: " + err.Error())
 		}
-	}
-	global.Conf.Service.RpcPort = rpcPort
-	global.Conf.Service.RpcName = "catalogRpc"
-	global.Conf.Service.RpcEnabled = true
-	grpcServer := grpc.NewServer()
-	inventorypb.RegisterInventoryServiceServer(grpcServer, inventory.NewServer(global.DB))
-	reflection.Register(grpcServer)
-	grpcListener, err := net.Listen("tcp", ":"+strconv.Itoa(rpcPort))
+		go func() {
+			if err := grpcServer.Serve(grpcListener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+				global.Logger.Error("GRPC 服务异常退出", zap.Error(err))
+				panic(err)
+			}
+		}()
 
-	if err != nil {
-		global.Logger.Error("GRPC 端口监听失败", zap.Int("port", rpcPort), zap.Error(err))
-		panic("GRPC 端口监听失败: " + err.Error())
 	}
-	go func() {
-		if err := grpcServer.Serve(grpcListener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-			global.Logger.Error("GRPC 服务异常退出", zap.Error(err))
-			panic(err)
-		}
-	}()
 
-	registry, err := nacos.Register() // 注册服
+	registry, err := nacos.Register()                                              // 注册 Nacos 服务实例
+	registry.RpcRegister(global.Conf.Catalog.RpcName, global.Conf.Catalog.RpcPort) // 注册 Nacos RPC 服务实例
+	registry.ServiceRegister(global.Conf.Catalog.ServiceName, global.Conf.Catalog.ServicePort)
 	if err != nil {
 		global.Logger.Error("Nacos 注册失败", zap.Error(err))
 	}

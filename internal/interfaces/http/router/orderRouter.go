@@ -8,20 +8,23 @@ import (
 	"github.com/wsc-zz/service/global"
 	orderapp "github.com/wsc-zz/service/internal/application/order"
 	orderpo "github.com/wsc-zz/service/internal/infrastructure/persistence/order"
-	productpo "github.com/wsc-zz/service/internal/infrastructure/persistence/product"
-	transaction "github.com/wsc-zz/service/internal/infrastructure/persistence/transaction"
 	"github.com/wsc-zz/service/internal/interfaces/http/handler"
 	"go.uber.org/zap"
 
 	middleware "github.com/wsc-zz/service/internal/interfaces/http/middleware"
 
 	redisCache "github.com/wsc-zz/service/internal/infrastructure/cache/redis"
+	inventory "github.com/wsc-zz/service/internal/interfaces/rpc/inventory"
 )
 
 func registerOrderRoutes(api *gin.RouterGroup) {
 	orderRepo := orderpo.NewOrderRepository(global.DB)
-	productRepo := productpo.NewProductRepository(global.DB)
-	orderSvc := orderapp.NewService(orderRepo, productRepo, transaction.NewRunner(global.DB))
+
+	invertorySvc, err := inventory.NewClient(global.Conf.Catalog.RpcAddr, 3*time.Second)
+	if err != nil {
+		panic(err)
+	}
+	orderSvc := orderapp.NewService(orderRepo, invertorySvc)
 	// 定时取消订单
 	go func() {
 		ticker := time.NewTicker(time.Minute)
