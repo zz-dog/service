@@ -1,0 +1,104 @@
+services:
+  mysql8:
+    image: docker.io/library/mysql:8.0
+    container_name: mysql8
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "wsczz332211"
+      MYSQL_DATABASE: nacos_config
+      TZ: Asia/Shanghai
+    volumes:
+      - /home/admin/mysql_data:/var/lib/mysql:z
+    command: --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+
+  nacos:
+    image: nacos-registry.cn-hangzhou.cr.aliyuncs.com/nacos/nacos-server:v2.3.2
+    container_name: nacos
+    restart: always
+    stop_grace_period: 60s
+    depends_on:
+      mysql8:
+        condition: service_healthy
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    environment:
+      MODE: standalone
+      SPRING_DATASOURCE_PLATFORM: mysql
+      MYSQL_SERVICE_HOST: mysql8
+      MYSQL_SERVICE_DB_NAME: nacos_config
+      MYSQL_SERVICE_USER: root
+      MYSQL_SERVICE_PASSWORD: "wsczz332211"
+      JVM_XMS: 320m
+      JVM_XMX: 320m
+      TZ: Asia/Shanghai
+
+  redis7:
+    image: docker.1ms.run/library/redis:7
+    container_name: redis7
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - /data/podman/redis/data:/data:z
+    command: redis-server --appendonly yes --requirepass "e51e5470a75fc67ee77b37ef0862785c"
+
+  nginx:
+    image: docker.io/library/nginx:alpine
+    container_name: nginx
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      - /home/admin/nginx/conf:/etc/nginx/conf.d:z
+      - /home/admin/nginx/html:/usr/share/nginx/html:z
+      - /home/admin/nginx/cert:/etc/nginx/cert:z
+
+  # ---- 应用服务：同一镜像（见 Containerfile），用不同 command 启动 ----
+  # 生产配置挂载宿主机 /home/admin/demo-config（不进 git，与本地开发配置隔离）；
+  # host.docker.internal 用于容器内访问宿主机上映射出来的 mysql/nacos/redis 端口
+  x-app: &app-base
+    image: demo-app:latest
+    build: .
+    restart: always
+    volumes:
+      - /home/admin/demo-config:/app/config:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      mysql8:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+
+  gateway:
+    <<: *app-base
+    container_name: gateway
+    command: ["./gateway"]
+
+  identity:
+    <<: *app-base
+    container_name: identity
+    command: ["./identity"]
+
+  catalog:
+    <<: *app-base
+    container_name: catalog
+    command: ["./catalog"]
+
+  order:
+    <<: *app-base
+    container_name: order
+    command: ["./order"]
+    environment:
+      # 跨服务扣库存的 gRPC 地址：容器网络内用服务名（代码已支持环境变量覆盖配置键）
+      CATALOG_GRPC_ADDR: catalog:9082

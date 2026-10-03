@@ -5,8 +5,12 @@ on:
     branches: [main]
   pull_request:
 
+env:
+  # 服务列表与 cmd/ 目录一一对应
+  SERVICES: gateway identity catalog order
+
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -17,15 +21,6 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-
-      - name: Cache Go modules
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-
-      - name: Download dependencies
-        run: go mod download
 
       - name: Vet
         run: go vet ./...
@@ -39,8 +34,17 @@ jobs:
       - name: Test
         run: go test -v ./...
 
+      # 与 Containerfile 相同的编译方式，提前验证 4 个服务都能编译通过
       - name: Build (linux/amd64)
-        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o service ./cmd/main.go
+        run: |
+          for svc in $SERVICES; do
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+              go build -trimpath -ldflags="-s -w" -o bin/$svc ./cmd/$svc
+          done
 
-      - name: Check binary
-        run: test -s service && echo "binary OK"
+      - name: Check binaries
+        run: |
+          for svc in $SERVICES; do
+            test -s bin/$svc || { echo "缺少二进制：$svc"; exit 1; }
+          done
+          echo "binaries OK"

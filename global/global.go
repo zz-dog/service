@@ -135,6 +135,12 @@ func InitViper() {
 	if cfgPath == "" {
 		panic("读取配置失败：未找到 config/config.yaml（已搜索当前目录及可执行文件目录的各级上级目录）")
 	}
+	// 环境变量可覆盖同名配置键（仅对文件里已存在的键生效）：
+	// catalog.grpc_addr → CATALOG_GRPC_ADDR。容器部署时用它给单个服务注入差异配置，
+	// 例如 order 容器把 gRPC 地址指向 compose 服务名 catalog:9082
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.AutomaticEnv()
+
 	v.SetConfigFile(cfgPath)
 	v.SetConfigType("yaml")
 
