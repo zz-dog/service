@@ -18,15 +18,13 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             set -e
-            cd ~/demo
+            if [ ! -d ~/service ];then
+              git clone https://github.com/zz-dog/service.git ~/service
+            fi
+            cd ~/service
             git pull --ff-only origin main
-
-            # 镜像由 compose 构建一次（4 个服务共用同一镜像，见 Containerfile）
             docker compose build
-
-            # 只拉起应用服务，不动正在运行的 mysql/nacos/redis/nginx
             docker compose up -d gateway identity catalog order
-
             sleep 5
             for svc in gateway identity catalog order; do
               if [ -z "$(docker ps -q --filter "name=^${svc}$" --filter "status=running")" ]; then
