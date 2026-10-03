@@ -23,10 +23,10 @@ type Config struct {
 	Redis    RedisCfg      `yaml:"redis"`
 	Catalog  ServiceConfig `yaml:"catalog"`
 	Identity ServiceConfig `yaml:"identity"`
+	Order    ServiceConfig `yaml:"order"`
 }
 
 type ServiceConfig struct {
-	RpcEnabled  bool   `yaml:"rpc_enabled" mapstructure:"rpc_enabled"`
 	RpcAddr     string `yaml:"grpc_addr" mapstructure:"grpc_addr"`
 	RpcPort     int    `yaml:"rpc_port" mapstructure:"rpc_port"`
 	RpcName     string `yaml:"rpc_name" mapstructure:"rpc_name"`

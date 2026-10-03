@@ -40,7 +40,7 @@ func registerOrderRoutes(api *gin.RouterGroup) {
 	blacklist := NewTokenBlacklist()
 	limiter := redisCache.NewDedupStore(global.RedisClient)
 	h := handler.NewOrderHandler(orderSvc)
-	orderApi := api.Group("/orders", middleware.JWTAuth(blacklist))
+	orderApi := api.Group("/order", middleware.JWTAuth(blacklist))
 	{
 		orderApi.POST("create", middleware.OrderCreateGuard(limiter, 3*time.Second), h.Create)
 		orderApi.POST("cancel", h.Cancel)

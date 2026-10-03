@@ -19,11 +19,6 @@ import (
 	orderpo "github.com/wsc-zz/service/internal/infrastructure/persistence/order"
 
 	"github.com/wsc-zz/service/internal/interfaces/http/router"
-
-	categorypo "github.com/wsc-zz/service/internal/infrastructure/persistence/category"
-	productpo "github.com/wsc-zz/service/internal/infrastructure/persistence/product"
-
-	specpo "github.com/wsc-zz/service/internal/infrastructure/persistence/spec"
 )
 
 // @title           Demo Service API
@@ -59,13 +54,6 @@ func main() {
 	if err := global.DB.AutoMigrate(
 		&orderpo.OrderPO{},
 		&orderpo.OrderItemPO{},
-		&categorypo.CategoryPO{},
-		&categorypo.CategorySpecPO{},
-		&specpo.SpecPO{},
-		&specpo.SpecValuePO{},
-		&productpo.ProductPO{},
-		&productpo.SKUPO{},
-		&productpo.SKUSpecItemPO{},
 	); err != nil {
 		global.Logger.Error("数据表迁移失败", zap.Error(err))
 		panic("数据表迁移失败:" + err.Error())
@@ -73,13 +61,13 @@ func main() {
 	global.Logger.Info("数据表迁移成功")
 
 	// 3. 初始化路由
-	r := router.InitRouter()
+	r := router.InitOrderRouter()
 
 	// 4. 先监听端口，服务可达后再注册 Nacos，避免注册后请求打到尚未监听的实例
-	port := global.Conf.Service.Port
-	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
+
+	listener, err := net.Listen("tcp", ":"+strconv.Itoa(global.Conf.Order.ServicePort))
 	if err != nil {
-		global.Logger.Error("端口监听失败", zap.Int("port", port), zap.Error(err))
+		global.Logger.Error("端口监听失败", zap.Int("port", global.Conf.Order.ServicePort), zap.Error(err))
 		panic("端口监听失败: " + err.Error())
 	}
 	srv := &http.Server{Handler: r}
@@ -89,14 +77,14 @@ func main() {
 		global.Logger.Error("Nacos 注册失败", zap.Error(err))
 		panic(err)
 	}
-
+	registry.ServiceRegister(global.Conf.Order.ServiceName, global.Conf.Order.ServicePort)
 	go func() {
 		if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			global.Logger.Error("HTTP 服务异常退出", zap.Error(err))
 			panic(err)
 		}
 	}()
-	global.Logger.Info("服务启动成功", zap.String("name", global.Conf.Service.Name), zap.Int("port", port))
+	global.Logger.Info("服务启动成功", zap.String("name", global.Conf.Order.ServiceName), zap.Int("port", global.Conf.Order.ServicePort))
 
 	// 5. 等待退出信号：先注销 Nacos（停止接入新流量），再优雅关闭 HTTP（处理完存量请求）
 	quit := make(chan os.Signal, 1)

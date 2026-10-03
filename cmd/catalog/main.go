@@ -22,9 +22,8 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	router "github.com/wsc-zz/service/internal/interfaces/http/router"
-	"github.com/wsc-zz/service/internal/interfaces/rpc/inventorypb"
-
 	"github.com/wsc-zz/service/internal/interfaces/rpc/inventory"
+	"github.com/wsc-zz/service/internal/interfaces/rpc/inventorypb"
 )
 
 func main() {
@@ -74,24 +73,21 @@ func main() {
 		}
 	}()
 
-	if global.Conf.Catalog.RpcEnabled {
-		grpcServer := grpc.NewServer()
-		inventorypb.RegisterInventoryServiceServer(grpcServer, inventory.NewServer(global.DB))
-		reflection.Register(grpcServer)
-		grpcListener, err := net.Listen("tcp", ":"+strconv.Itoa(global.Conf.Catalog.RpcPort))
+	grpcServer := grpc.NewServer()
+	inventorypb.RegisterInventoryServiceServer(grpcServer, inventory.NewServer(global.DB))
+	reflection.Register(grpcServer)
+	grpcListener, err := net.Listen("tcp", ":"+strconv.Itoa(global.Conf.Catalog.RpcPort))
 
-		if err != nil {
-			global.Logger.Error("GRPC 端口监听失败", zap.Int("port", global.Conf.Catalog.RpcPort), zap.Error(err))
-			panic("GRPC 端口监听失败: " + err.Error())
-		}
-		go func() {
-			if err := grpcServer.Serve(grpcListener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-				global.Logger.Error("GRPC 服务异常退出", zap.Error(err))
-				panic(err)
-			}
-		}()
-
+	if err != nil {
+		global.Logger.Error("GRPC 端口监听失败", zap.Int("port", global.Conf.Catalog.RpcPort), zap.Error(err))
+		panic("GRPC 端口监听失败: " + err.Error())
 	}
+	go func() {
+		if err := grpcServer.Serve(grpcListener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+			global.Logger.Error("GRPC 服务异常退出", zap.Error(err))
+			panic(err)
+		}
+	}()
 
 	registry, err := nacos.Register()                                              // 注册 Nacos 服务实例
 	registry.RpcRegister(global.Conf.Catalog.RpcName, global.Conf.Catalog.RpcPort) // 注册 Nacos RPC 服务实例
