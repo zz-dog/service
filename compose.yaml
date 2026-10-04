@@ -66,13 +66,13 @@ services:
   # ---- 应用服务：单镜像（见 Containerfile），用不同 command 启动 ----
   # 镜像由 CI 构建推到 ACR，服务器只 pull：APP_IMAGE 由部署脚本 export 成完整 ACR 地址
   # 本地开发不设 APP_IMAGE 时回落 demo-app:latest（docker build -f Containerfile -t demo-app:latest .）
-  # 生产配置挂载宿主机 /home/admin/demo-config（不进 git，与本地开发配置隔离）；
+  # 生产配置挂载宿主机 /home/admin/service-config（不进 git，与本地开发配置隔离）；
   # host.docker.internal 用于容器内访问宿主机上映射出来的 mysql/nacos/redis 端口
   x-app: &app-base
     image: ${APP_IMAGE:-demo-app:latest}
     restart: always
     volumes:
-      - /home/admin/demo-config:/app/config:ro
+      - /home/admin/service-config:/app/config:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
