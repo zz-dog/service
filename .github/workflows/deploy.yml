@@ -68,7 +68,9 @@ jobs:
             # APP_IMAGE 供 compose 变量插值（compose.yaml 里写的是 APP_IMAGE，带 demo-app:latest 默认值）
             export APP_IMAGE='${{ env.REGISTRY }}/${{ env.NAMESPACE }}/service-app:${{ env.IMAGE_TAG }}'
             docker compose pull gateway identity catalog order
-            docker compose up -d gateway identity catalog order
+            # --no-deps：mysql/nacos 由旧的 compose 项目拉起且在运行，容器名被占用，
+            # compose 会想在当前项目里重建它们；应用走 host.docker.internal 访问宿主机端口，不需要同网络
+            docker compose up -d --no-deps gateway identity catalog order
             sleep 5
 
             for svc in gateway identity catalog order; do
