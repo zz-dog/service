@@ -1,10 +1,13 @@
 # 多阶段构建：构建阶段一次性编译 cmd/ 下全部服务；运行阶段单镜像承载，
 # 由 compose 用不同 command 启动 gateway / identity / catalog / order
 # 若服务器拉不动官方镜像，把 FROM 换成 docker.1ms.run/library/ 前缀的同名镜像
-FROM golang:1.23-alpine AS builder
+# 版本必须 >= go.mod 的 go 指令（1.26.3）；golang 镜像默认 GOTOOLCHAIN=local，
+# 版本不够时不会自动下载新工具链，而是直接报错
+FROM golang:1.26-alpine AS builder
 
-# 国内访问不了 proxy.golang.org，走 goproxy.cn；在海外构建可删掉这行
-ENV GOPROXY=https://goproxy.cn,direct
+# 模块代理默认 goproxy.cn，供国内本地构建；CI 在海外 runner 上构建，
+# 在 deploy.yml 里用 --build-arg 覆盖为官方源（ARG 会作为环境变量暴露给 RUN）
+ARG GOPROXY=https://goproxy.cn,direct
 
 WORKDIR /src
 COPY go.mod go.sum ./

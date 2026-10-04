@@ -25,8 +25,11 @@ jobs:
 
       - name: Build & push app image
         run: |
-          # 单镜像承载 4 个服务（见 Containerfile）；docker build 不会自动识别 Containerfile，需 -f 指定
-          docker build -f Containerfile -t ${REGISTRY}/${NAMESPACE}/service-app:${IMAGE_TAG} .
+          # 单镜像承载 4 个服务（见 Containerfile）；docker build 不会自动识别 Containerfile，需 -f 指定；
+          # runner 在海外，模块代理用官方源（Containerfile 里 ARG 默认 goproxy.cn 是给国内本地构建的）
+          docker build -f Containerfile \
+            --build-arg GOPROXY=https://proxy.golang.org,direct \
+            -t ${REGISTRY}/${NAMESPACE}/service-app:${IMAGE_TAG} .
           docker push ${REGISTRY}/${NAMESPACE}/service-app:${IMAGE_TAG}
 
   deploy:
