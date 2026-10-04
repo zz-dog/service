@@ -1,15 +1,38 @@
 name: Deploy
-
 on:
   push:
     branches: [main]
   workflow_dispatch: # 支持手动触发重发
 
+env:
+  REGISTRY: ${{ secrets.ALIYUN_REGISTRY }}
+  NAMESPACE: zzdog
+  IMAGE_TAG: latest
+
 jobs:
-  deploy:
+  build_push:
     runs-on: ubuntu-latest
     steps:
-      # 服务器上要求：/home/admin/demo 是本仓库的 git clone，生产配置在 /home/admin/demo-config
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Login ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.ALIYUN_REG_USER }}
+          password: ${{ secrets.ALIYUN_REG_PWD }}
+
+      - name: Build & push app image
+        run: |
+          # 单镜像承载 4 个服务（见 Containerfile）；docker build 不会自动识别 Containerfile，需 -f 指定
+          docker build -f Containerfile -t ${REGISTRY}/${NAMESPACE}/service-app:${IMAGE_TAG} .
+          docker push ${REGISTRY}/${NAMESPACE}/service-app:${IMAGE_TAG}
+
+  deploy:
+    needs: build_push
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.2.2
         with:
@@ -23,9 +46,17 @@ jobs:
             fi
             cd ~/service
             git pull --ff-only origin main
-            docker compose build
+
+            # 登录 ACR：密码走 stdin，不进 ps；REGISTRY 用 Actions 插值（workflow env: 里的变量不会跟着 SSH 到服务器）
+            echo '${{ secrets.ALIYUN_REG_PWD }}' | docker login ${{ env.REGISTRY }} -u '${{ secrets.ALIYUN_REG_USER }}' --password-stdin
+
+            # 镜像由 CI 推到 ACR：只 pull + 滚动更新，不在服务器上构建；
+            # APP_IMAGE 供 compose 变量插值（compose.yaml 里写的是 APP_IMAGE，带 demo-app:latest 默认值）
+            export APP_IMAGE='${{ env.REGISTRY }}/${{ env.NAMESPACE }}/service-app:${{ env.IMAGE_TAG }}'
+            docker compose pull gateway identity catalog order
             docker compose up -d gateway identity catalog order
             sleep 5
+
             for svc in gateway identity catalog order; do
               if [ -z "$(docker ps -q --filter "name=^${svc}$" --filter "status=running")" ]; then
                 echo "❌ $svc 未正常运行，最近日志："
