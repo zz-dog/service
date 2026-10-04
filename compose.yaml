@@ -11,8 +11,11 @@ services:
       TZ: Asia/Shanghai
     volumes:
       - /home/admin/mysql_data:/var/lib/mysql:z
+    # 小内存：关掉内存大户 performance_schema，连接数收敛到 50
     command: --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
+      --performance_schema=OFF
+      --max_connections=50
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
       interval: 5s
@@ -25,22 +28,19 @@ services:
     container_name: nacos
     restart: always
     stop_grace_period: 60s
-    depends_on:
-      mysql8:
-        condition: service_healthy
+    # 不再依赖mysql，删掉depends_on mysql8
     ports:
       - "8848:8848"
       - "9848:9848"
     environment:
       MODE: standalone
-      SPRING_DATASOURCE_PLATFORM: mysql
-      MYSQL_SERVICE_HOST: mysql8
-      MYSQL_SERVICE_DB_NAME: nacos_config
-      MYSQL_SERVICE_USER: root
-      MYSQL_SERVICE_PASSWORD: "wsczz332211"
-      JVM_XMS: 320m
-      JVM_XMX: 320m
       TZ: Asia/Shanghai
+      # 2G服务器JVM参数保留
+      JVM_XMS: 512m
+      JVM_XMX: 512m
+      JVM_XMN: 128m
+      JVM_MS: 64m
+      JVM_MMS: 128m
 
   redis7:
     image: docker.1ms.run/library/redis:7
@@ -50,7 +50,7 @@ services:
       - "6379:6379"
     volumes:
       - /data/podman/redis/data:/data:z
-    command: redis-server --appendonly yes --requirepass "e51e5470a75fc67ee77b37ef0862785c"
+    command: redis-server --appendonly yes --requirepass "e51e5470a75fc67ee77b37ef0862785c" --maxmemory 64mb
 
   nginx:
     image: docker.io/library/nginx:alpine
@@ -65,11 +65,11 @@ services:
 
   # ---- 应用服务：单镜像（见 Containerfile），用不同 command 启动 ----
   # 镜像由 CI 构建推到 ACR，服务器只 pull：APP_IMAGE 由部署脚本 export 成完整 ACR 地址
-  # 本地开发不设 APP_IMAGE 时回落 demo-app:latest（docker build -f Containerfile -t demo-app:latest .）
+  # 本地开发不设 APP_IMAGE 时回落 service-app:latest（docker build -f Containerfile -t service-app:latest .）
   # 生产配置挂载宿主机 /home/admin/service-config（不进 git，与本地开发配置隔离）；
   # host.docker.internal 用于容器内访问宿主机上映射出来的 mysql/nacos/redis 端口
   x-app: &app-base
-    image: ${APP_IMAGE:-demo-app:latest}
+    image: ${APP_IMAGE:-service-app:latest}
     restart: always
     volumes:
       - /home/admin/service-config:/app/config:ro
