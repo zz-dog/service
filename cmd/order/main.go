@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 
 	"github.com/wsc-zz/service/global"
 	nacosconfig "github.com/wsc-zz/service/internal/infrastructure/configcenter/nacos"
@@ -19,6 +20,9 @@ import (
 	orderpo "github.com/wsc-zz/service/internal/infrastructure/persistence/order"
 
 	"github.com/wsc-zz/service/internal/interfaces/http/router"
+
+	"github.com/wsc-zz/service/internal/interfaces/rpc/orderpay"
+	"github.com/wsc-zz/service/internal/interfaces/rpc/orderpb"
 )
 
 //	@title						Demo Service API
@@ -77,7 +81,7 @@ func main() {
 		global.Logger.Error("Nacos 注册失败", zap.Error(err))
 		panic(err)
 	}
-	registry.ServiceRegister(global.Conf.Order.ServiceName, global.Conf.Order.ServicePort)
+
 	go func() {
 		if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			global.Logger.Error("HTTP 服务异常退出", zap.Error(err))
@@ -85,7 +89,21 @@ func main() {
 		}
 	}()
 	global.Logger.Info("服务启动成功", zap.String("name", global.Conf.Order.ServiceName), zap.Int("port", global.Conf.Order.ServicePort))
-
+	grpcServer := grpc.NewServer()
+	orderpb.RegisterOrderPayServiceServer(grpcServer, orderpay.NewServer(orderpo.NewOrderRepository(global.DB)))
+	grpcListener, err := net.Listen("tcp", ":"+strconv.Itoa(global.Conf.Order.RpcPort))
+	if err != nil {
+		global.Logger.Error("GRPC 端口监听失败", zap.Int("port", global.Conf.Order.RpcPort), zap.Error(err))
+		panic("GRPC 端口监听失败: " + err.Error())
+	}
+	go func() {
+		if err := grpcServer.Serve(grpcListener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+			global.Logger.Error("GRPC 服务异常退出", zap.Error(err))
+			panic(err)
+		}
+	}()
+	registry.ServiceRegister(global.Conf.Order.ServiceName, global.Conf.Order.ServicePort)
+	registry.RpcRegister(global.Conf.Order.RpcName, global.Conf.Order.RpcPort)
 	// 5. 等待退出信号：先注销 Nacos（停止接入新流量），再优雅关闭 HTTP（处理完存量请求）
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

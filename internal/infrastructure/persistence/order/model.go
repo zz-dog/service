@@ -8,12 +8,12 @@ import (
 
 // OrderPO 订单持久化对象，对应 orders 表。
 type OrderPO struct {
-	OrderID     uint   `gorm:"primaryKey;autoIncrement;comment:订单主键"`
-	OrderNo     string `gorm:"size:32;uniqueIndex;comment:订单号"`
-	UserID      uint   `gorm:"index;comment:下单用户ID"`
-	RequestID   string `gorm:"size:64;uniqueIndex;comment:请求ID,幂等保证"`
-	Status      int    `gorm:"tinyint;not null;default:1;comment:订单状态 1待支付 2已支付 3已发货 4已完成 5已取消"`
-	TotalAmount int64  `gorm:"comment:总金额(分)"`
+	OrderID     uint               `gorm:"primaryKey;autoIncrement;comment:订单主键"`
+	OrderNo     string             `gorm:"size:32;uniqueIndex;comment:订单号"`
+	UserID      uint               `gorm:"index;comment:下单用户ID"`
+	RequestID   string             `gorm:"size:64;uniqueIndex;comment:请求ID,幂等保证"`
+	Status      domainorder.Status `gorm:"tinyint;not null;default:1;comment:订单状态 1待支付 2已支付 3已发货 4已完成 5已取消"`
+	TotalAmount int64              `gorm:"comment:总金额(分)"`
 
 	ConsigneeName    string `gorm:"size:32;comment:收货人姓名"`
 	ConsigneePhone   string `gorm:"size:20;comment:收货人电话"`

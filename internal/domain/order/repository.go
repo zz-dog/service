@@ -14,6 +14,8 @@ type OrderRepository interface {
 	Save(ctx context.Context, order *Order) error //新增/更新 订单
 
 	List(ctx context.Context, q ListQuery) ([]*Order, int, error)
+	FindByOrderNo(ctx context.Context, orderNo string) (*Order, error)
+	MarkPaid(ctx context.Context, orderNo string) (bool, error)
 }
 
 type ListQuery struct {

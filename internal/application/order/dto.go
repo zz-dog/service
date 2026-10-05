@@ -2,6 +2,8 @@ package orderapp
 
 import (
 	"time"
+
+	domainOrder "github.com/wsc-zz/service/internal/domain/order"
 )
 
 type OrderItemInput struct {
@@ -56,21 +58,21 @@ type OrderItemDTO struct {
 
 // OrderDTO 订单视图
 type OrderDTO struct {
-	OrderID          uint           `json:"orderId"`               // 订单ID
-	UserID           uint           `json:"userId"`                // 用户ID
-	OrderNo          string         `json:"orderNo"`               // 订单编号
-	Status           int            `json:"status"`                // 订单状态：1-待支付，2-已支付，3-已发货，4-已完成，5-已取消
-	StatusName       string         `json:"statusName"`            // 订单状态名称
-	TotalAmount      int64          `json:"totalAmount"`           // 单位：分
-	ConsigneeName    string         `json:"consigneeName"`         // 收货人姓名
-	ConsigneePhone   string         `json:"consigneePhone"`        // 收货人手机号
-	ConsigneeAddress string         `json:"consigneeAddress"`      // 收货人地址
-	LogisticsNo      string         `json:"logisticsNo"`           // 物流单号
-	Items            []OrderItemDTO `json:"items"`                 // 订单明细
-	CreatedAt        time.Time      `json:"createdAt"`             // 创建时间
-	UpdatedAt        time.Time      `json:"updatedAt"`             // 更新时间
-	PaidAt           *time.Time     `json:"paidAt,omitempty"`      // 支付时间
-	CancelledAt      *time.Time     `json:"cancelledAt,omitempty"` // 取消时间
+	OrderID          uint               `json:"orderId"`               // 订单ID
+	UserID           uint               `json:"userId"`                // 用户ID
+	OrderNo          string             `json:"orderNo"`               // 订单编号
+	Status           domainOrder.Status `json:"status"`                // 订单状态：1-待支付，2-已支付，3-已发货，4-已完成，5-已取消
+	StatusName       string             `json:"statusName"`            // 订单状态名称
+	TotalAmount      int64              `json:"totalAmount"`           // 单位：分
+	ConsigneeName    string             `json:"consigneeName"`         // 收货人姓名
+	ConsigneePhone   string             `json:"consigneePhone"`        // 收货人手机号
+	ConsigneeAddress string             `json:"consigneeAddress"`      // 收货人地址
+	LogisticsNo      string             `json:"logisticsNo"`           // 物流单号
+	Items            []OrderItemDTO     `json:"items"`                 // 订单明细
+	CreatedAt        time.Time          `json:"createdAt"`             // 创建时间
+	UpdatedAt        time.Time          `json:"updatedAt"`             // 更新时间
+	PaidAt           *time.Time         `json:"paidAt,omitempty"`      // 支付时间
+	CancelledAt      *time.Time         `json:"cancelledAt,omitempty"` // 取消时间
 }
 
 // OrderListResult 订单分页结果

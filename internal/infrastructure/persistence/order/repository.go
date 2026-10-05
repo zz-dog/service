@@ -123,3 +123,24 @@ func (r *OrderRepository) List(ctx context.Context, q domainorder.ListQuery) ([]
 	}
 	return orders, int(total), nil
 }
+
+func (r *OrderRepository) FindByOrderNo(ctx context.Context, orderNo string) (*domainorder.Order, error) {
+	var po OrderPO
+	err := r.db.WithContext(ctx).Preload("Items").First(&po, "order_no = ?", orderNo).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domainorder.ErrOrderNotFound
+		}
+		return nil, err
+	}
+	return toDomain(&po), nil
+}
+
+func (r *OrderRepository) MarkPaid(ctx context.Context, orderNo string) (bool, error) {
+	result := r.db.WithContext(ctx).Model(&OrderPO{}).Where("order_no = ?", orderNo).
+		Updates(map[string]interface{}{
+			"status":  domainorder.StatusPaid,
+			"paid_at": time.Now(),
+		})
+	return result.RowsAffected == 1, result.Error
+}
