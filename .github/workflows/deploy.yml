@@ -70,6 +70,13 @@ jobs:
             docker compose pull gateway identity catalog order
             # --no-deps：mysql/nacos 由旧的 compose 项目拉起且在运行，容器名被占用，
             # compose 会想在当前项目里重建它们；应用走 host.docker.internal 访问宿主机端口，不需要同网络
+            # 应用容器同理：名字被 compose 项目之外的容器占用时（手工 docker run 调试、旧项目残留），
+            # compose 不接管、直接报 Conflict。只清掉不属于本项目的同名容器，本项目的交给 up 滚动更新
+            for svc in gateway identity catalog order; do
+              if [ -z "$(docker compose ps -aq "$svc")" ]; then
+                docker rm -f "$svc" >/dev/null 2>&1 || true
+              fi
+            done
             docker compose up -d --no-deps gateway identity catalog order
             sleep 5
 
