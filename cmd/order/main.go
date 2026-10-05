@@ -21,14 +21,14 @@ import (
 	"github.com/wsc-zz/service/internal/interfaces/http/router"
 )
 
-// @title           Demo Service API
-// @version         1.0
-// @description     DDD 架构示例服务（用户 / 订单 / 分类）
-// @host            localhost:8080
-// @BasePath        /api
-// @securityDefinitions.apikey  ApiKeyAuth
-// @in                           header
-// @name                         Authorization
+//	@title						Demo Service API
+//	@version					1.0
+//	@description				DDD 架构示例服务（用户 / 商品目录 / 订单）。host 为网关端口，经网关按前缀转发到各服务
+//	@host						localhost:9000
+//	@BasePath					/api
+//	@securityDefinitions.apikey	ApiKeyAuth
+//	@in							header
+//	@name						Authorization
 
 func main() {
 	// 1. 初始化基础设施：配置、日志、远程配置、数据库

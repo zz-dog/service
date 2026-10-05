@@ -69,16 +69,17 @@ type SkU struct {
 }
 
 // Create 创建商品
-// @Summary      创建商品
-// @Description  创建商品及其 SKU；SKU 编码和规格名称由服务端生成
-// @Tags         商品
-// @Accept       json
-// @Produce      json
-// @Param        request  body      createProductReq  true  "商品信息"
-// @Success      200      {object}  response.Response{data=productapp.ProductDTO}
-// @Failure      400      {object}  response.Response  "参数校验失败或商品信息无效"
-// @Failure      500      {object}  response.Response  "服务器内部错误"
-// @Router       /product/create [post]
+//
+//	@Summary		创建商品
+//	@Description	创建商品及其 SKU；SKU 编码和规格名称由服务端生成
+//	@Tags			商品
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		createProductReq	true	"商品信息"
+//	@Success		200		{object}	response.Response{data=productapp.ProductDTO}
+//	@Failure		400		{object}	response.Response	"参数校验失败或商品信息无效"
+//	@Failure		500		{object}	response.Response	"服务器内部错误"
+//	@Router			/product/create [post]
 func (h *ProductHandler) Create(c *gin.Context) {
 	var req createProductReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -113,16 +114,17 @@ type updateProductReq struct {
 }
 
 // Update 更新商品
-// @Summary      更新商品
-// @Description  根据商品ID更新商品的分类、名称、描述和图片地址
-// @Tags         商品
-// @Accept       json
-// @Produce      json
-// @Param        request  body      updateProductReq  true  "商品更新信息"
-// @Success      200      {object}  response.Response{data=productapp.ProductDTO}
-// @Failure      400      {object}  response.Response  "参数校验失败或商品信息无效"
-// @Failure      500      {object}  response.Response  "服务器内部错误"
-// @Router       /product/update [post]
+//
+//	@Summary		更新商品
+//	@Description	根据商品ID更新商品的分类、名称、描述和图片地址
+//	@Tags			商品
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		updateProductReq	true	"商品更新信息"
+//	@Success		200		{object}	response.Response{data=productapp.ProductDTO}
+//	@Failure		400		{object}	response.Response	"参数校验失败或商品信息无效"
+//	@Failure		500		{object}	response.Response	"服务器内部错误"
+//	@Router			/product/update [post]
 func (h *ProductHandler) Update(c *gin.Context) {
 	var req updateProductReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -158,19 +160,20 @@ type ProdectListReq struct {
 }
 
 // List 分页查询商品
-// @Summary      分页查询商品
-// @Description  根据分类、商品ID或名称筛选商品并分页返回
-// @Tags         商品
-// @Produce      json
-// @Param        categoryId  query     int     false  "分类ID"
-// @Param        productId   query     int     false  "商品ID"
-// @Param        name        query     string  false  "商品名称"
-// @Param        page        query     int     true   "页码"
-// @Param        pageSize    query     int     true   "每页数量"
-// @Success      200         {object}  response.Response{data=productapp.ProductListResult}
-// @Failure      400         {object}  response.Response  "查询参数校验失败"
-// @Failure      500         {object}  response.Response  "服务器内部错误"
-// @Router       /product/list [post]
+//
+//	@Summary		分页查询商品
+//	@Description	根据分类、商品ID或名称筛选商品并分页返回
+//	@Tags			商品
+//	@Produce		json
+//	@Param			categoryId	query		int		false	"分类ID"
+//	@Param			productId	query		int		false	"商品ID"
+//	@Param			name		query		string	false	"商品名称"
+//	@Param			page		query		int		true	"页码"
+//	@Param			pageSize	query		int		true	"每页数量"
+//	@Success		200			{object}	response.Response{data=productapp.ProductListResult}
+//	@Failure		400			{object}	response.Response	"查询参数校验失败"
+//	@Failure		500			{object}	response.Response	"服务器内部错误"
+//	@Router			/product/list [post]
 func (h *ProductHandler) List(c *gin.Context) {
 	var req ProdectListReq
 	if err := c.ShouldBindQuery(&req); err != nil {

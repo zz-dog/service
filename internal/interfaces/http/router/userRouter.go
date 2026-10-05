@@ -22,9 +22,7 @@ func registerUserRoutes(r *gin.RouterGroup) {
 	h := handler.NewHandler(userSvc)
 	apiGroup := r.Group("/user")
 	// 健康检查：供部署流水线 / 负载均衡探活使用，不校验 JWT
-	apiGroup.GET("/health", func(c *gin.Context) {
-		response.SuccessMsg(c, "ok", nil)
-	})
+	apiGroup.GET("/health", healthCheck)
 
 	apiGroup.POST("/register", h.Register)
 	apiGroup.POST("/login", h.Login)
@@ -32,6 +30,18 @@ func registerUserRoutes(r *gin.RouterGroup) {
 	apiGroup.PUT("/status", middleware.JWTAuth(tokenBlacklist), h.ChangeStatus)
 	// 用户资料：需要登录（JWT 中间件校验 token 并写入 userId）
 	apiGroup.PUT("/user/profile", middleware.JWTAuth(tokenBlacklist), h.UpdateUser) // 更新当前用户资料
+}
+
+// healthCheck 健康检查
+//
+//	@Summary		健康检查
+//	@Description	供部署流水线 / 负载均衡探活使用，不校验 JWT
+//	@Tags			用户
+//	@Produce		json
+//	@Success		200	{object}	response.Response
+//	@Router			/user/health [get]
+func healthCheck(c *gin.Context) {
+	response.SuccessMsg(c, "ok", nil)
 }
 
 // RegisterIdentityRoutes 注册 identity 服务的用户接口，不包含其他业务域路由。
