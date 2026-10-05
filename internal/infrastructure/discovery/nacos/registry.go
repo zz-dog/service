@@ -64,6 +64,9 @@ func (r *Registry) ServiceRegister(serviceName string, port int) error {
 	if !registered {
 		return fmt.Errorf("注册 Nacos 服务实例失败: Nacos 未确认注册结果")
 	}
+	// 回存注册信息，供 Deregister 使用
+	r.serviceName = serviceName
+	r.servicePort = uint64(port)
 
 	return nil
 }
@@ -74,6 +77,13 @@ func Register() (*Registry, error) {
 		return nil, fmt.Errorf("创建 Nacos 客户端失败: %w", err)
 	}
 	ip := global.Conf.Nacos.ServiceIP
+	if ip == "" {
+		// 未显式配置 service_ip 时自动探测本机 IPv4（容器内为 eth0 地址）
+		ip, err = localIPv4()
+		if err != nil {
+			return nil, fmt.Errorf("探测本机 IP 失败: %w", err)
+		}
+	}
 
 	return &Registry{client: client, ip: ip, groupName: groupName}, nil
 
@@ -96,7 +106,7 @@ func (r *Registry) RpcRegister(RpcName string, RpcPort int) error {
 		Weight:      1,               // 默认权重
 		Enable:      true,            // 默认启用
 		Healthy:     true,            // 默认健康
-		ServiceName: r.RpcName,       // 默认服务名
+		ServiceName: RpcName,         // 用入参，而非注册前未赋值的 r.RpcName
 		GroupName:   groupName,       //	默认分组
 		Ephemeral:   true,            // 默认临时实例
 	})
