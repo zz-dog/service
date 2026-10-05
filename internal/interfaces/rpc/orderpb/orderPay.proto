@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package orderpay.v1;
+
+option go_package = "github.com/wsc-zz/service/internal/interfaces/rpc/orderpb;orderpb";
+
+// OrderPayService 订单域对支付域开放的 RPC 契约。
+// 契约变更规则:payment 和 order 必须同一次提交里同步改,靠编译期报错保证两边一致
+service OrderPayService {
+  // GetPayableOrder 查询订单(预支付前调用)。只做取数,归属与可付策略由 payment 裁决。
+  rpc GetPayableOrder(GetPayableOrderRequest) returns (GetPayableOrderResponse);
+  // NotifyPaid 通知支付结果。
+  // 幂等:订单已支付 → 返回成功(重放安全);
+  // 订单已取消 → FailedPrecondition(payment 侧转"待退款");
+  // 金额与订单总额不一致 → InvalidArgument(人工介入,绝不自动放行)。
+  rpc NotifyPaid (NotifyPaidRequest) returns (NotifyPaidResponse);
+}
+
+message GetPayableOrderRequest { 
+  string order_no = 1;
+}
+
+message GetPayableOrderResponse { 
+  string order_no = 1;
+  string user_id = 2;
+  int64 total_amount = 3;
+  int64 status = 4;
+}
+
+message NotifyPaidRequest { 
+  string order_no = 1;
+  string pay_no = 2;
+  int64 amount = 3;
+}
+
+message NotifyPaidResponse { 
+}
