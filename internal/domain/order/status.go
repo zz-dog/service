@@ -4,11 +4,12 @@ package order
 type Status int
 
 const (
-	StatusPending   Status = 1 // 待支付
-	StatusPaid      Status = 2 // 已支付
-	StatusShipped   Status = 3 // 已发货
-	StatusCompleted Status = 4 // 已完成
-	StatusCancelled Status = 5 // 已取消
+	StatusUnknown   Status = iota // 未知状态
+	StatusPending          = 1    // 待支付
+	StatusPaid             = 2    // 已支付
+	StatusShipped          = 3    // 已发货
+	StatusCompleted        = 4    // 已完成
+	StatusCancelled        = 5    // 已取消
 )
 
 // statusName 状态中文名，用于日志与展示

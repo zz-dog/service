@@ -91,3 +91,8 @@ func (o *Order) Cancel() error {
 func (o *Order) CanCancel() bool {
 	return o.Status == StatusPending
 }
+
+// canPay
+func (o *Order) CanPay() bool {
+	return o.Status == StatusPending
+}

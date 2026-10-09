@@ -6,6 +6,8 @@ import (
 
 	domainorder "github.com/wsc-zz/service/internal/domain/order"
 	"github.com/wsc-zz/service/internal/interfaces/rpc/orderpb"
+
+	domainpayment "github.com/wsc-zz/service/internal/domain/payment"
 )
 
 type Server struct {
@@ -38,4 +40,19 @@ func (s *Server) NotifyPaid(ctx context.Context, req *orderpb.NotifyPaidRequest)
 	}
 	// Implementation for handling paid notification
 	return &orderpb.NotifyPaidResponse{}, nil
+}
+
+func (s *Server) GetPayableOrder(ctx context.Context, req *orderpb.GetPayableOrderRequest) (*orderpb.GetPayableOrderResponse, error) {
+	o, err := s.repo.FindByOrderNo(ctx, req.GetOrderNo())
+	if err != nil {
+		return nil, fmt.Errorf("订单不存在: %w", err)
+	}
+	if o.CanPay() != true {
+		return nil, fmt.Errorf("订单不可支付")
+	}
+	return &orderpb.GetPayableOrderResponse{
+		OrderNo:     o.OrderNo,
+		TotalAmount: o.TotalAmount,
+		Status:      int64(domainpayment.StatusProcessing),
+	}, nil
 }

@@ -24,8 +24,18 @@ type Config struct {
 	Catalog  ServiceConfig `yaml:"catalog"`
 	Identity ServiceConfig `yaml:"identity"`
 	Order    ServiceConfig `yaml:"order"`
+	Payment  PaymentConfig `yaml:"payment"`
 }
-
+type PaymentConfig struct {
+	NotifyUrl string    `yaml:"notify_url"`
+	ReturnUrl string    `yaml:"return_url"`
+	Alipay    payConfug `yaml:"alipay"`
+}
+type payConfug struct {
+	AppID      string `yaml:"app_id" mapstructure:"app_id"`
+	PrivateKey string `yaml:"private_key" mapstructure:"private_key"`
+	PublicKey  string `yaml:"public_key" mapstructure:"public_key"`
+}
 type ServiceConfig struct {
 	RpcAddr     string `yaml:"grpc_addr" mapstructure:"grpc_addr"`
 	RpcPort     int    `yaml:"rpc_port" mapstructure:"rpc_port"`
