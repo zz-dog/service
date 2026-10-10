@@ -27,6 +27,8 @@ var badRequestErrors = []error{
 	domainproduct.ErrInvalidSpecItem,
 	domainproduct.ErrInvalidPrice,
 	domainproduct.ErrInvalidStock,
+	domainproduct.ErrInvalidMediaType,
+	domainproduct.ErrEmptyMediaURL,
 }
 
 func isBadRequest(err error) bool {
@@ -48,11 +50,18 @@ func NewProductHandler(productSvc *productapp.Service) *ProductHandler {
 	}
 }
 
+type mediaReq struct {
+	// Type 类型：1图片 2视频 3模型
+	Type int    `json:"type" binding:"required,oneof=1 2 3"`
+	URL  string `json:"url" binding:"required"`
+}
+
 type createProductReq struct {
-	CategoryID uint   `json:"categoryId" binding:"required"` // 分类ID
-	Name       string `json:"name" binding:"required"`       // 商品名称
-	Desc       string `json:"desc"`                          // 商品描述
-	SKUs       []SkU  `json:"skus" binding:"required"`       // 商品规格
+	CategoryID uint       `json:"categoryId" binding:"required"` // 分类ID
+	Name       string     `json:"name" binding:"required"`       // 商品名称
+	Desc       string     `json:"desc"`                          // 商品描述
+	SKUs       []SkU      `json:"skus" binding:"required"`       // 商品规格
+	Medias     []mediaReq `json:"medias"`                        // 商品媒体资源，按顺序展示
 }
 
 type specItemReq struct {
@@ -92,6 +101,7 @@ func (h *ProductHandler) Create(c *gin.Context) {
 		Name:       req.Name,
 		Desc:       req.Desc,
 		SKUs:       toSKUInputs(req.SKUs),
+		Medias:     toMediaInputs(req.Medias),
 	}
 	resp, err := h.productSvc.Create(c.Request.Context(), in)
 	if err != nil {
@@ -106,17 +116,17 @@ func (h *ProductHandler) Create(c *gin.Context) {
 }
 
 type updateProductReq struct {
-	ProductID  uint     `json:"productId" binding:"required"`
-	CategoryID uint     `json:"categoryId"`
-	Name       string   `json:"name"`
-	Desc       string   `json:"desc"`
-	Urls       []string `json:"urls"`
+	ProductID  uint       `json:"productId" binding:"required"`
+	CategoryID uint       `json:"categoryId"`
+	Name       string     `json:"name"`
+	Desc       string     `json:"desc"`
+	Medias     []mediaReq `json:"medias"` // 整体替换：不传则清空
 }
 
 // Update 更新商品
 //
 //	@Summary		更新商品
-//	@Description	根据商品ID更新商品的分类、名称、描述和图片地址
+//	@Description	根据商品ID更新商品的分类、名称、描述和媒体资源（整体替换）
 //	@Tags			商品
 //	@Accept			json
 //	@Produce		json
@@ -136,7 +146,7 @@ func (h *ProductHandler) Update(c *gin.Context) {
 		CategoryID: req.CategoryID,
 		Name:       req.Name,
 		Desc:       req.Desc,
-		Urls:       req.Urls,
+		Medias:     toMediaInputs(req.Medias),
 	}
 	resp, err := h.productSvc.Update(c.Request.Context(), in)
 	if err != nil {
@@ -194,6 +204,17 @@ func (h *ProductHandler) List(c *gin.Context) {
 	}
 	response.Success(c, result)
 }
+func toMediaInputs(inputs []mediaReq) []productapp.MediaInput {
+	out := make([]productapp.MediaInput, 0, len(inputs))
+	for _, m := range inputs {
+		out = append(out, productapp.MediaInput{
+			Type: m.Type,
+			URL:  m.URL,
+		})
+	}
+	return out
+}
+
 func toSKUInputs(skus []SkU) []productapp.SKUInput {
 	out := make([]productapp.SKUInput, 0, len(skus))
 	for _, s := range skus {

@@ -61,7 +61,7 @@ type OrderDTO struct {
 	OrderID          uint               `json:"orderId"`               // 订单ID
 	UserID           uint               `json:"userId"`                // 用户ID
 	OrderNo          string             `json:"orderNo"`               // 订单编号
-	Status           domainOrder.Status `json:"status"`                // 订单状态：1-待支付，2-已支付，3-已发货，4-已完成，5-已取消
+	Status           domainOrder.Status `json:"status" swaggertype:"integer"` // 订单状态：1-待支付，2-已支付，3-已发货，4-已完成，5-已取消
 	StatusName       string             `json:"statusName"`            // 订单状态名称
 	TotalAmount      int64              `json:"totalAmount"`           // 单位：分
 	ConsigneeName    string             `json:"consigneeName"`         // 收货人姓名

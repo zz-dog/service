@@ -28,6 +28,7 @@ type SKU struct {
 	SpecItems []SpecItem // 规格组合，如 [{颜色:红色},{尺码:L}]
 	Price     int64      // 单价，单位：分
 	Stock     int        // 库存
+	Url       string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

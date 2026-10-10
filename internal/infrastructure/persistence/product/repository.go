@@ -23,7 +23,7 @@ func NewProductRepository(db *gorm.DB) *ProductRepository {
 func (r *ProductRepository) FindByID(ctx context.Context, id uint) (*domainproduct.Product, error) {
 	var po ProductPO
 	err := r.db.WithContext(ctx).
-		Preload("SKUs").Preload("SKUs.SpecItems").
+		Preload("SKUs").Preload("SKUs.SpecItems").Preload("Medias").
 		Where("product_id = ?", id).First(&po).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -66,10 +66,17 @@ func (r *ProductRepository) Create(ctx context.Context, p *domainproduct.Product
 
 func (r *ProductRepository) Save(ctx context.Context, p *domainproduct.Product) error {
 	po := toPO(p)
-	// FullSaveAssociations：更新时同步 Upsert 子表（SKU / 规格项）
-	return r.db.WithContext(ctx).
-		Session(&gorm.Session{FullSaveAssociations: true}).
-		Save(&po).Error
+	// 媒体是"整体替换"语义且自增主键无业务键：
+	// FullSaveAssociations 只会 Upsert 不会删旧行，先删旧媒体再落库，避免越更越多
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("product_id = ?", po.ProductID).
+			Delete(&ProductMediaPO{}).Error; err != nil {
+			return err
+		}
+		// FullSaveAssociations：更新时同步 Upsert 子表（SKU / 规格项 / 媒体）
+		return tx.Session(&gorm.Session{FullSaveAssociations: true}).
+			Save(&po).Error
+	})
 }
 
 func (r *ProductRepository) CountByCategory(ctx context.Context, categoryID uint) (int64, error) {
@@ -145,7 +152,7 @@ func (r *ProductRepository) List(ctx context.Context, q domainproduct.ListQuery)
 		return nil, 0, err
 	}
 	offset := (q.Page - 1) * q.PageSize
-	if err := db.Preload("SKUs").Preload("SKUs.SpecItems").
+	if err := db.Preload("SKUs").Preload("SKUs.SpecItems").Preload("Medias").
 		Offset(offset).Limit(q.PageSize).Find(&pos).Error; err != nil {
 		return nil, 0, err
 	}
@@ -164,9 +171,24 @@ func toProduct(p ProductPO) *domainproduct.Product {
 		Desc:       p.Desc,
 		Status:     p.Status,
 		SKUs:       toSKUs(p.SKUs),
+		Medias:     toMedias(p.Medias),
 		CreatedAt:  p.CreatedAt,
 		UpdatedAt:  p.UpdatedAt,
 	}
+}
+
+func toMedias(medias []ProductMediaPO) []domainproduct.Media {
+	if len(medias) == 0 {
+		return nil
+	}
+	target := make([]domainproduct.Media, 0, len(medias))
+	for _, m := range medias {
+		target = append(target, domainproduct.Media{
+			Type: m.Type,
+			URL:  m.URL,
+		})
+	}
+	return target
 }
 
 func toSKUs(s []SKUPO) []domainproduct.SKU {
@@ -205,7 +227,25 @@ func toPO(p *domainproduct.Product) ProductPO {
 		Desc:       p.Desc,
 		Status:     p.Status,
 		SKUs:       toSKUPO(p.SKUs),
+		Medias:     toMediaPO(p.Medias),
 	}
+}
+
+// toMediaPO 领域媒体转 PO：按切片顺序生成 Sort，保证展示顺序稳定。
+func toMediaPO(medias []domainproduct.Media) []ProductMediaPO {
+	if len(medias) == 0 {
+		return nil
+	}
+	target := make([]ProductMediaPO, 0, len(medias))
+	for i, m := range medias {
+		target = append(target, ProductMediaPO{
+			ProductID: 0, // 由 GORM 关联写入时填充
+			Sort:      i,
+			Type:      m.Type,
+			URL:       m.URL,
+		})
+	}
+	return target
 }
 
 func toSKUPO(s []domainproduct.SKU) []SKUPO {

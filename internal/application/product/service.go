@@ -33,6 +33,9 @@ func (s *Service) Create(ctx context.Context, in CreateProductInput) (*ProductDT
 	if err != nil {
 		return nil, err
 	}
+	if err := p.ReplaceMedias(toMedias(in.Medias)); err != nil {
+		return nil, err
+	}
 	if err := s.repo.Create(ctx, p); err != nil {
 		return nil, err
 	}
@@ -58,7 +61,13 @@ func (s *Service) Update(ctx context.Context, in UpdateProductInput) (*ProductDT
 	if err != nil {
 		return nil, err
 	}
-	p.UpdateInfo(in.CategoryID, in.Name, in.Desc, in.Urls)
+	if err := p.UpdateInfo(in.CategoryID, in.Name, in.Desc); err != nil {
+		return nil, err
+	}
+	// 媒体整体替换：不传则清空
+	if err := p.ReplaceMedias(toMedias(in.Medias)); err != nil {
+		return nil, err
+	}
 	if err := s.repo.Save(ctx, p); err != nil {
 		return nil, err
 	}
@@ -103,6 +112,35 @@ func buildSKUs(inputs []SKUInput, specs []*CategorySpecView) ([]domainproduct.SK
 	return skus, nil
 }
 
+// toMedias 输入媒体转领域媒体（类型合法性由领域层 ReplaceMedias 校验）。
+func toMedias(inputs []MediaInput) []domainproduct.Media {
+	if len(inputs) == 0 {
+		return nil
+	}
+	medias := make([]domainproduct.Media, 0, len(inputs))
+	for _, in := range inputs {
+		medias = append(medias, domainproduct.Media{
+			Type: domainproduct.MediaType(in.Type),
+			URL:  in.URL,
+		})
+	}
+	return medias
+}
+
+func toMediaDTOs(medias []domainproduct.Media) []MediaDTO {
+	if len(medias) == 0 {
+		return nil
+	}
+	dtos := make([]MediaDTO, 0, len(medias))
+	for _, m := range medias {
+		dtos = append(dtos, MediaDTO{
+			Type: int(m.Type),
+			URL:  m.URL,
+		})
+	}
+	return dtos
+}
+
 func toSpecItemDTOs(items []domainproduct.SpecItem) []SpecItemDTO {
 	dtos := make([]SpecItemDTO, 0, len(items))
 	for _, item := range items {
@@ -134,6 +172,7 @@ func toProductDTO(p *domainproduct.Product) ProductDTO {
 		Desc:       p.Desc,
 		Status:     int(p.Status),
 		SKUs:       skus,
+		Medias:     toMediaDTOs(p.Medias),
 		CreatedAt:  p.CreatedAt,
 		UpdatedAt:  p.UpdatedAt,
 	}

@@ -20,6 +20,8 @@ var (
 	ErrInvalidSpecItem          = errors.New("规格项的维度ID、值ID、名称不能为空")
 	ErrDuplicateSpecInSKU       = errors.New("SKU内同一规格维度不能出现多次")
 	ErrEmptyProductName         = errors.New("商品名称不能为空")
+	ErrInvalidMediaType         = errors.New("媒体资源类型无效")
+	ErrEmptyMediaURL            = errors.New("媒体资源地址不能为空")
 	ErrEmptyCategoryName        = errors.New("分类名称不能为空")
 	ErrCategoryHasProduct       = errors.New("分类下还有商品，不能删除")
 )

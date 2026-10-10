@@ -19,7 +19,7 @@ type Product struct {
 	Desc       string    // 商品描述
 	Status     Status    // 上下架状态
 	SKUs       []SKU     // 商品规格
-	Urls       []string  // 商品图片
+	Medias     []Media   // 商品媒体资源（图片/视频/3D模型）
 	CreatedAt  time.Time // 创建时间
 	UpdatedAt  time.Time // 更新时间
 }
@@ -43,16 +43,23 @@ func NewProduct(categoryID uint, name, desc string, skus []SKU) (*Product, error
 }
 
 // UpdateInfo 修改商品基础信息（名称、描述、分类）。
-func (p *Product) UpdateInfo(categoryID uint, name, desc string, Urls []string) error {
+func (p *Product) UpdateInfo(categoryID uint, name, desc string) error {
 	if name == "" {
 		return ErrEmptyProductName
 	}
 	p.CategoryID = categoryID
 	p.Name = name
 	p.Desc = desc
-	if len(Urls) > 0 {
-		p.Urls = Urls
+
+	return nil
+}
+
+// ReplaceMedias 替换全部媒体资源（管理端重新设置商品图片/视频/模型）。
+func (p *Product) ReplaceMedias(medias []Media) error {
+	if err := validateMedias(medias); err != nil {
+		return err
 	}
+	p.Medias = medias
 	return nil
 }
 

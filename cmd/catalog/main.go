@@ -51,6 +51,7 @@ func main() {
 		&productpo.ProductPO{},
 		&productpo.SKUPO{},
 		&productpo.SKUSpecItemPO{},
+		&productpo.ProductMediaPO{},
 	); err != nil {
 		global.Logger.Error("数据表迁移失败", zap.Error(err))
 		panic("数据表迁移失败:" + err.Error())

@@ -37,11 +37,24 @@ type ProductPO struct {
 	Name       string  `gorm:"size:128;comment:商品名称"`
 	Desc       string  `gorm:"size:255;comment:商品描述"`
 	SKUs       []SKUPO `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;comment:商品规格"`
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	Status     domainproduct.Status `gorm:"tinyint;not null;default:1;comment:商品状态 1上架 0下架"`
+	// 媒体资源：图片/视频/3D模型等，一行一条
+	Medias    []ProductMediaPO `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;comment:商品媒体资源"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Status    domainproduct.Status `gorm:"tinyint;not null;default:1;comment:商品状态 1上架 0下架"`
 }
 
-func (ProductPO) TableName() string     { return "products" }
-func (SKUPO) TableName() string         { return "product_skus" }
-func (SKUSpecItemPO) TableName() string { return "sku_spec_items" }
+// ProductMediaPO 商品媒体资源：图片/视频/3D模型等展示素材。
+// 自增主键 + (product_id, sort) 索引：一个商品多条资源，按 sort 排序展示。
+type ProductMediaPO struct {
+	ID        uint                    `gorm:"primaryKey;autoIncrement;comment:媒体ID"`
+	ProductID uint                    `gorm:"index:idx_product_media,priority:1;comment:商品ID"`
+	Sort      int                     `gorm:"index:idx_product_media,priority:2;comment:排序，越小越靠前"`
+	Type      domainproduct.MediaType `gorm:"tinyint;not null;comment:类型 1图片 2视频 3模型"`
+	URL       string                  `gorm:"size:512;comment:资源地址"`
+}
+
+func (ProductPO) TableName() string        { return "products" }
+func (SKUPO) TableName() string            { return "product_skus" }
+func (SKUSpecItemPO) TableName() string    { return "sku_spec_items" }
+func (ProductMediaPO) TableName() string   { return "product_media" }

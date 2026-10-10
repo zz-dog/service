@@ -11,6 +11,12 @@ type SpecItemInput struct {
 	ValueID uint `json:"valueId"` // 规格值ID
 }
 
+// MediaInput 商品媒体资源输入：类型 1图片 2视频 3模型。
+type MediaInput struct {
+	Type int    `json:"type"` // 资源类型
+	URL  string `json:"url"`  // 资源地址
+}
+
 type SKUInput struct {
 	// SKUCode 不收客户端值，由服务端从规格组合派生（值ID按维度ID排序拼接）
 	SpecItems []SpecItemInput `json:"specItems"` // 规格组合
@@ -18,17 +24,18 @@ type SKUInput struct {
 	Stock     int             `json:"stock"`     // 库存
 }
 type CreateProductInput struct {
-	CategoryID uint       `json:"categoryId"`
-	Name       string     `json:"name"`
-	Desc       string     `json:"desc"`
-	SKUs       []SKUInput `json:"skus"`
+	CategoryID uint        `json:"categoryId"`
+	Name       string      `json:"name"`
+	Desc       string      `json:"desc"`
+	SKUs       []SKUInput  `json:"skus"`
+	Medias     []MediaInput `json:"medias"` // 商品媒体资源，按顺序展示
 }
 type UpdateProductInput struct {
-	ProductID  uint     `json:"productId"`
-	CategoryID uint     `json:"categoryId"`
-	Name       string   `json:"name"`
-	Desc       string   `json:"desc"`
-	Urls       []string `json:"urls"`
+	ProductID  uint         `json:"productId"`
+	CategoryID uint         `json:"categoryId"`
+	Name       string       `json:"name"`
+	Desc       string       `json:"desc"`
+	Medias     []MediaInput `json:"medias"` // 整体替换：不传则清空
 }
 type DeductStockInput struct {
 	SKUCode string `json:"skuCode"`
@@ -48,6 +55,11 @@ type SpecItemDTO struct {
 	ValueName string `json:"valueName"`
 }
 
+type MediaDTO struct {
+	Type int    `json:"type"` // 类型 1图片 2视频 3模型
+	URL  string `json:"url"`  // 资源地址
+}
+
 type SKUDTO struct {
 	SKUCode   string        `json:"skuCode"`
 	SpecItems []SpecItemDTO `json:"specItems"`
@@ -56,14 +68,15 @@ type SKUDTO struct {
 	Stock     int           `json:"stock"`
 }
 type ProductDTO struct {
-	ProductID  uint      `json:"productId"`
-	CategoryID uint      `json:"categoryId"`
-	Name       string    `json:"name"`
-	Desc       string    `json:"desc"`
-	Status     int       `json:"status"`
-	SKUs       []SKUDTO  `json:"skus"`
-	CreatedAt  time.Time `json:"createdAt"`
-	UpdatedAt  time.Time `json:"updatedAt"`
+	ProductID  uint       `json:"productId"`
+	CategoryID uint       `json:"categoryId"`
+	Name       string     `json:"name"`
+	Desc       string     `json:"desc"`
+	Status     int        `json:"status"`
+	SKUs       []SKUDTO   `json:"skus"`
+	Medias     []MediaDTO `json:"medias"`
+	CreatedAt  time.Time  `json:"createdAt"`
+	UpdatedAt  time.Time  `json:"updatedAt"`
 }
 
 type ProductListResult struct {
