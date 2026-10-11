@@ -11,6 +11,7 @@ import (
 	productpo "github.com/wsc-zz/service/internal/infrastructure/persistence/product"
 	specpo "github.com/wsc-zz/service/internal/infrastructure/persistence/spec"
 	"github.com/wsc-zz/service/internal/interfaces/http/handler"
+	middleware "github.com/wsc-zz/service/internal/interfaces/http/middleware"
 
 	categoryCache "github.com/wsc-zz/service/internal/infrastructure/cache/redis"
 )
@@ -27,11 +28,14 @@ func registerProductRouter(r *gin.RouterGroup) {
 	productRepo := productpo.NewProductRepository(global.DB)
 	productSvc := productapp.NewService(productRepo, categorySpecDirectory{svc: categorySvc})
 	h := handler.NewProductHandler(productSvc)
+
 	productApi := r.Group("/product")
+	blacklist := NewTokenBlacklist()
 	{
-		productApi.POST("/create", h.Create)
-		productApi.POST("/update", h.Update)
+		productApi.POST("/create", h.Create, middleware.JWTAuth(blacklist))
+		productApi.POST("/update", h.Update, middleware.JWTAuth(blacklist))
 		productApi.POST("/list", h.List)
+
 	}
 }
 

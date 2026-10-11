@@ -13,6 +13,7 @@ type SKUPO struct {
 	SKUCode   string `gorm:"primaryKey;size:64;comment:规格编码"`
 	Price     int64  `gorm:"comment:单价(分)"`
 	Stock     int    `gorm:"comment:库存"`
+	Picture   string `gorm:"size:512;comment:商品图片"`
 	// 规格项：引用规格库的维度+值（含名称快照）
 	// 复合外键 (product_id, sku_code) -> product_skus(product_id, sku_code)
 	SpecItems []SKUSpecItemPO `gorm:"foreignKey:ProductID,SKUCode;references:ProductID,SKUCode;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;comment:SKU规格组合"`
@@ -54,7 +55,7 @@ type ProductMediaPO struct {
 	URL       string                  `gorm:"size:512;comment:资源地址"`
 }
 
-func (ProductPO) TableName() string        { return "products" }
-func (SKUPO) TableName() string            { return "product_skus" }
-func (SKUSpecItemPO) TableName() string    { return "sku_spec_items" }
-func (ProductMediaPO) TableName() string   { return "product_media" }
+func (ProductPO) TableName() string      { return "products" }
+func (SKUPO) TableName() string          { return "product_skus" }
+func (SKUSpecItemPO) TableName() string  { return "sku_spec_items" }
+func (ProductMediaPO) TableName() string { return "product_media" }

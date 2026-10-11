@@ -18,28 +18,29 @@ type MediaInput struct {
 }
 
 type SKUInput struct {
-	// SKUCode 不收客户端值，由服务端从规格组合派生（值ID按维度ID排序拼接）
-	SpecItems []SpecItemInput `json:"specItems"` // 规格组合
-	Price     int64           `json:"price"`     // 价格
-	Stock     int             `json:"stock"`     // 库存
+	// SKUCode 不收客户端值，派生（值ID按维度ID排序拼接）
+	SpecItems []SpecItemInput // 规格组合
+	Price     int64           // 价格
+	Stock     int             // 库存
+	Picture   string
 }
 type CreateProductInput struct {
-	CategoryID uint        `json:"categoryId"`
-	Name       string      `json:"name"`
-	Desc       string      `json:"desc"`
-	SKUs       []SKUInput  `json:"skus"`
-	Medias     []MediaInput `json:"medias"` // 商品媒体资源，按顺序展示
+	CategoryID uint
+	Name       string
+	Desc       string
+	SKUs       []SKUInput
+	Medias     []MediaInput // 商品媒体资源，按顺序展示
 }
 type UpdateProductInput struct {
-	ProductID  uint         `json:"productId"`
-	CategoryID uint         `json:"categoryId"`
-	Name       string       `json:"name"`
-	Desc       string       `json:"desc"`
-	Medias     []MediaInput `json:"medias"` // 整体替换：不传则清空
+	ProductID  uint
+	CategoryID uint
+	Name       string
+	Desc       string
+	Medias     []MediaInput // 整体替换：不传则清空
 }
 type DeductStockInput struct {
-	SKUCode string `json:"skuCode"`
-	Qty     int    `json:"qty"`
+	SKUCode string
+	Qty     int
 }
 type SearchProductInput struct {
 	CategoryID uint

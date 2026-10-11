@@ -7,6 +7,7 @@ import (
 	specpo "github.com/wsc-zz/service/internal/infrastructure/persistence/spec"
 
 	"github.com/wsc-zz/service/internal/interfaces/http/handler"
+	middleware "github.com/wsc-zz/service/internal/interfaces/http/middleware"
 )
 
 func RegisterSpecRoutes(r *gin.RouterGroup) {
@@ -14,7 +15,8 @@ func RegisterSpecRoutes(r *gin.RouterGroup) {
 	specSvc := specapp.NewService(specRepo)
 
 	h := handler.NewSpecHandler(specSvc)
-	specRouter := r.Group("/spec")
+	blacklist := NewTokenBlacklist()
+	specRouter := r.Group("/spec", middleware.JWTAuth(blacklist))
 
 	specRouter.POST("/register", h.Create)
 	specRouter.PUT("/update/:id", h.Update)

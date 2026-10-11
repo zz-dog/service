@@ -74,7 +74,8 @@ type SkU struct {
 	// SKUCode 不收客户端值，由服务端从规格组合派生，创建后在响应中返回
 	SpecItems []specItemReq `json:"specItems" binding:"required,min=1,dive"` // 规格组合
 	Price     int64         `json:"price" binding:"required,gt=0"`           // 价格
-	Stock     int           `json:"stock" binding:"gte=0"`                   // 库存
+	Stock     int           `json:"stock" binding:"gte=0"`
+	Picture   string        `json:"picture" binding:"required"` // 图片
 }
 
 // Create 创建商品
@@ -229,6 +230,7 @@ func toSKUInputs(skus []SkU) []productapp.SKUInput {
 			SpecItems: items,
 			Price:     s.Price,
 			Stock:     s.Stock,
+			Picture:   s.Picture,
 		})
 	}
 	return out

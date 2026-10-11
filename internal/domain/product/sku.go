@@ -28,7 +28,7 @@ type SKU struct {
 	SpecItems []SpecItem // 规格组合，如 [{颜色:红色},{尺码:L}]
 	Price     int64      // 单价，单位：分
 	Stock     int        // 库存
-	Url       string
+	Picture   string     // 商品图片
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -66,6 +66,9 @@ func (s SKU) validate() error {
 	}
 	if s.Stock < 0 {
 		return ErrInvalidStock
+	}
+	if s.Picture == "" {
+		return ErrEmptyMediaURL
 	}
 	// 规格组合：至少一项，字段齐全，同一维度不能出现两次（一个 SKU 不能既红色又蓝色）
 	if len(s.SpecItems) == 0 {

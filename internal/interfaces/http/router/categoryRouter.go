@@ -9,6 +9,8 @@ import (
 	"github.com/wsc-zz/service/internal/interfaces/http/handler"
 
 	categoryCache "github.com/wsc-zz/service/internal/infrastructure/cache/redis"
+
+	middleware "github.com/wsc-zz/service/internal/interfaces/http/middleware"
 )
 
 func registerCategoryRoutes(router *gin.RouterGroup) {
@@ -20,7 +22,9 @@ func registerCategoryRoutes(router *gin.RouterGroup) {
 	categoryCache := categoryCache.NewCategoryCache(global.RedisClient)
 	categorySvc := categoryapp.NewService(categoryRepo, specRepo, categorySpecRepo, categoryCache)
 	h := handler.NewCategoryHandler(categorySvc)
-	categoryApi := router.Group("/category")
+
+	blacklist := NewTokenBlacklist()
+	categoryApi := router.Group("/category", middleware.JWTAuth(blacklist))
 	{
 		categoryApi.POST("/create", h.Create)           // 创建分类
 		categoryApi.PUT("/:id", h.Update)               // 更新分类

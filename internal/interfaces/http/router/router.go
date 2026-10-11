@@ -16,10 +16,13 @@ func InitCatalogRouter() *gin.Engine {
 	registerCategoryRoutes(catalogGroup) // /api/catalog/category/**
 	RegisterSpecRoutes(catalogGroup)     // /api/catalog/spec/**
 	registerProductRouter(catalogGroup)  // /api/catalog/product/**
+
+	registerPublicRoutes(catalogGroup) // /api/catalog/public/**
 	return r
 }
 
 func InitOrderRouter() *gin.Engine {
+
 	r := gin.Default()
 	r.Use(CORSMiddleware())
 	orderGroup := r.Group("/api")

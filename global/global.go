@@ -25,6 +25,15 @@ type Config struct {
 	Identity ServiceConfig `yaml:"identity"`
 	Order    ServiceConfig `yaml:"order"`
 	Payment  PaymentConfig `yaml:"payment"`
+	Oss      OssConfig     `yaml:"oss"`
+}
+
+type OssConfig struct {
+	Region                string `yaml:"region"`
+	AccessKeyId           string `yaml:"access_key_id"`
+	AccessAccessKeySecret string `yaml:"access_key_secret"`
+	Bucket                string `yaml:"bucket"`
+	PublicBaseUrl         string `yaml:"public_base_url"`
 }
 type PaymentConfig struct {
 	NotifyUrl string    `yaml:"notify_url"`

@@ -199,6 +199,7 @@ func toSKUs(s []SKUPO) []domainproduct.SKU {
 			SpecItems: toSpecItems(sku.SpecItems),
 			Price:     sku.Price,
 			Stock:     sku.Stock,
+			Picture:   sku.Picture,
 			CreatedAt: sku.CreatedAt,
 			UpdatedAt: sku.UpdatedAt,
 		}
@@ -255,6 +256,7 @@ func toSKUPO(s []domainproduct.SKU) []SKUPO {
 			SKUCode:   sku.SKUCode,
 			Price:     sku.Price,
 			Stock:     sku.Stock,
+			Picture:   sku.Picture,
 			SpecItems: toSpecItemPO(sku.SpecItems),
 		}
 	}
