@@ -37,7 +37,7 @@ type CreateReq struct {
 //	@Success		200		{object}	response.Response{data=categoryapp.CategoryDto}
 //	@Failure		400		{object}	response.Response	"参数校验失败"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/category/create [post]
+//	@Router			/catalog/category/create [post]
 func (h *CategoryHandler) Create(c *gin.Context) {
 	var req CreateReq
 	// 绑定参数
@@ -77,7 +77,7 @@ type UpdateReq struct {
 //	@Success		200		{object}	response.Response{data=categoryapp.CategoryDto}
 //	@Failure		400		{object}	response.Response	"参数校验失败"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/category/{id} [put]
+//	@Router			/catalog/category/{id} [put]
 func (h *CategoryHandler) Update(c *gin.Context) {
 	// 从动态路由 :id 读取分类ID
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
@@ -116,7 +116,7 @@ func (h *CategoryHandler) Update(c *gin.Context) {
 //	@Success		200	{object}	response.Response
 //	@Failure		400	{object}	response.Response	"分类ID格式错误"
 //	@Failure		500	{object}	response.Response	"服务器内部错误"
-//	@Router			/category/{id} [delete]
+//	@Router			/catalog/category/{id} [delete]
 func (h *CategoryHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -139,7 +139,7 @@ func (h *CategoryHandler) Delete(c *gin.Context) {
 //	@Produce		json
 //	@Success		200	{object}	response.Response{data=[]categoryapp.CategoryDto}
 //	@Failure		500	{object}	response.Response	"服务器内部错误"
-//	@Router			/category/findAll [get]
+//	@Router			/catalog/category/findAll [get]
 func (h *CategoryHandler) FindAll(c *gin.Context) {
 
 	cs, err := h.categorySvc.FindAll(c.Request.Context())
@@ -167,7 +167,7 @@ type BindSpecReq struct {
 //	@Produce		json
 //	@Param			request	body		BindSpecReq	true	"绑定信息"
 //	@Success		200		{object}	response.Response{data=categoryapp.CategorySpecDto}
-//	@Router			/category/bindSpec [post]
+//	@Router			/catalog/category/bindSpec [post]
 func (h *CategoryHandler) BindSpec(c *gin.Context) {
 	var req BindSpecReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -198,7 +198,7 @@ func (h *CategoryHandler) BindSpec(c *gin.Context) {
 //	@Param			categoryId	query		int	true	"分类ID"
 //	@Param			specId		query		int	true	"规格ID"
 //	@Success		200			{object}	response.Response
-//	@Router			/category/unbindSpec [delete]
+//	@Router			/catalog/category/unbindSpec [delete]
 func (h *CategoryHandler) UnbindSpec(c *gin.Context) {
 	categoryID, err := strconv.ParseUint(c.Query("categoryId"), 10, 64)
 	if err != nil || categoryID == 0 {
@@ -227,7 +227,7 @@ func (h *CategoryHandler) UnbindSpec(c *gin.Context) {
 //	@Produce		json
 //	@Param			id	path		int	true	"分类ID"
 //	@Success		200	{object}	response.Response{data=[]categoryapp.CategorySpecDto}
-//	@Router			/category/findSpecs/{id} [get]
+//	@Router			/catalog/category/findSpecs/{id} [get]
 func (h *CategoryHandler) ListSpecs(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil || id == 0 {

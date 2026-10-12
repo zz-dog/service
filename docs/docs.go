@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/category/bindSpec": {
+        "/catalog/category/bindSpec": {
             "post": {
                 "description": "建立分类与规格维度的多对多绑定；重复绑定返回错误",
                 "consumes": [
@@ -35,7 +35,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.BindSpecReq"
+                            "$ref": "#/definitions/internal_interfaces_http_handler.BindSpecReq"
                         }
                     }
                 ],
@@ -45,13 +45,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/categoryapp.CategorySpecDto"
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_category.CategorySpecDto"
                                         }
                                     }
                                 }
@@ -61,7 +61,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/category/create": {
+        "/catalog/category/create": {
             "post": {
                 "description": "创建一个新的商品分类；同名分类已存在时返回错误",
                 "consumes": [
@@ -81,7 +81,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.CreateReq"
+                            "$ref": "#/definitions/internal_interfaces_http_handler.CreateReq"
                         }
                     }
                 ],
@@ -91,13 +91,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/categoryapp.CategoryDto"
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_category.CategoryDto"
                                         }
                                     }
                                 }
@@ -107,19 +107,19 @@ const docTemplate = `{
                     "400": {
                         "description": "参数校验失败",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
             }
         },
-        "/category/findAll": {
+        "/catalog/category/findAll": {
             "get": {
                 "description": "返回全部分类列表（不分页）",
                 "produces": [
@@ -135,7 +135,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
@@ -143,7 +143,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/categoryapp.CategoryDto"
+                                                "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_category.CategoryDto"
                                             }
                                         }
                                     }
@@ -154,13 +154,13 @@ const docTemplate = `{
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
             }
         },
-        "/category/findSpecs/{id}": {
+        "/catalog/category/findSpecs/{id}": {
             "get": {
                 "description": "返回分类下全部绑定的规格维度（含规格值、排序、是否必选）",
                 "produces": [
@@ -185,7 +185,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
@@ -193,7 +193,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/categoryapp.CategorySpecDto"
+                                                "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_category.CategorySpecDto"
                                             }
                                         }
                                     }
@@ -204,7 +204,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/category/unbindSpec": {
+        "/catalog/category/unbindSpec": {
             "delete": {
                 "description": "删除分类与规格维度的绑定关系",
                 "produces": [
@@ -234,13 +234,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
             }
         },
-        "/category/{id}": {
+        "/catalog/category/{id}": {
             "put": {
                 "description": "根据分类ID更新分类信息，支持部分更新（未传字段不修改）",
                 "consumes": [
@@ -267,7 +267,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateReq"
+                            "$ref": "#/definitions/internal_interfaces_http_handler.UpdateReq"
                         }
                     }
                 ],
@@ -277,13 +277,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/categoryapp.CategoryDto"
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_category.CategoryDto"
                                         }
                                     }
                                 }
@@ -293,13 +293,13 @@ const docTemplate = `{
                     "400": {
                         "description": "参数校验失败",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
@@ -326,250 +326,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "400": {
                         "description": "分类ID格式错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
             }
         },
-        "/order/cancel": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "取消订单并回补库存，仅待支付订单可取消，校验订单归属。需要登录（JWT）",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "订单"
-                ],
-                "summary": "取消订单",
-                "parameters": [
-                    {
-                        "description": "订单ID与用户ID",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.CancelOrderRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "订单取消成功",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "订单已取消或当前状态不允许取消",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "未登录或 token 失效",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "404": {
-                        "description": "订单不存在",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/order/create": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "下单并扣减库存（事务保证），用户ID取自 JWT；同一用户 3 秒内重复提交返回 429。",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "订单"
-                ],
-                "summary": "创建订单",
-                "parameters": [
-                    {
-                        "description": "订单信息",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.createOrderRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/orderapp.OrderDTO"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "参数校验失败/商品已下架/库存不足/收货人信息不完整",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "未登录或 token 失效",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "404": {
-                        "description": "商品或 SKU 不存在",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "429": {
-                        "description": "请求过于频繁（3 秒防重窗口）",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/order/list": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "按用户分页查询订单，可按状态过滤：不传或 0 查全部，1-待支付，2-已支付。需要登录（JWT）",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "订单"
-                ],
-                "summary": "分页查询订单列表",
-                "parameters": [
-                    {
-                        "description": "查询条件",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.OrderListRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/orderapp.OrderListResult"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "参数校验失败",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "未登录或 token 失效",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/product/create": {
+        "/catalog/product/create": {
             "post": {
                 "description": "创建商品及其 SKU；SKU 编码和规格名称由服务端生成",
                 "consumes": [
@@ -589,7 +364,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.createProductReq"
+                            "$ref": "#/definitions/internal_interfaces_http_handler.createProductReq"
                         }
                     }
                 ],
@@ -599,13 +374,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/productapp.ProductDTO"
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_product.ProductDTO"
                                         }
                                     }
                                 }
@@ -615,19 +390,19 @@ const docTemplate = `{
                     "400": {
                         "description": "参数校验失败或商品信息无效",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
             }
         },
-        "/product/list": {
+        "/catalog/product/list": {
             "post": {
                 "description": "根据分类、商品ID或名称筛选商品并分页返回",
                 "produces": [
@@ -677,13 +452,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/productapp.ProductListResult"
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_product.ProductListResult"
                                         }
                                     }
                                 }
@@ -693,21 +468,21 @@ const docTemplate = `{
                     "400": {
                         "description": "查询参数校验失败",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
             }
         },
-        "/product/update": {
+        "/catalog/product/update": {
             "post": {
-                "description": "根据商品ID更新商品的分类、名称、描述和图片地址",
+                "description": "根据商品ID更新商品的分类、名称、描述和媒体资源（整体替换）",
                 "consumes": [
                     "application/json"
                 ],
@@ -725,7 +500,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.updateProductReq"
+                            "$ref": "#/definitions/internal_interfaces_http_handler.updateProductReq"
                         }
                     }
                 ],
@@ -735,13 +510,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/productapp.ProductDTO"
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_product.ProductDTO"
                                         }
                                     }
                                 }
@@ -751,19 +526,172 @@ const docTemplate = `{
                     "400": {
                         "description": "参数校验失败或商品信息无效",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
             }
         },
-        "/spec/delete/{id}": {
+        "/catalog/public/media/signURL": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "按 key 与扩展名生成 OSS 预签名 URL,有效期 1 小时。需要登录（JWT）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "媒体资源"
+                ],
+                "summary": "获取媒体签名 URL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "对象 key",
+                        "name": "key",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "扩展名（png/jpg/webp/gif）",
+                        "name": "ext",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "签名 URL",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "生成签名 URL 失败",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/catalog/public/media/upload": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "上传图片到 OSS,返回访问 URL。multipart/form-data:file 必传(≤10MB,",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "媒体资源"
+                ],
+                "summary": "上传媒体文件",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "图片文件（≤10MB）",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "对象 key 前缀，不传自动生成",
+                        "name": "key",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "图片访问 URL",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "缺少 file 字段",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "413": {
+                        "description": "文件过大（上限 10MB）",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "415": {
+                        "description": "不支持的媒体类型",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "上传 OSS 失败",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/catalog/spec/delete/{id}": {
             "delete": {
                 "description": "根据规格ID删除规格维度",
                 "produces": [
@@ -786,25 +714,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "400": {
                         "description": "规格ID格式错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
             }
         },
-        "/spec/findById/{id}": {
+        "/catalog/spec/findById/{id}": {
             "get": {
                 "description": "根据规格ID查询规格详情（含规格值列表）",
                 "produces": [
@@ -829,13 +757,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/specapp.SpecDTO"
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_spec.SpecDTO"
                                         }
                                     }
                                 }
@@ -845,19 +773,19 @@ const docTemplate = `{
                     "400": {
                         "description": "规格ID格式错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
             }
         },
-        "/spec/findByName/{name}": {
+        "/catalog/spec/findByName/{name}": {
             "get": {
                 "description": "根据规格名称精确查询规格详情（含规格值列表）",
                 "produces": [
@@ -882,13 +810,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/specapp.SpecDTO"
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_spec.SpecDTO"
                                         }
                                     }
                                 }
@@ -898,13 +826,13 @@ const docTemplate = `{
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
             }
         },
-        "/spec/list": {
+        "/catalog/spec/list": {
             "get": {
                 "description": "分页查询规格维度列表，支持按名称模糊搜索；返回列表与总数",
                 "produces": [
@@ -946,13 +874,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/specapp.ListDto"
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_spec.ListDto"
                                         }
                                     }
                                 }
@@ -962,19 +890,19 @@ const docTemplate = `{
                     "400": {
                         "description": "参数校验失败",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
             }
         },
-        "/spec/register": {
+        "/catalog/spec/register": {
             "post": {
                 "description": "创建一个新的规格维度（如颜色、尺寸等），可同时传入规格值列表一次性创建；同名规格已存在时返回错误",
                 "consumes": [
@@ -994,7 +922,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.CreateInput"
+                            "$ref": "#/definitions/internal_interfaces_http_handler.CreateInput"
                         }
                     }
                 ],
@@ -1004,13 +932,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/specapp.SpecDTO"
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_spec.SpecDTO"
                                         }
                                     }
                                 }
@@ -1020,19 +948,19 @@ const docTemplate = `{
                     "400": {
                         "description": "参数校验失败",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
             }
         },
-        "/spec/update/{id}": {
+        "/catalog/spec/update/{id}": {
             "put": {
                 "description": "根据规格ID更新规格维度及规格值。Values 须传该规格的完整值列表：带ID的值被更新、不带ID的值被新增、库中缺席的值被删除；单事务保证一致",
                 "consumes": [
@@ -1059,7 +987,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateInput"
+                            "$ref": "#/definitions/internal_interfaces_http_handler.UpdateInput"
                         }
                     }
                 ],
@@ -1069,13 +997,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/specapp.SpecDTO"
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_spec.SpecDTO"
                                         }
                                     }
                                 }
@@ -1085,13 +1013,238 @@ const docTemplate = `{
                     "400": {
                         "description": "参数校验失败",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/order/cancel": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "取消订单并回补库存，仅待支付订单可取消，校验订单归属。需要登录（JWT）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订单"
+                ],
+                "summary": "取消订单",
+                "parameters": [
+                    {
+                        "description": "订单ID与用户ID",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_interfaces_http_handler.CancelOrderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "订单取消成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "订单已取消或当前状态不允许取消",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "订单不存在",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/order/create": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "下单并扣减库存（事务保证），用户ID取自 JWT；同一用户 3 秒内重复提交返回 429。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订单"
+                ],
+                "summary": "创建订单",
+                "parameters": [
+                    {
+                        "description": "订单信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_interfaces_http_handler.createOrderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_order.OrderDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "参数校验失败/商品已下架/库存不足/收货人信息不完整",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "商品或 SKU 不存在",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "429": {
+                        "description": "请求过于频繁（3 秒防重窗口）",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/order/list": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "按用户分页查询订单，可按状态过滤：不传或 0 查全部，1-待支付，2-已支付。需要登录（JWT）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订单"
+                ],
+                "summary": "分页查询订单列表",
+                "parameters": [
+                    {
+                        "description": "查询条件",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_interfaces_http_handler.OrderListRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_order.OrderListResult"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "参数校验失败",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
@@ -1111,7 +1264,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
@@ -1166,13 +1319,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/userapp.GetUserListResult"
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_user.GetUserListResult"
                                         }
                                     }
                                 }
@@ -1182,19 +1335,19 @@ const docTemplate = `{
                     "400": {
                         "description": "参数校验失败",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "401": {
                         "description": "未登录或 token 失效",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
@@ -1220,7 +1373,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.loginRequest"
+                            "$ref": "#/definitions/internal_interfaces_http_handler.loginRequest"
                         }
                     }
                 ],
@@ -1230,13 +1383,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/userapp.LoginResult"
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_user.LoginResult"
                                         }
                                     }
                                 }
@@ -1246,25 +1399,25 @@ const docTemplate = `{
                     "400": {
                         "description": "参数校验失败",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "401": {
                         "description": "用户名或密码错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "403": {
                         "description": "账号已被禁用",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
@@ -1290,7 +1443,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.registerRequest"
+                            "$ref": "#/definitions/internal_interfaces_http_handler.registerRequest"
                         }
                     }
                 ],
@@ -1300,13 +1453,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/userapp.UserDTO"
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_user.UserDTO"
                                         }
                                     }
                                 }
@@ -1316,13 +1469,13 @@ const docTemplate = `{
                     "400": {
                         "description": "参数校验失败或用户名已存在",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
@@ -1353,7 +1506,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.changeStatusRequest"
+                            "$ref": "#/definitions/internal_interfaces_http_handler.changeStatusRequest"
                         }
                     }
                 ],
@@ -1361,31 +1514,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "400": {
                         "description": "参数校验失败",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "401": {
                         "description": "未登录或 token 失效",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "404": {
                         "description": "用户不存在",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
@@ -1416,7 +1569,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.updateUserRequest"
+                            "$ref": "#/definitions/internal_interfaces_http_handler.updateUserRequest"
                         }
                     }
                 ],
@@ -1426,13 +1579,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/response.Response"
+                                    "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/userapp.UserDTO"
+                                            "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_user.UserDTO"
                                         }
                                     }
                                 }
@@ -1442,25 +1595,25 @@ const docTemplate = `{
                     "400": {
                         "description": "参数校验失败或性别取值不合法",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "401": {
                         "description": "未登录或 token 失效",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "404": {
                         "description": "用户不存在",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
                     }
                 }
@@ -1468,7 +1621,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "categoryapp.CategoryDto": {
+        "github_com_wsc-zz_service_internal_application_category.CategoryDto": {
             "type": "object",
             "properties": {
                 "categoryId": {
@@ -1491,7 +1644,7 @@ const docTemplate = `{
                 }
             }
         },
-        "categoryapp.CategorySpecDto": {
+        "github_com_wsc-zz_service_internal_application_category.CategorySpecDto": {
             "type": "object",
             "properties": {
                 "category_id": {
@@ -1512,12 +1665,12 @@ const docTemplate = `{
                 "values": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/categoryapp.SpecValueDto"
+                        "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_category.SpecValueDto"
                     }
                 }
             }
         },
-        "categoryapp.SpecValueDto": {
+        "github_com_wsc-zz_service_internal_application_category.SpecValueDto": {
             "type": "object",
             "properties": {
                 "name": {
@@ -1531,413 +1684,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.BindSpecReq": {
-            "type": "object",
-            "required": [
-                "categoryId",
-                "specId"
-            ],
-            "properties": {
-                "categoryId": {
-                    "description": "分类ID",
-                    "type": "integer"
-                },
-                "required": {
-                    "description": "是否必填",
-                    "type": "boolean"
-                },
-                "sort": {
-                    "description": "排序",
-                    "type": "integer"
-                },
-                "specId": {
-                    "description": "规格ID",
-                    "type": "integer"
-                }
-            }
-        },
-        "handler.CancelOrderRequest": {
-            "type": "object",
-            "required": [
-                "orderId",
-                "userId"
-            ],
-            "properties": {
-                "orderId": {
-                    "type": "integer"
-                },
-                "userId": {
-                    "type": "integer"
-                }
-            }
-        },
-        "handler.CreateInput": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "sort": {
-                    "type": "integer"
-                },
-                "values": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handler.SpecValueInput"
-                    }
-                }
-            }
-        },
-        "handler.CreateReq": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "parentId": {
-                    "type": "integer"
-                },
-                "sort": {
-                    "type": "integer",
-                    "default": 0
-                }
-            }
-        },
-        "handler.OrderListRequest": {
-            "type": "object",
-            "required": [
-                "userId"
-            ],
-            "properties": {
-                "page": {
-                    "type": "integer",
-                    "minimum": 1
-                },
-                "pageSize": {
-                    "type": "integer",
-                    "maximum": 100,
-                    "minimum": 1
-                },
-                "status": {
-                    "description": "可选，若不传则查询所有状态的订单",
-                    "type": "integer",
-                    "enum": [
-                        0,
-                        1,
-                        2
-                    ]
-                },
-                "userId": {
-                    "type": "integer"
-                }
-            }
-        },
-        "handler.SkU": {
-            "type": "object",
-            "required": [
-                "price",
-                "specItems"
-            ],
-            "properties": {
-                "price": {
-                    "description": "价格",
-                    "type": "integer"
-                },
-                "specItems": {
-                    "description": "SKUCode 不收客户端值，由服务端从规格组合派生，创建后在响应中返回",
-                    "type": "array",
-                    "minItems": 1,
-                    "items": {
-                        "$ref": "#/definitions/handler.specItemReq"
-                    }
-                },
-                "stock": {
-                    "description": "库存",
-                    "type": "integer",
-                    "minimum": 0
-                }
-            }
-        },
-        "handler.SpecValueInput": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "sort": {
-                    "type": "integer"
-                }
-            }
-        },
-        "handler.UpdateInput": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "sort": {
-                    "type": "integer"
-                },
-                "values": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handler.UpdateValueInput"
-                    }
-                }
-            }
-        },
-        "handler.UpdateReq": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "parentId": {
-                    "type": "integer"
-                },
-                "sort": {
-                    "type": "integer"
-                }
-            }
-        },
-        "handler.UpdateValueInput": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "sort": {
-                    "type": "integer"
-                },
-                "specValueId": {
-                    "description": "规格值ID，0 表示新增",
-                    "type": "integer"
-                }
-            }
-        },
-        "handler.changeStatusRequest": {
-            "type": "object",
-            "required": [
-                "userId"
-            ],
-            "properties": {
-                "status": {
-                    "description": "int 而非 domainuser.Status：0 是合法取值（禁用），required 会拒绝 0；\n用 min/max 限定 0~1，swag 也能正确生成 schema",
-                    "type": "integer",
-                    "maximum": 1,
-                    "minimum": 0
-                },
-                "userId": {
-                    "type": "integer"
-                }
-            }
-        },
-        "handler.createOrderRequest": {
-            "type": "object",
-            "required": [
-                "consigneeAddress",
-                "consigneeName",
-                "consigneePhone",
-                "items"
-            ],
-            "properties": {
-                "consigneeAddress": {
-                    "type": "string"
-                },
-                "consigneeName": {
-                    "type": "string"
-                },
-                "consigneePhone": {
-                    "type": "string"
-                },
-                "items": {
-                    "type": "array",
-                    "minItems": 1,
-                    "items": {
-                        "$ref": "#/definitions/handler.orderItemRequest"
-                    }
-                }
-            }
-        },
-        "handler.createProductReq": {
-            "type": "object",
-            "required": [
-                "categoryId",
-                "name",
-                "skus"
-            ],
-            "properties": {
-                "categoryId": {
-                    "description": "分类ID",
-                    "type": "integer"
-                },
-                "desc": {
-                    "description": "商品描述",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "商品名称",
-                    "type": "string"
-                },
-                "skus": {
-                    "description": "商品规格",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handler.SkU"
-                    }
-                }
-            }
-        },
-        "handler.loginRequest": {
-            "type": "object",
-            "required": [
-                "password",
-                "username"
-            ],
-            "properties": {
-                "ip": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.orderItemRequest": {
-            "type": "object",
-            "required": [
-                "productId",
-                "quantity",
-                "skuCode"
-            ],
-            "properties": {
-                "productId": {
-                    "type": "integer"
-                },
-                "quantity": {
-                    "type": "integer",
-                    "minimum": 1
-                },
-                "skuCode": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.registerRequest": {
-            "type": "object",
-            "required": [
-                "password",
-                "phone",
-                "username"
-            ],
-            "properties": {
-                "password": {
-                    "type": "string",
-                    "maxLength": 20,
-                    "minLength": 6
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string",
-                    "maxLength": 10,
-                    "minLength": 2
-                }
-            }
-        },
-        "handler.specItemReq": {
-            "type": "object",
-            "required": [
-                "specId",
-                "valueId"
-            ],
-            "properties": {
-                "specId": {
-                    "description": "规格维度ID",
-                    "type": "integer"
-                },
-                "valueId": {
-                    "description": "规格值ID",
-                    "type": "integer"
-                }
-            }
-        },
-        "handler.updateProductReq": {
-            "type": "object",
-            "required": [
-                "productId"
-            ],
-            "properties": {
-                "categoryId": {
-                    "type": "integer"
-                },
-                "desc": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "productId": {
-                    "type": "integer"
-                },
-                "urls": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "handler.updateUserRequest": {
-            "type": "object",
-            "required": [
-                "nickname"
-            ],
-            "properties": {
-                "avatar": {
-                    "type": "string"
-                },
-                "birthday": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "gender": {
-                    "type": "integer",
-                    "maximum": 2,
-                    "minimum": 0
-                },
-                "nickname": {
-                    "type": "string",
-                    "maxLength": 10,
-                    "minLength": 2
-                },
-                "phone": {
-                    "type": "string"
-                }
-            }
-        },
-        "orderapp.OrderDTO": {
+        "github_com_wsc-zz_service_internal_application_order.OrderDTO": {
             "type": "object",
             "properties": {
                 "cancelledAt": {
@@ -1964,7 +1711,7 @@ const docTemplate = `{
                     "description": "订单明细",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/orderapp.OrderItemDTO"
+                        "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_order.OrderItemDTO"
                     }
                 },
                 "logisticsNo": {
@@ -2005,7 +1752,7 @@ const docTemplate = `{
                 }
             }
         },
-        "orderapp.OrderItemDTO": {
+        "github_com_wsc-zz_service_internal_application_order.OrderItemDTO": {
             "type": "object",
             "properties": {
                 "price": {
@@ -2030,13 +1777,13 @@ const docTemplate = `{
                 }
             }
         },
-        "orderapp.OrderListResult": {
+        "github_com_wsc-zz_service_internal_application_order.OrderListResult": {
             "type": "object",
             "properties": {
                 "list": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/orderapp.OrderDTO"
+                        "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_order.OrderDTO"
                     }
                 },
                 "total": {
@@ -2044,7 +1791,20 @@ const docTemplate = `{
                 }
             }
         },
-        "productapp.ProductDTO": {
+        "github_com_wsc-zz_service_internal_application_product.MediaDTO": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "description": "类型 1图片 2视频 3模型",
+                    "type": "integer"
+                },
+                "url": {
+                    "description": "资源地址",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_wsc-zz_service_internal_application_product.ProductDTO": {
             "type": "object",
             "properties": {
                 "categoryId": {
@@ -2056,6 +1816,12 @@ const docTemplate = `{
                 "desc": {
                     "type": "string"
                 },
+                "medias": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_product.MediaDTO"
+                    }
+                },
                 "name": {
                     "type": "string"
                 },
@@ -2065,7 +1831,7 @@ const docTemplate = `{
                 "skus": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/productapp.SKUDTO"
+                        "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_product.SKUDTO"
                     }
                 },
                 "status": {
@@ -2076,13 +1842,13 @@ const docTemplate = `{
                 }
             }
         },
-        "productapp.ProductListResult": {
+        "github_com_wsc-zz_service_internal_application_product.ProductListResult": {
             "type": "object",
             "properties": {
                 "list": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/productapp.ProductDTO"
+                        "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_product.ProductDTO"
                     }
                 },
                 "total": {
@@ -2090,7 +1856,7 @@ const docTemplate = `{
                 }
             }
         },
-        "productapp.SKUDTO": {
+        "github_com_wsc-zz_service_internal_application_product.SKUDTO": {
             "type": "object",
             "properties": {
                 "price": {
@@ -2106,7 +1872,7 @@ const docTemplate = `{
                 "specItems": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/productapp.SpecItemDTO"
+                        "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_product.SpecItemDTO"
                     }
                 },
                 "stock": {
@@ -2114,7 +1880,7 @@ const docTemplate = `{
                 }
             }
         },
-        "productapp.SpecItemDTO": {
+        "github_com_wsc-zz_service_internal_application_product.SpecItemDTO": {
             "type": "object",
             "properties": {
                 "specId": {
@@ -2131,25 +1897,13 @@ const docTemplate = `{
                 }
             }
         },
-        "response.Response": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {},
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "specapp.ListDto": {
+        "github_com_wsc-zz_service_internal_application_spec.ListDto": {
             "type": "object",
             "properties": {
                 "list": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/specapp.SpecDTO"
+                        "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_spec.SpecDTO"
                     }
                 },
                 "total": {
@@ -2157,7 +1911,7 @@ const docTemplate = `{
                 }
             }
         },
-        "specapp.SpecDTO": {
+        "github_com_wsc-zz_service_internal_application_spec.SpecDTO": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -2179,12 +1933,12 @@ const docTemplate = `{
                 "values": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/specapp.SpecValueDTO"
+                        "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_spec.SpecValueDTO"
                     }
                 }
             }
         },
-        "specapp.SpecValueDTO": {
+        "github_com_wsc-zz_service_internal_application_spec.SpecValueDTO": {
             "type": "object",
             "properties": {
                 "name": {
@@ -2201,45 +1955,13 @@ const docTemplate = `{
                 }
             }
         },
-        "user.LoginChannel": {
-            "type": "integer",
-            "enum": [
-                0,
-                1,
-                2
-            ],
-            "x-enum-comments": {
-                "ChannelAlipay": "支付宝快捷登录",
-                "ChannelPassword": "账号密码登录",
-                "ChannelWechat": "微信登录(小程序/公众号/App)"
-            },
-            "x-enum-descriptions": [
-                "账号密码登录",
-                "微信登录(小程序/公众号/App)",
-                "支付宝快捷登录"
-            ],
-            "x-enum-varnames": [
-                "ChannelPassword",
-                "ChannelWechat",
-                "ChannelAlipay"
-            ]
-        },
-        "user.Status": {
-            "type": "integer",
-            "enum": [
-                0
-            ],
-            "x-enum-varnames": [
-                "StatusDisabled"
-            ]
-        },
-        "userapp.GetUserListResult": {
+        "github_com_wsc-zz_service_internal_application_user.GetUserListResult": {
             "type": "object",
             "properties": {
                 "list": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/userapp.UserDTO"
+                        "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_user.UserDTO"
                     }
                 },
                 "total": {
@@ -2247,18 +1969,18 @@ const docTemplate = `{
                 }
             }
         },
-        "userapp.LoginResult": {
+        "github_com_wsc-zz_service_internal_application_user.LoginResult": {
             "type": "object",
             "properties": {
                 "token": {
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/userapp.UserDTO"
+                    "$ref": "#/definitions/github_com_wsc-zz_service_internal_application_user.UserDTO"
                 }
             }
         },
-        "userapp.UserDTO": {
+        "github_com_wsc-zz_service_internal_application_user.UserDTO": {
             "type": "object",
             "properties": {
                 "alipayUid": {
@@ -2286,7 +2008,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "loginChannel": {
-                    "$ref": "#/definitions/user.LoginChannel"
+                    "$ref": "#/definitions/github_com_wsc-zz_service_internal_domain_user.LoginChannel"
                 },
                 "nickname": {
                     "type": "string"
@@ -2298,7 +2020,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "$ref": "#/definitions/user.Status"
+                    "$ref": "#/definitions/github_com_wsc-zz_service_internal_domain_user.Status"
                 },
                 "unionId": {
                     "type": "string"
@@ -2310,6 +2032,489 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_wsc-zz_service_internal_domain_user.LoginChannel": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2
+            ],
+            "x-enum-comments": {
+                "ChannelAlipay": "支付宝快捷登录",
+                "ChannelPassword": "账号密码登录",
+                "ChannelWechat": "微信登录(小程序/公众号/App)"
+            },
+            "x-enum-descriptions": [
+                "账号密码登录",
+                "微信登录(小程序/公众号/App)",
+                "支付宝快捷登录"
+            ],
+            "x-enum-varnames": [
+                "ChannelPassword",
+                "ChannelWechat",
+                "ChannelAlipay"
+            ]
+        },
+        "github_com_wsc-zz_service_internal_domain_user.Status": {
+            "type": "integer",
+            "enum": [
+                0
+            ],
+            "x-enum-varnames": [
+                "StatusDisabled"
+            ]
+        },
+        "github_com_wsc-zz_service_pkg_response.Response": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {},
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_interfaces_http_handler.BindSpecReq": {
+            "type": "object",
+            "required": [
+                "categoryId",
+                "specId"
+            ],
+            "properties": {
+                "categoryId": {
+                    "description": "分类ID",
+                    "type": "integer"
+                },
+                "required": {
+                    "description": "是否必填",
+                    "type": "boolean"
+                },
+                "sort": {
+                    "description": "排序",
+                    "type": "integer"
+                },
+                "specId": {
+                    "description": "规格ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_interfaces_http_handler.CancelOrderRequest": {
+            "type": "object",
+            "required": [
+                "orderId",
+                "userId"
+            ],
+            "properties": {
+                "orderId": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_interfaces_http_handler.CreateInput": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_interfaces_http_handler.SpecValueInput"
+                    }
+                }
+            }
+        },
+        "internal_interfaces_http_handler.CreateReq": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "sort": {
+                    "type": "integer",
+                    "default": 0
+                }
+            }
+        },
+        "internal_interfaces_http_handler.OrderListRequest": {
+            "type": "object",
+            "required": [
+                "userId"
+            ],
+            "properties": {
+                "page": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "maximum": 100,
+                    "minimum": 1
+                },
+                "status": {
+                    "description": "可选，若不传则查询所有状态的订单",
+                    "type": "integer",
+                    "enum": [
+                        0,
+                        1,
+                        2
+                    ]
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_interfaces_http_handler.SkU": {
+            "type": "object",
+            "required": [
+                "picture",
+                "price",
+                "specItems"
+            ],
+            "properties": {
+                "picture": {
+                    "description": "图片",
+                    "type": "string"
+                },
+                "price": {
+                    "description": "价格",
+                    "type": "integer"
+                },
+                "specItems": {
+                    "description": "SKUCode 不收客户端值，由服务端从规格组合派生，创建后在响应中返回",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/internal_interfaces_http_handler.specItemReq"
+                    }
+                },
+                "stock": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
+        "internal_interfaces_http_handler.SpecValueInput": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_interfaces_http_handler.UpdateInput": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_interfaces_http_handler.UpdateValueInput"
+                    }
+                }
+            }
+        },
+        "internal_interfaces_http_handler.UpdateReq": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "type": "integer"
+                },
+                "sort": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_interfaces_http_handler.UpdateValueInput": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "specValueId": {
+                    "description": "规格值ID，0 表示新增",
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_interfaces_http_handler.changeStatusRequest": {
+            "type": "object",
+            "required": [
+                "userId"
+            ],
+            "properties": {
+                "status": {
+                    "description": "int 而非 domainuser.Status：0 是合法取值（禁用），required 会拒绝 0；\n用 min/max 限定 0~1，swag 也能正确生成 schema",
+                    "type": "integer",
+                    "maximum": 1,
+                    "minimum": 0
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_interfaces_http_handler.createOrderRequest": {
+            "type": "object",
+            "required": [
+                "consigneeAddress",
+                "consigneeName",
+                "consigneePhone",
+                "items"
+            ],
+            "properties": {
+                "consigneeAddress": {
+                    "type": "string"
+                },
+                "consigneeName": {
+                    "type": "string"
+                },
+                "consigneePhone": {
+                    "type": "string"
+                },
+                "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/internal_interfaces_http_handler.orderItemRequest"
+                    }
+                }
+            }
+        },
+        "internal_interfaces_http_handler.createProductReq": {
+            "type": "object",
+            "required": [
+                "categoryId",
+                "name",
+                "skus"
+            ],
+            "properties": {
+                "categoryId": {
+                    "description": "分类ID",
+                    "type": "integer"
+                },
+                "desc": {
+                    "description": "商品描述",
+                    "type": "string"
+                },
+                "medias": {
+                    "description": "商品媒体资源，按顺序展示",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_interfaces_http_handler.mediaReq"
+                    }
+                },
+                "name": {
+                    "description": "商品名称",
+                    "type": "string"
+                },
+                "skus": {
+                    "description": "商品规格",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_interfaces_http_handler.SkU"
+                    }
+                }
+            }
+        },
+        "internal_interfaces_http_handler.loginRequest": {
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "ip": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_interfaces_http_handler.mediaReq": {
+            "type": "object",
+            "required": [
+                "type",
+                "url"
+            ],
+            "properties": {
+                "type": {
+                    "description": "Type 类型：1图片 2视频 3模型",
+                    "type": "integer",
+                    "enum": [
+                        1,
+                        2,
+                        3
+                    ]
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_interfaces_http_handler.orderItemRequest": {
+            "type": "object",
+            "required": [
+                "productId",
+                "quantity",
+                "skuCode"
+            ],
+            "properties": {
+                "productId": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "skuCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_interfaces_http_handler.registerRequest": {
+            "type": "object",
+            "required": [
+                "password",
+                "phone",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "minLength": 6
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 10,
+                    "minLength": 2
+                }
+            }
+        },
+        "internal_interfaces_http_handler.specItemReq": {
+            "type": "object",
+            "required": [
+                "specId",
+                "valueId"
+            ],
+            "properties": {
+                "specId": {
+                    "description": "规格维度ID",
+                    "type": "integer"
+                },
+                "valueId": {
+                    "description": "规格值ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_interfaces_http_handler.updateProductReq": {
+            "type": "object",
+            "required": [
+                "productId"
+            ],
+            "properties": {
+                "categoryId": {
+                    "type": "integer"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "medias": {
+                    "description": "整体替换：不传则清空",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_interfaces_http_handler.mediaReq"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "productId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_interfaces_http_handler.updateUserRequest": {
+            "type": "object",
+            "required": [
+                "nickname"
+            ],
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "birthday": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "integer",
+                    "maximum": 2,
+                    "minimum": 0
+                },
+                "nickname": {
+                    "type": "string",
+                    "maxLength": 10,
+                    "minLength": 2
+                },
+                "phone": {
                     "type": "string"
                 }
             }

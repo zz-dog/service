@@ -89,7 +89,7 @@ type SkU struct {
 //	@Success		200		{object}	response.Response{data=productapp.ProductDTO}
 //	@Failure		400		{object}	response.Response	"参数校验失败或商品信息无效"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/product/create [post]
+//	@Router			/catalog/product/create [post]
 func (h *ProductHandler) Create(c *gin.Context) {
 	var req createProductReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -135,7 +135,7 @@ type updateProductReq struct {
 //	@Success		200		{object}	response.Response{data=productapp.ProductDTO}
 //	@Failure		400		{object}	response.Response	"参数校验失败或商品信息无效"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/product/update [post]
+//	@Router			/catalog/product/update [post]
 func (h *ProductHandler) Update(c *gin.Context) {
 	var req updateProductReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -184,7 +184,7 @@ type ProdectListReq struct {
 //	@Success		200			{object}	response.Response{data=productapp.ProductListResult}
 //	@Failure		400			{object}	response.Response	"查询参数校验失败"
 //	@Failure		500			{object}	response.Response	"服务器内部错误"
-//	@Router			/product/list [post]
+//	@Router			/catalog/product/list [post]
 func (h *ProductHandler) List(c *gin.Context) {
 	var req ProdectListReq
 	if err := c.ShouldBindQuery(&req); err != nil {

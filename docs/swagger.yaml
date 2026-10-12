@@ -1,6 +1,6 @@
 basePath: /api
 definitions:
-  categoryapp.CategoryDto:
+  github_com_wsc-zz_service_internal_application_category.CategoryDto:
     properties:
       categoryId:
         type: integer
@@ -15,7 +15,7 @@ definitions:
       updatedAt:
         type: string
     type: object
-  categoryapp.CategorySpecDto:
+  github_com_wsc-zz_service_internal_application_category.CategorySpecDto:
     properties:
       category_id:
         type: integer
@@ -29,10 +29,10 @@ definitions:
         type: string
       values:
         items:
-          $ref: '#/definitions/categoryapp.SpecValueDto'
+          $ref: '#/definitions/github_com_wsc-zz_service_internal_application_category.SpecValueDto'
         type: array
     type: object
-  categoryapp.SpecValueDto:
+  github_com_wsc-zz_service_internal_application_category.SpecValueDto:
     properties:
       name:
         type: string
@@ -41,290 +41,7 @@ definitions:
       value_id:
         type: integer
     type: object
-  handler.BindSpecReq:
-    properties:
-      categoryId:
-        description: 分类ID
-        type: integer
-      required:
-        description: 是否必填
-        type: boolean
-      sort:
-        description: 排序
-        type: integer
-      specId:
-        description: 规格ID
-        type: integer
-    required:
-    - categoryId
-    - specId
-    type: object
-  handler.CancelOrderRequest:
-    properties:
-      orderId:
-        type: integer
-      userId:
-        type: integer
-    required:
-    - orderId
-    - userId
-    type: object
-  handler.CreateInput:
-    properties:
-      name:
-        type: string
-      sort:
-        type: integer
-      values:
-        items:
-          $ref: '#/definitions/handler.SpecValueInput'
-        type: array
-    required:
-    - name
-    type: object
-  handler.CreateReq:
-    properties:
-      name:
-        type: string
-      parentId:
-        type: integer
-      sort:
-        default: 0
-        type: integer
-    required:
-    - name
-    type: object
-  handler.OrderListRequest:
-    properties:
-      page:
-        minimum: 1
-        type: integer
-      pageSize:
-        maximum: 100
-        minimum: 1
-        type: integer
-      status:
-        description: 可选，若不传则查询所有状态的订单
-        enum:
-        - 0
-        - 1
-        - 2
-        type: integer
-      userId:
-        type: integer
-    required:
-    - userId
-    type: object
-  handler.SkU:
-    properties:
-      price:
-        description: 价格
-        type: integer
-      specItems:
-        description: SKUCode 不收客户端值，由服务端从规格组合派生，创建后在响应中返回
-        items:
-          $ref: '#/definitions/handler.specItemReq'
-        minItems: 1
-        type: array
-      stock:
-        description: 库存
-        minimum: 0
-        type: integer
-    required:
-    - price
-    - specItems
-    type: object
-  handler.SpecValueInput:
-    properties:
-      name:
-        type: string
-      sort:
-        type: integer
-    required:
-    - name
-    type: object
-  handler.UpdateInput:
-    properties:
-      name:
-        type: string
-      sort:
-        type: integer
-      values:
-        items:
-          $ref: '#/definitions/handler.UpdateValueInput'
-        type: array
-    required:
-    - name
-    type: object
-  handler.UpdateReq:
-    properties:
-      name:
-        type: string
-      parentId:
-        type: integer
-      sort:
-        type: integer
-    type: object
-  handler.UpdateValueInput:
-    properties:
-      name:
-        type: string
-      sort:
-        type: integer
-      specValueId:
-        description: 规格值ID，0 表示新增
-        type: integer
-    required:
-    - name
-    type: object
-  handler.changeStatusRequest:
-    properties:
-      status:
-        description: |-
-          int 而非 domainuser.Status：0 是合法取值（禁用），required 会拒绝 0；
-          用 min/max 限定 0~1，swag 也能正确生成 schema
-        maximum: 1
-        minimum: 0
-        type: integer
-      userId:
-        type: integer
-    required:
-    - userId
-    type: object
-  handler.createOrderRequest:
-    properties:
-      consigneeAddress:
-        type: string
-      consigneeName:
-        type: string
-      consigneePhone:
-        type: string
-      items:
-        items:
-          $ref: '#/definitions/handler.orderItemRequest'
-        minItems: 1
-        type: array
-    required:
-    - consigneeAddress
-    - consigneeName
-    - consigneePhone
-    - items
-    type: object
-  handler.createProductReq:
-    properties:
-      categoryId:
-        description: 分类ID
-        type: integer
-      desc:
-        description: 商品描述
-        type: string
-      name:
-        description: 商品名称
-        type: string
-      skus:
-        description: 商品规格
-        items:
-          $ref: '#/definitions/handler.SkU'
-        type: array
-    required:
-    - categoryId
-    - name
-    - skus
-    type: object
-  handler.loginRequest:
-    properties:
-      ip:
-        type: string
-      password:
-        type: string
-      username:
-        type: string
-    required:
-    - password
-    - username
-    type: object
-  handler.orderItemRequest:
-    properties:
-      productId:
-        type: integer
-      quantity:
-        minimum: 1
-        type: integer
-      skuCode:
-        type: string
-    required:
-    - productId
-    - quantity
-    - skuCode
-    type: object
-  handler.registerRequest:
-    properties:
-      password:
-        maxLength: 20
-        minLength: 6
-        type: string
-      phone:
-        type: string
-      username:
-        maxLength: 10
-        minLength: 2
-        type: string
-    required:
-    - password
-    - phone
-    - username
-    type: object
-  handler.specItemReq:
-    properties:
-      specId:
-        description: 规格维度ID
-        type: integer
-      valueId:
-        description: 规格值ID
-        type: integer
-    required:
-    - specId
-    - valueId
-    type: object
-  handler.updateProductReq:
-    properties:
-      categoryId:
-        type: integer
-      desc:
-        type: string
-      name:
-        type: string
-      productId:
-        type: integer
-      urls:
-        items:
-          type: string
-        type: array
-    required:
-    - productId
-    type: object
-  handler.updateUserRequest:
-    properties:
-      avatar:
-        type: string
-      birthday:
-        type: string
-      email:
-        type: string
-      gender:
-        maximum: 2
-        minimum: 0
-        type: integer
-      nickname:
-        maxLength: 10
-        minLength: 2
-        type: string
-      phone:
-        type: string
-    required:
-    - nickname
-    type: object
-  orderapp.OrderDTO:
+  github_com_wsc-zz_service_internal_application_order.OrderDTO:
     properties:
       cancelledAt:
         description: 取消时间
@@ -344,7 +61,7 @@ definitions:
       items:
         description: 订单明细
         items:
-          $ref: '#/definitions/orderapp.OrderItemDTO'
+          $ref: '#/definitions/github_com_wsc-zz_service_internal_application_order.OrderItemDTO'
         type: array
       logisticsNo:
         description: 物流单号
@@ -374,7 +91,7 @@ definitions:
         description: 用户ID
         type: integer
     type: object
-  orderapp.OrderItemDTO:
+  github_com_wsc-zz_service_internal_application_order.OrderItemDTO:
     properties:
       price:
         description: 单位：分
@@ -391,16 +108,25 @@ definitions:
         description: 小计，单位：分
         type: integer
     type: object
-  orderapp.OrderListResult:
+  github_com_wsc-zz_service_internal_application_order.OrderListResult:
     properties:
       list:
         items:
-          $ref: '#/definitions/orderapp.OrderDTO'
+          $ref: '#/definitions/github_com_wsc-zz_service_internal_application_order.OrderDTO'
         type: array
       total:
         type: integer
     type: object
-  productapp.ProductDTO:
+  github_com_wsc-zz_service_internal_application_product.MediaDTO:
+    properties:
+      type:
+        description: 类型 1图片 2视频 3模型
+        type: integer
+      url:
+        description: 资源地址
+        type: string
+    type: object
+  github_com_wsc-zz_service_internal_application_product.ProductDTO:
     properties:
       categoryId:
         type: integer
@@ -408,29 +134,33 @@ definitions:
         type: string
       desc:
         type: string
+      medias:
+        items:
+          $ref: '#/definitions/github_com_wsc-zz_service_internal_application_product.MediaDTO'
+        type: array
       name:
         type: string
       productId:
         type: integer
       skus:
         items:
-          $ref: '#/definitions/productapp.SKUDTO'
+          $ref: '#/definitions/github_com_wsc-zz_service_internal_application_product.SKUDTO'
         type: array
       status:
         type: integer
       updatedAt:
         type: string
     type: object
-  productapp.ProductListResult:
+  github_com_wsc-zz_service_internal_application_product.ProductListResult:
     properties:
       list:
         items:
-          $ref: '#/definitions/productapp.ProductDTO'
+          $ref: '#/definitions/github_com_wsc-zz_service_internal_application_product.ProductDTO'
         type: array
       total:
         type: integer
     type: object
-  productapp.SKUDTO:
+  github_com_wsc-zz_service_internal_application_product.SKUDTO:
     properties:
       price:
         type: integer
@@ -441,12 +171,12 @@ definitions:
         type: string
       specItems:
         items:
-          $ref: '#/definitions/productapp.SpecItemDTO'
+          $ref: '#/definitions/github_com_wsc-zz_service_internal_application_product.SpecItemDTO'
         type: array
       stock:
         type: integer
     type: object
-  productapp.SpecItemDTO:
+  github_com_wsc-zz_service_internal_application_product.SpecItemDTO:
     properties:
       specId:
         type: integer
@@ -457,24 +187,16 @@ definitions:
       valueName:
         type: string
     type: object
-  response.Response:
-    properties:
-      code:
-        type: integer
-      data: {}
-      message:
-        type: string
-    type: object
-  specapp.ListDto:
+  github_com_wsc-zz_service_internal_application_spec.ListDto:
     properties:
       list:
         items:
-          $ref: '#/definitions/specapp.SpecDTO'
+          $ref: '#/definitions/github_com_wsc-zz_service_internal_application_spec.SpecDTO'
         type: array
       total:
         type: integer
     type: object
-  specapp.SpecDTO:
+  github_com_wsc-zz_service_internal_application_spec.SpecDTO:
     properties:
       createdAt:
         type: string
@@ -489,10 +211,10 @@ definitions:
         type: string
       values:
         items:
-          $ref: '#/definitions/specapp.SpecValueDTO'
+          $ref: '#/definitions/github_com_wsc-zz_service_internal_application_spec.SpecValueDTO'
         type: array
     type: object
-  specapp.SpecValueDTO:
+  github_com_wsc-zz_service_internal_application_spec.SpecValueDTO:
     properties:
       name:
         type: string
@@ -503,47 +225,23 @@ definitions:
       specValueId:
         type: integer
     type: object
-  user.LoginChannel:
-    enum:
-    - 0
-    - 1
-    - 2
-    type: integer
-    x-enum-comments:
-      ChannelAlipay: 支付宝快捷登录
-      ChannelPassword: 账号密码登录
-      ChannelWechat: 微信登录(小程序/公众号/App)
-    x-enum-descriptions:
-    - 账号密码登录
-    - 微信登录(小程序/公众号/App)
-    - 支付宝快捷登录
-    x-enum-varnames:
-    - ChannelPassword
-    - ChannelWechat
-    - ChannelAlipay
-  user.Status:
-    enum:
-    - 0
-    type: integer
-    x-enum-varnames:
-    - StatusDisabled
-  userapp.GetUserListResult:
+  github_com_wsc-zz_service_internal_application_user.GetUserListResult:
     properties:
       list:
         items:
-          $ref: '#/definitions/userapp.UserDTO'
+          $ref: '#/definitions/github_com_wsc-zz_service_internal_application_user.UserDTO'
         type: array
       total:
         type: integer
     type: object
-  userapp.LoginResult:
+  github_com_wsc-zz_service_internal_application_user.LoginResult:
     properties:
       token:
         type: string
       user:
-        $ref: '#/definitions/userapp.UserDTO'
+        $ref: '#/definitions/github_com_wsc-zz_service_internal_application_user.UserDTO'
     type: object
-  userapp.UserDTO:
+  github_com_wsc-zz_service_internal_application_user.UserDTO:
     properties:
       alipayUid:
         type: string
@@ -562,7 +260,7 @@ definitions:
       lastLoginIp:
         type: string
       loginChannel:
-        $ref: '#/definitions/user.LoginChannel'
+        $ref: '#/definitions/github_com_wsc-zz_service_internal_domain_user.LoginChannel'
       nickname:
         type: string
       openId:
@@ -570,7 +268,7 @@ definitions:
       phone:
         type: string
       status:
-        $ref: '#/definitions/user.Status'
+        $ref: '#/definitions/github_com_wsc-zz_service_internal_domain_user.Status'
       unionId:
         type: string
       updatedAt:
@@ -580,6 +278,345 @@ definitions:
       username:
         type: string
     type: object
+  github_com_wsc-zz_service_internal_domain_user.LoginChannel:
+    enum:
+    - 0
+    - 1
+    - 2
+    type: integer
+    x-enum-comments:
+      ChannelAlipay: 支付宝快捷登录
+      ChannelPassword: 账号密码登录
+      ChannelWechat: 微信登录(小程序/公众号/App)
+    x-enum-descriptions:
+    - 账号密码登录
+    - 微信登录(小程序/公众号/App)
+    - 支付宝快捷登录
+    x-enum-varnames:
+    - ChannelPassword
+    - ChannelWechat
+    - ChannelAlipay
+  github_com_wsc-zz_service_internal_domain_user.Status:
+    enum:
+    - 0
+    type: integer
+    x-enum-varnames:
+    - StatusDisabled
+  github_com_wsc-zz_service_pkg_response.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+  internal_interfaces_http_handler.BindSpecReq:
+    properties:
+      categoryId:
+        description: 分类ID
+        type: integer
+      required:
+        description: 是否必填
+        type: boolean
+      sort:
+        description: 排序
+        type: integer
+      specId:
+        description: 规格ID
+        type: integer
+    required:
+    - categoryId
+    - specId
+    type: object
+  internal_interfaces_http_handler.CancelOrderRequest:
+    properties:
+      orderId:
+        type: integer
+      userId:
+        type: integer
+    required:
+    - orderId
+    - userId
+    type: object
+  internal_interfaces_http_handler.CreateInput:
+    properties:
+      name:
+        type: string
+      sort:
+        type: integer
+      values:
+        items:
+          $ref: '#/definitions/internal_interfaces_http_handler.SpecValueInput'
+        type: array
+    required:
+    - name
+    type: object
+  internal_interfaces_http_handler.CreateReq:
+    properties:
+      name:
+        type: string
+      parentId:
+        type: integer
+      sort:
+        default: 0
+        type: integer
+    required:
+    - name
+    type: object
+  internal_interfaces_http_handler.OrderListRequest:
+    properties:
+      page:
+        minimum: 1
+        type: integer
+      pageSize:
+        maximum: 100
+        minimum: 1
+        type: integer
+      status:
+        description: 可选，若不传则查询所有状态的订单
+        enum:
+        - 0
+        - 1
+        - 2
+        type: integer
+      userId:
+        type: integer
+    required:
+    - userId
+    type: object
+  internal_interfaces_http_handler.SkU:
+    properties:
+      picture:
+        description: 图片
+        type: string
+      price:
+        description: 价格
+        type: integer
+      specItems:
+        description: SKUCode 不收客户端值，由服务端从规格组合派生，创建后在响应中返回
+        items:
+          $ref: '#/definitions/internal_interfaces_http_handler.specItemReq'
+        minItems: 1
+        type: array
+      stock:
+        minimum: 0
+        type: integer
+    required:
+    - picture
+    - price
+    - specItems
+    type: object
+  internal_interfaces_http_handler.SpecValueInput:
+    properties:
+      name:
+        type: string
+      sort:
+        type: integer
+    required:
+    - name
+    type: object
+  internal_interfaces_http_handler.UpdateInput:
+    properties:
+      name:
+        type: string
+      sort:
+        type: integer
+      values:
+        items:
+          $ref: '#/definitions/internal_interfaces_http_handler.UpdateValueInput'
+        type: array
+    required:
+    - name
+    type: object
+  internal_interfaces_http_handler.UpdateReq:
+    properties:
+      name:
+        type: string
+      parentId:
+        type: integer
+      sort:
+        type: integer
+    type: object
+  internal_interfaces_http_handler.UpdateValueInput:
+    properties:
+      name:
+        type: string
+      sort:
+        type: integer
+      specValueId:
+        description: 规格值ID，0 表示新增
+        type: integer
+    required:
+    - name
+    type: object
+  internal_interfaces_http_handler.changeStatusRequest:
+    properties:
+      status:
+        description: |-
+          int 而非 domainuser.Status：0 是合法取值（禁用），required 会拒绝 0；
+          用 min/max 限定 0~1，swag 也能正确生成 schema
+        maximum: 1
+        minimum: 0
+        type: integer
+      userId:
+        type: integer
+    required:
+    - userId
+    type: object
+  internal_interfaces_http_handler.createOrderRequest:
+    properties:
+      consigneeAddress:
+        type: string
+      consigneeName:
+        type: string
+      consigneePhone:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/internal_interfaces_http_handler.orderItemRequest'
+        minItems: 1
+        type: array
+    required:
+    - consigneeAddress
+    - consigneeName
+    - consigneePhone
+    - items
+    type: object
+  internal_interfaces_http_handler.createProductReq:
+    properties:
+      categoryId:
+        description: 分类ID
+        type: integer
+      desc:
+        description: 商品描述
+        type: string
+      medias:
+        description: 商品媒体资源，按顺序展示
+        items:
+          $ref: '#/definitions/internal_interfaces_http_handler.mediaReq'
+        type: array
+      name:
+        description: 商品名称
+        type: string
+      skus:
+        description: 商品规格
+        items:
+          $ref: '#/definitions/internal_interfaces_http_handler.SkU'
+        type: array
+    required:
+    - categoryId
+    - name
+    - skus
+    type: object
+  internal_interfaces_http_handler.loginRequest:
+    properties:
+      ip:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  internal_interfaces_http_handler.mediaReq:
+    properties:
+      type:
+        description: Type 类型：1图片 2视频 3模型
+        enum:
+        - 1
+        - 2
+        - 3
+        type: integer
+      url:
+        type: string
+    required:
+    - type
+    - url
+    type: object
+  internal_interfaces_http_handler.orderItemRequest:
+    properties:
+      productId:
+        type: integer
+      quantity:
+        minimum: 1
+        type: integer
+      skuCode:
+        type: string
+    required:
+    - productId
+    - quantity
+    - skuCode
+    type: object
+  internal_interfaces_http_handler.registerRequest:
+    properties:
+      password:
+        maxLength: 20
+        minLength: 6
+        type: string
+      phone:
+        type: string
+      username:
+        maxLength: 10
+        minLength: 2
+        type: string
+    required:
+    - password
+    - phone
+    - username
+    type: object
+  internal_interfaces_http_handler.specItemReq:
+    properties:
+      specId:
+        description: 规格维度ID
+        type: integer
+      valueId:
+        description: 规格值ID
+        type: integer
+    required:
+    - specId
+    - valueId
+    type: object
+  internal_interfaces_http_handler.updateProductReq:
+    properties:
+      categoryId:
+        type: integer
+      desc:
+        type: string
+      medias:
+        description: 整体替换：不传则清空
+        items:
+          $ref: '#/definitions/internal_interfaces_http_handler.mediaReq'
+        type: array
+      name:
+        type: string
+      productId:
+        type: integer
+    required:
+    - productId
+    type: object
+  internal_interfaces_http_handler.updateUserRequest:
+    properties:
+      avatar:
+        type: string
+      birthday:
+        type: string
+      email:
+        type: string
+      gender:
+        maximum: 2
+        minimum: 0
+        type: integer
+      nickname:
+        maxLength: 10
+        minLength: 2
+        type: string
+      phone:
+        type: string
+    required:
+    - nickname
+    type: object
 host: localhost:9000
 info:
   contact: {}
@@ -587,7 +624,7 @@ info:
   title: Demo Service API
   version: "1.0"
 paths:
-  /category/{id}:
+  /catalog/category/{id}:
     delete:
       description: 根据分类ID删除分类
       parameters:
@@ -602,15 +639,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "400":
           description: 分类ID格式错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 删除分类
       tags:
       - 分类
@@ -629,7 +666,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.UpdateReq'
+          $ref: '#/definitions/internal_interfaces_http_handler.UpdateReq'
       produces:
       - application/json
       responses:
@@ -637,23 +674,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/categoryapp.CategoryDto'
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_category.CategoryDto'
               type: object
         "400":
           description: 参数校验失败
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 更新分类
       tags:
       - 分类
-  /category/bindSpec:
+  /catalog/category/bindSpec:
     post:
       consumes:
       - application/json
@@ -664,7 +701,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.BindSpecReq'
+          $ref: '#/definitions/internal_interfaces_http_handler.BindSpecReq'
       produces:
       - application/json
       responses:
@@ -672,15 +709,15 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/categoryapp.CategorySpecDto'
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_category.CategorySpecDto'
               type: object
       summary: 绑定规格到分类
       tags:
       - 分类
-  /category/create:
+  /catalog/category/create:
     post:
       consumes:
       - application/json
@@ -691,7 +728,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.CreateReq'
+          $ref: '#/definitions/internal_interfaces_http_handler.CreateReq'
       produces:
       - application/json
       responses:
@@ -699,23 +736,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/categoryapp.CategoryDto'
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_category.CategoryDto'
               type: object
         "400":
           description: 参数校验失败
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 创建分类
       tags:
       - 分类
-  /category/findAll:
+  /catalog/category/findAll:
     get:
       description: 返回全部分类列表（不分页）
       produces:
@@ -725,21 +762,21 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/categoryapp.CategoryDto'
+                    $ref: '#/definitions/github_com_wsc-zz_service_internal_application_category.CategoryDto'
                   type: array
               type: object
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 查询所有分类
       tags:
       - 分类
-  /category/findSpecs/{id}:
+  /catalog/category/findSpecs/{id}:
     get:
       description: 返回分类下全部绑定的规格维度（含规格值、排序、是否必选）
       parameters:
@@ -755,17 +792,17 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/categoryapp.CategorySpecDto'
+                    $ref: '#/definitions/github_com_wsc-zz_service_internal_application_category.CategorySpecDto'
                   type: array
               type: object
       summary: 查询分类绑定的规格
       tags:
       - 分类
-  /category/unbindSpec:
+  /catalog/category/unbindSpec:
     delete:
       description: 删除分类与规格维度的绑定关系
       parameters:
@@ -785,146 +822,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 解除规格绑定
       tags:
       - 分类
-  /order/cancel:
-    post:
-      consumes:
-      - application/json
-      description: 取消订单并回补库存，仅待支付订单可取消，校验订单归属。需要登录（JWT）
-      parameters:
-      - description: 订单ID与用户ID
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.CancelOrderRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 订单取消成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "400":
-          description: 订单已取消或当前状态不允许取消
-          schema:
-            $ref: '#/definitions/response.Response'
-        "401":
-          description: 未登录或 token 失效
-          schema:
-            $ref: '#/definitions/response.Response'
-        "404":
-          description: 订单不存在
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: 取消订单
-      tags:
-      - 订单
-  /order/create:
-    post:
-      consumes:
-      - application/json
-      description: 下单并扣减库存（事务保证），用户ID取自 JWT；同一用户 3 秒内重复提交返回 429。
-      parameters:
-      - description: 订单信息
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.createOrderRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/orderapp.OrderDTO'
-              type: object
-        "400":
-          description: 参数校验失败/商品已下架/库存不足/收货人信息不完整
-          schema:
-            $ref: '#/definitions/response.Response'
-        "401":
-          description: 未登录或 token 失效
-          schema:
-            $ref: '#/definitions/response.Response'
-        "404":
-          description: 商品或 SKU 不存在
-          schema:
-            $ref: '#/definitions/response.Response'
-        "429":
-          description: 请求过于频繁（3 秒防重窗口）
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: 创建订单
-      tags:
-      - 订单
-  /order/list:
-    post:
-      consumes:
-      - application/json
-      description: 按用户分页查询订单，可按状态过滤：不传或 0 查全部，1-待支付，2-已支付。需要登录（JWT）
-      parameters:
-      - description: 查询条件
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.OrderListRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/orderapp.OrderListResult'
-              type: object
-        "400":
-          description: 参数校验失败
-          schema:
-            $ref: '#/definitions/response.Response'
-        "401":
-          description: 未登录或 token 失效
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: 分页查询订单列表
-      tags:
-      - 订单
-  /product/create:
+  /catalog/product/create:
     post:
       consumes:
       - application/json
@@ -935,7 +837,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.createProductReq'
+          $ref: '#/definitions/internal_interfaces_http_handler.createProductReq'
       produces:
       - application/json
       responses:
@@ -943,23 +845,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/productapp.ProductDTO'
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_product.ProductDTO'
               type: object
         "400":
           description: 参数校验失败或商品信息无效
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 创建商品
       tags:
       - 商品
-  /product/list:
+  /catalog/product/list:
     post:
       description: 根据分类、商品ID或名称筛选商品并分页返回
       parameters:
@@ -992,34 +894,34 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/productapp.ProductListResult'
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_product.ProductListResult'
               type: object
         "400":
           description: 查询参数校验失败
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 分页查询商品
       tags:
       - 商品
-  /product/update:
+  /catalog/product/update:
     post:
       consumes:
       - application/json
-      description: 根据商品ID更新商品的分类、名称、描述和图片地址
+      description: 根据商品ID更新商品的分类、名称、描述和媒体资源（整体替换）
       parameters:
       - description: 商品更新信息
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.updateProductReq'
+          $ref: '#/definitions/internal_interfaces_http_handler.updateProductReq'
       produces:
       - application/json
       responses:
@@ -1027,23 +929,116 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/productapp.ProductDTO'
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_product.ProductDTO'
               type: object
         "400":
           description: 参数校验失败或商品信息无效
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 更新商品
       tags:
       - 商品
-  /spec/delete/{id}:
+  /catalog/public/media/signURL:
+    get:
+      consumes:
+      - application/json
+      description: 按 key 与扩展名生成 OSS 预签名 URL,有效期 1 小时。需要登录（JWT）
+      parameters:
+      - description: 对象 key
+        in: query
+        name: key
+        required: true
+        type: string
+      - description: 扩展名（png/jpg/webp/gif）
+        in: query
+        name: ext
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 签名 URL
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "500":
+          description: 生成签名 URL 失败
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取媒体签名 URL
+      tags:
+      - 媒体资源
+  /catalog/public/media/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传图片到 OSS,返回访问 URL。multipart/form-data:file 必传(≤10MB,
+      parameters:
+      - description: 图片文件（≤10MB）
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: 对象 key 前缀，不传自动生成
+        in: formData
+        name: key
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 图片访问 URL
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: 缺少 file 字段
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "413":
+          description: 文件过大（上限 10MB）
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "415":
+          description: 不支持的媒体类型
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "500":
+          description: 上传 OSS 失败
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 上传媒体文件
+      tags:
+      - 媒体资源
+  /catalog/spec/delete/{id}:
     delete:
       description: 根据规格ID删除规格维度
       parameters:
@@ -1058,19 +1053,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "400":
           description: 规格ID格式错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 删除规格
       tags:
       - 规格
-  /spec/findById/{id}:
+  /catalog/spec/findById/{id}:
     get:
       description: 根据规格ID查询规格详情（含规格值列表）
       parameters:
@@ -1086,23 +1081,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/specapp.SpecDTO'
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_spec.SpecDTO'
               type: object
         "400":
           description: 规格ID格式错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 根据ID查询规格
       tags:
       - 规格
-  /spec/findByName/{name}:
+  /catalog/spec/findByName/{name}:
     get:
       description: 根据规格名称精确查询规格详情（含规格值列表）
       parameters:
@@ -1118,19 +1113,19 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/specapp.SpecDTO'
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_spec.SpecDTO'
               type: object
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 根据名称查询规格
       tags:
       - 规格
-  /spec/list:
+  /catalog/spec/list:
     get:
       description: 分页查询规格维度列表，支持按名称模糊搜索；返回列表与总数
       parameters:
@@ -1157,23 +1152,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/specapp.ListDto'
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_spec.ListDto'
               type: object
         "400":
           description: 参数校验失败
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 分页查询规格列表
       tags:
       - 规格
-  /spec/register:
+  /catalog/spec/register:
     post:
       consumes:
       - application/json
@@ -1184,7 +1179,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.CreateInput'
+          $ref: '#/definitions/internal_interfaces_http_handler.CreateInput'
       produces:
       - application/json
       responses:
@@ -1192,23 +1187,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/specapp.SpecDTO'
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_spec.SpecDTO'
               type: object
         "400":
           description: 参数校验失败
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 创建规格
       tags:
       - 规格
-  /spec/update/{id}:
+  /catalog/spec/update/{id}:
     put:
       consumes:
       - application/json
@@ -1224,7 +1219,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.UpdateInput'
+          $ref: '#/definitions/internal_interfaces_http_handler.UpdateInput'
       produces:
       - application/json
       responses:
@@ -1232,22 +1227,157 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/specapp.SpecDTO'
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_spec.SpecDTO'
               type: object
         "400":
           description: 参数校验失败
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 整包更新规格
       tags:
       - 规格
+  /order/cancel:
+    post:
+      consumes:
+      - application/json
+      description: 取消订单并回补库存，仅待支付订单可取消，校验订单归属。需要登录（JWT）
+      parameters:
+      - description: 订单ID与用户ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_interfaces_http_handler.CancelOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 订单取消成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: 订单已取消或当前状态不允许取消
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "404":
+          description: 订单不存在
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 取消订单
+      tags:
+      - 订单
+  /order/create:
+    post:
+      consumes:
+      - application/json
+      description: 下单并扣减库存（事务保证），用户ID取自 JWT；同一用户 3 秒内重复提交返回 429。
+      parameters:
+      - description: 订单信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_interfaces_http_handler.createOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_order.OrderDTO'
+              type: object
+        "400":
+          description: 参数校验失败/商品已下架/库存不足/收货人信息不完整
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "404":
+          description: 商品或 SKU 不存在
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "429":
+          description: 请求过于频繁（3 秒防重窗口）
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 创建订单
+      tags:
+      - 订单
+  /order/list:
+    post:
+      consumes:
+      - application/json
+      description: 按用户分页查询订单，可按状态过滤：不传或 0 查全部，1-待支付，2-已支付。需要登录（JWT）
+      parameters:
+      - description: 查询条件
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_interfaces_http_handler.OrderListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_order.OrderListResult'
+              type: object
+        "400":
+          description: 参数校验失败
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 分页查询订单列表
+      tags:
+      - 订单
   /user/health:
     get:
       description: 供部署流水线 / 负载均衡探活使用，不校验 JWT
@@ -1257,7 +1387,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 健康检查
       tags:
       - 用户
@@ -1290,23 +1420,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/userapp.GetUserListResult'
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_user.GetUserListResult'
               type: object
         "400":
           description: 参数校验失败
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "401":
           description: 未登录或 token 失效
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       security:
       - ApiKeyAuth: []
       summary: 分页查询用户列表
@@ -1323,7 +1453,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.loginRequest'
+          $ref: '#/definitions/internal_interfaces_http_handler.loginRequest'
       produces:
       - application/json
       responses:
@@ -1331,27 +1461,27 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/userapp.LoginResult'
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_user.LoginResult'
               type: object
         "400":
           description: 参数校验失败
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "401":
           description: 用户名或密码错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "403":
           description: 账号已被禁用
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 用户名密码登录
       tags:
       - 用户
@@ -1366,7 +1496,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.registerRequest'
+          $ref: '#/definitions/internal_interfaces_http_handler.registerRequest'
       produces:
       - application/json
       responses:
@@ -1374,19 +1504,19 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/userapp.UserDTO'
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_user.UserDTO'
               type: object
         "400":
           description: 参数校验失败或用户名已存在
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 注册用户
       tags:
       - 用户
@@ -1401,30 +1531,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.changeStatusRequest'
+          $ref: '#/definitions/internal_interfaces_http_handler.changeStatusRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "400":
           description: 参数校验失败
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "401":
           description: 未登录或 token 失效
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "404":
           description: 用户不存在
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       security:
       - ApiKeyAuth: []
       summary: 修改用户状态
@@ -1441,7 +1571,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.updateUserRequest'
+          $ref: '#/definitions/internal_interfaces_http_handler.updateUserRequest'
       produces:
       - application/json
       responses:
@@ -1449,27 +1579,27 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/response.Response'
+            - $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/userapp.UserDTO'
+                  $ref: '#/definitions/github_com_wsc-zz_service_internal_application_user.UserDTO'
               type: object
         "400":
           description: 参数校验失败或性别取值不合法
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "401":
           description: 未登录或 token 失效
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "404":
           description: 用户不存在
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
         "500":
           description: 服务器内部错误
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       security:
       - ApiKeyAuth: []
       summary: 更新当前用户资料

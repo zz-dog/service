@@ -43,7 +43,7 @@ type CreateInput struct {
 //	@Success		200		{object}	response.Response{data=specapp.SpecDTO}
 //	@Failure		400		{object}	response.Response	"参数校验失败"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/spec/register [post]
+//	@Router			/catalog/spec/register [post]
 func (h *SpecHandler) Create(c *gin.Context) {
 	var req CreateInput
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -94,7 +94,7 @@ type UpdateInput struct {
 //	@Success		200		{object}	response.Response{data=specapp.SpecDTO}
 //	@Failure		400		{object}	response.Response	"参数校验失败"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/spec/update/{id} [put]
+//	@Router			/catalog/spec/update/{id} [put]
 func (h *SpecHandler) Update(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -136,7 +136,7 @@ func (h *SpecHandler) Update(c *gin.Context) {
 //	@Success		200	{object}	response.Response
 //	@Failure		400	{object}	response.Response	"规格ID格式错误"
 //	@Failure		500	{object}	response.Response	"服务器内部错误"
-//	@Router			/spec/delete/{id} [delete]
+//	@Router			/catalog/spec/delete/{id} [delete]
 func (h *SpecHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -161,7 +161,7 @@ func (h *SpecHandler) Delete(c *gin.Context) {
 //	@Success		200	{object}	response.Response{data=specapp.SpecDTO}
 //	@Failure		400	{object}	response.Response	"规格ID格式错误"
 //	@Failure		500	{object}	response.Response	"服务器内部错误"
-//	@Router			/spec/findById/{id} [get]
+//	@Router			/catalog/spec/findById/{id} [get]
 func (h *SpecHandler) FindByID(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -184,7 +184,7 @@ func (h *SpecHandler) FindByID(c *gin.Context) {
 //	@Param			name	path		string	true	"规格名称"
 //	@Success		200		{object}	response.Response{data=specapp.SpecDTO}
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/spec/findByName/{name} [get]
+//	@Router			/catalog/spec/findByName/{name} [get]
 func (h *SpecHandler) FindByName(c *gin.Context) {
 	name := c.Param("name")
 	spec, err := h.specSvc.FindByName(c, name)
@@ -215,7 +215,7 @@ type ListInput struct {
 //	@Success		200			{object}	response.Response{data=specapp.ListDto}
 //	@Failure		400			{object}	response.Response	"参数校验失败"
 //	@Failure		500			{object}	response.Response	"服务器内部错误"
-//	@Router			/spec/list [get]
+//	@Router			/catalog/spec/list [get]
 func (h *SpecHandler) List(c *gin.Context) {
 	var req ListInput
 	if err := c.ShouldBindQuery(&req); err != nil {
