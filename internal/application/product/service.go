@@ -42,6 +42,7 @@ func (s *Service) Create(ctx context.Context, in CreateProductInput) (*ProductDT
 	dto := toProductDTO(p)
 	return &dto, nil
 }
+
 // Delete 删除商品：仅允许删除已下架商品
 func (s *Service) Delete(ctx context.Context, productID uint) error {
 	p, err := s.repo.FindByID(ctx, productID)
@@ -83,6 +84,11 @@ func (s *Service) Update(ctx context.Context, in UpdateProductInput) (*ProductDT
 	}
 	dto := toProductDTO(p)
 	return &dto, nil
+}
+
+// AddInventory 添加库存（进货）：按商品ID+SKU编码原子增加库存
+func (s *Service) AddInventory(ctx context.Context, productID uint, skuCode string, qty int) error {
+	return s.repo.RestockStock(ctx, productID, skuCode, qty)
 }
 
 // buildSKUs 把输入 SKU 转为领域 SKU：

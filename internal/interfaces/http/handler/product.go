@@ -20,6 +20,7 @@ var badRequestErrors = []error{
 	domaincategory.ErrCategoryNotFound,
 	domainproduct.ErrProductNotFound,
 	domainproduct.ErrProductOnShelf,
+	domainproduct.ErrSKUNotFound,
 	domainproduct.ErrEmptyProductName,
 	domainproduct.ErrEmptySKUs,
 	domainproduct.ErrEmptySKUCode,
@@ -136,6 +137,42 @@ func (h *ProductHandler) Delete(c *gin.Context) {
 		return
 	}
 	err = h.productSvc.Delete(c.Request.Context(), uint(id))
+	if err != nil {
+		if isBadRequest(err) {
+			response.BadRequest(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		return
+	}
+	response.Success(c, nil)
+}
+
+type addInventoryReq struct {
+	ProductID uint   `json:"productId" binding:"required"` // 商品ID
+	SKUCode   string `json:"skuCode" binding:"required"`   // SKU编码
+	Qty       int    `json:"qty" binding:"required,gt=0"`  // 增加的库存数量
+}
+
+// AddInventory 添加库存
+//
+//	@Summary		添加库存
+//	@Description	根据商品ID和SKU编码增加库存（进货）
+//	@Tags			商品
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		addInventoryReq	true	"库存信息"
+//	@Success		200		{object}	response.Response
+//	@Failure		400		{object}	response.Response	"参数校验失败、商品规格不存在或库存数量无效"
+//	@Failure		500		{object}	response.Response	"服务器内部错误"
+//	@Router			/catalog/product/inventory/add [post]
+func (h *ProductHandler) AddInventory(c *gin.Context) {
+	var req addInventoryReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		return
+	}
+	err := h.productSvc.AddInventory(c.Request.Context(), req.ProductID, req.SKUCode, req.Qty)
 	if err != nil {
 		if isBadRequest(err) {
 			response.BadRequest(c, http.StatusBadRequest, err.Error())
