@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -56,12 +55,12 @@ type createOrderRequest struct {
 func (h *OrderHandler) Create(c *gin.Context) {
 	userID, ok := getCurrentUserID(c)
 	if !ok {
-		response.Unauthorized(c, http.StatusUnauthorized, "用户未登录")
+		response.Unauthorized(c, "用户未登录")
 		return
 	}
 	var req createOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 	items := make([]orderapp.OrderItemInput, 0, len(req.Items))
@@ -112,7 +111,7 @@ type CancelOrderRequest struct {
 func (h *OrderHandler) Cancel(c *gin.Context) {
 	var req CancelOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 	err := h.orderSvc.CancelOrder(c.Request.Context(), orderapp.CancelOrderInput{
@@ -152,7 +151,7 @@ type OrderListRequest struct {
 func (h *OrderHandler) List(c *gin.Context) {
 	var req OrderListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 	result, err := h.orderSvc.List(c.Request.Context(), orderapp.QueryOrdersInput{
@@ -193,21 +192,21 @@ func getCurrentUserID(c *gin.Context) (uint, bool) {
 func (h *OrderHandler) writeError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, domainorder.ErrOrderNotFound):
-		response.NotFound(c, http.StatusNotFound, err.Error())
+		response.NotFound(c, err.Error())
 	case errors.Is(err, domainproduct.ErrProductNotFound),
 		errors.Is(err, domainproduct.ErrSKUNotFound):
-		response.NotFound(c, http.StatusNotFound, err.Error())
+		response.NotFound(c, err.Error())
 	case errors.Is(err, domainproduct.ErrProductOffShelf),
 		errors.Is(err, domainproduct.ErrInsufficientStock):
-		response.BadRequest(c, http.StatusBadRequest, err.Error())
+		response.BadRequest(c, err.Error())
 	case errors.Is(err, domainorder.ErrInvalidStatusTransition),
 		errors.Is(err, domainorder.ErrOrderAlreadyCancelled),
 		errors.Is(err, domainorder.ErrEmptyOrderItems),
 		errors.Is(err, domainorder.ErrInvalidQuantity),
 		errors.Is(err, domainorder.ErrInvalidPrice),
 		errors.Is(err, domainorder.ErrConsigneeIncomplete):
-		response.BadRequest(c, http.StatusBadRequest, err.Error())
+		response.BadRequest(c, err.Error())
 	default:
-		response.ServerError(c, http.StatusInternalServerError, err.Error())
+		response.ServerError(c, err.Error())
 	}
 }

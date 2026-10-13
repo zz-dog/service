@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	paymentapp "github.com/wsc-zz/service/internal/application/payment"
@@ -28,7 +27,7 @@ type PrepayRequest struct {
 func (h *paymentHandler) Prepay(c *gin.Context) {
 	var req PrepayRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 
 	}
@@ -38,7 +37,7 @@ func (h *paymentHandler) Prepay(c *gin.Context) {
 		Channel: req.Channel,
 	})
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, validator.ErrorMsg(err))
+		response.ServerError(c, validator.ErrorMsg(err))
 		return
 	}
 	response.Success(c, dto)
@@ -51,13 +50,13 @@ type NotifyRequest struct {
 func (h *paymentHandler) Notify(c *gin.Context) {
 	var req NotifyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 
 	}
 	err := h.paymentSvc.HandleChannelNotify(c.Request.Context(), req.PayNo)
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, validator.ErrorMsg(err))
+		response.ServerError(c, validator.ErrorMsg(err))
 		return
 	}
 	response.Success(c, nil)

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -52,7 +51,7 @@ type loginRequest struct {
 func (h *Handler) Register(c *gin.Context) {
 	var req registerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 	in := userapp.RegisterInput{
@@ -85,7 +84,7 @@ func (h *Handler) Register(c *gin.Context) {
 func (h *Handler) Login(c *gin.Context) {
 	var req loginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 	in := userapp.LoginInput{
@@ -127,7 +126,7 @@ type getUserListRequest struct {
 func (h *Handler) GetUserList(c *gin.Context) {
 	var req getUserListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 
@@ -174,13 +173,13 @@ type updateUserRequest struct {
 func (h *Handler) UpdateUser(c *gin.Context) {
 	userID, ok := getCurrentUserID(c)
 	if !ok {
-		response.Unauthorized(c, http.StatusUnauthorized, "未登录或登录已过期")
+		response.Unauthorized(c, "未登录或登录已过期")
 		return
 	}
 
 	var req updateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 	in := userapp.UpdateUserInput{
@@ -224,7 +223,7 @@ type changeStatusRequest struct {
 func (h *Handler) ChangeStatus(c *gin.Context) {
 	var req changeStatusRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 	err := h.userSvc.ChangeStatus(c.Request.Context(), req.UserID, domainuser.Status(req.Status))
@@ -239,17 +238,17 @@ func (h *Handler) ChangeStatus(c *gin.Context) {
 func (h *Handler) writeError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, domainuser.ErrUserAlreadyExists):
-		response.BadRequest(c, http.StatusBadRequest, err.Error())
+		response.BadRequest(c, err.Error())
 	case errors.Is(err, domainuser.ErrInvalidCredentials):
-		response.Unauthorized(c, http.StatusUnauthorized, err.Error())
+		response.Unauthorized(c, err.Error())
 	case errors.Is(err, domainuser.ErrUserDisabled):
-		response.Forbidden(c, http.StatusForbidden, err.Error())
+		response.Forbidden(c, err.Error())
 	case errors.Is(err, domainuser.ErrUserNotFound):
-		response.NotFound(c, http.StatusNotFound, err.Error())
+		response.NotFound(c, err.Error())
 	case errors.Is(err, domainuser.ErrInvalidGender):
-		response.BadRequest(c, http.StatusBadRequest, err.Error())
+		response.BadRequest(c, err.Error())
 	default:
-		response.ServerError(c, http.StatusInternalServerError, err.Error())
+		response.ServerError(c, err.Error())
 	}
 }
 
@@ -259,7 +258,7 @@ func (h *Handler) Logout(c *gin.Context) {
 	jtiStr, _ := jti.(string)
 	expAt, _ := exp.(time.Time)
 	if err := h.userSvc.Logout(c.Request.Context(), jtiStr, expAt); err != nil {
-		response.ServerError(c, http.StatusInternalServerError, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.SuccessMsg(c, "logout", nil)

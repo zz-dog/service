@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -42,7 +41,7 @@ func (h *CategoryHandler) Create(c *gin.Context) {
 	var req CreateReq
 	// 绑定参数
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 
@@ -53,7 +52,7 @@ func (h *CategoryHandler) Create(c *gin.Context) {
 	}
 	resp, err := h.categorySvc.Create(c.Request.Context(), in)
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, resp)
@@ -82,13 +81,13 @@ func (h *CategoryHandler) Update(c *gin.Context) {
 	// 从动态路由 :id 读取分类ID
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		response.BadRequest(c, http.StatusBadRequest, "分类ID格式错误")
+		response.BadRequest(c, "分类ID格式错误")
 		return
 	}
 
 	var req UpdateReq
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 
@@ -100,7 +99,7 @@ func (h *CategoryHandler) Update(c *gin.Context) {
 	}
 	resp, err := h.categorySvc.Update(c.Request.Context(), in)
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, resp)
@@ -120,12 +119,12 @@ func (h *CategoryHandler) Update(c *gin.Context) {
 func (h *CategoryHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		response.BadRequest(c, http.StatusBadRequest, "分类ID格式错误")
+		response.BadRequest(c, "分类ID格式错误")
 		return
 	}
 	err = h.categorySvc.Delete(c.Request.Context(), uint(id))
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, nil)
@@ -144,7 +143,7 @@ func (h *CategoryHandler) FindAll(c *gin.Context) {
 
 	cs, err := h.categorySvc.FindAll(c.Request.Context())
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, cs)
@@ -171,7 +170,7 @@ type BindSpecReq struct {
 func (h *CategoryHandler) BindSpec(c *gin.Context) {
 	var req BindSpecReq
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 
@@ -183,7 +182,7 @@ func (h *CategoryHandler) BindSpec(c *gin.Context) {
 	}
 	resp, err := h.categorySvc.BindSpec(c.Request.Context(), in)
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, resp)
@@ -202,18 +201,18 @@ func (h *CategoryHandler) BindSpec(c *gin.Context) {
 func (h *CategoryHandler) UnbindSpec(c *gin.Context) {
 	categoryID, err := strconv.ParseUint(c.Query("categoryId"), 10, 64)
 	if err != nil || categoryID == 0 {
-		response.BadRequest(c, http.StatusBadRequest, "分类ID格式错误")
+		response.BadRequest(c, "分类ID格式错误")
 		return
 	}
 	specID, err := strconv.ParseUint(c.Query("specId"), 10, 64)
 	if err != nil || specID == 0 {
-		response.BadRequest(c, http.StatusBadRequest, "规格ID格式错误")
+		response.BadRequest(c, "规格ID格式错误")
 		return
 	}
 
 	in := categoryapp.UnbindSpecInput{CategoryID: uint(categoryID), SpecID: uint(specID)}
 	if err := h.categorySvc.UnbindSpec(c.Request.Context(), in); err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, nil)
@@ -231,13 +230,13 @@ func (h *CategoryHandler) UnbindSpec(c *gin.Context) {
 func (h *CategoryHandler) ListSpecs(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil || id == 0 {
-		response.BadRequest(c, http.StatusBadRequest, "分类ID格式错误")
+		response.BadRequest(c, "分类ID格式错误")
 		return
 	}
 
 	specs, err := h.categorySvc.ListSpecs(c.Request.Context(), uint(id))
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, specs)

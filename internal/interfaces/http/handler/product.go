@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -97,7 +96,7 @@ type SkU struct {
 func (h *ProductHandler) Create(c *gin.Context) {
 	var req createProductReq
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 
@@ -111,10 +110,10 @@ func (h *ProductHandler) Create(c *gin.Context) {
 	resp, err := h.productSvc.Create(c.Request.Context(), in)
 	if err != nil {
 		if isBadRequest(err) {
-			response.BadRequest(c, http.StatusBadRequest, err.Error())
+			response.BadRequest(c, err.Error())
 			return
 		}
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, resp)
@@ -133,16 +132,16 @@ func (h *ProductHandler) Create(c *gin.Context) {
 func (h *ProductHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		response.BadRequest(c, http.StatusBadRequest, "ID格式错误")
+		response.BadRequest(c, "ID格式错误")
 		return
 	}
 	err = h.productSvc.Delete(c.Request.Context(), uint(id))
 	if err != nil {
 		if isBadRequest(err) {
-			response.BadRequest(c, http.StatusBadRequest, err.Error())
+			response.BadRequest(c, err.Error())
 			return
 		}
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, nil)
@@ -169,16 +168,16 @@ type addInventoryReq struct {
 func (h *ProductHandler) AddInventory(c *gin.Context) {
 	var req addInventoryReq
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 	err := h.productSvc.AddInventory(c.Request.Context(), req.ProductID, req.SKUCode, req.Qty)
 	if err != nil {
 		if isBadRequest(err) {
-			response.BadRequest(c, http.StatusBadRequest, err.Error())
+			response.BadRequest(c, err.Error())
 			return
 		}
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, nil)
@@ -206,16 +205,16 @@ type updateSKUReq struct {
 func (h *ProductHandler) UpdateSKU(c *gin.Context) {
 	var req updateSKUReq
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 	err := h.productSvc.UpdateSKU(c.Request.Context(), req.ProductID, req.SKUCode, req.Price, req.Picture)
 	if err != nil {
 		if isBadRequest(err) {
-			response.BadRequest(c, http.StatusBadRequest, err.Error())
+			response.BadRequest(c, err.Error())
 			return
 		}
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, nil)
@@ -244,7 +243,7 @@ type updateProductReq struct {
 func (h *ProductHandler) Update(c *gin.Context) {
 	var req updateProductReq
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 	in := productapp.UpdateProductInput{
@@ -257,10 +256,10 @@ func (h *ProductHandler) Update(c *gin.Context) {
 	resp, err := h.productSvc.Update(c.Request.Context(), in)
 	if err != nil {
 		if isBadRequest(err) {
-			response.BadRequest(c, http.StatusBadRequest, err.Error())
+			response.BadRequest(c, err.Error())
 			return
 		}
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, resp)
@@ -281,21 +280,21 @@ func (h *ProductHandler) Update(c *gin.Context) {
 func (h *ProductHandler) DeleteSKU(c *gin.Context) {
 	productID, err := strconv.ParseUint(c.Param("productId"), 10, 64)
 	if err != nil {
-		response.BadRequest(c, http.StatusBadRequest, "商品ID格式错误")
+		response.BadRequest(c, "商品ID格式错误")
 		return
 	}
 	skuCode := c.Param("skuCode")
 	if skuCode == "" {
-		response.BadRequest(c, http.StatusBadRequest, "SKU编码不能为空")
+		response.BadRequest(c, "SKU编码不能为空")
 		return
 	}
 	err = h.productSvc.DeleteSKU(c.Request.Context(), uint(productID), skuCode)
 	if err != nil {
 		if isBadRequest(err) {
-			response.BadRequest(c, http.StatusBadRequest, err.Error())
+			response.BadRequest(c, err.Error())
 			return
 		}
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, nil)
@@ -330,7 +329,7 @@ type ProductListReq struct {
 func (h *ProductHandler) List(c *gin.Context) {
 	var req ProductListReq
 	if err := c.ShouldBindQuery(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 	// 查询参数 1上架 2下架，偏移 -1 映射回领域状态（0上架 1下架）；不传不过滤
@@ -348,7 +347,7 @@ func (h *ProductHandler) List(c *gin.Context) {
 		Status:     status,
 	})
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, result)

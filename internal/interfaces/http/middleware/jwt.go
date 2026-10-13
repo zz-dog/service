@@ -16,20 +16,20 @@ func JWTAuth(blacklist TokenBlacklistChecker) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			response.Unauthorized(c, 401, "缺少Authorization头")
+			response.Unauthorized(c, "缺少Authorization头")
 			c.Abort()
 			return
 		}
 		const prefix = "Bearer "
 		if len(authHeader) <= len(prefix) || authHeader[:len(prefix)] != prefix {
-			response.Unauthorized(c, 401, "Authorization头格式错误")
+			response.Unauthorized(c, "Authorization头格式错误")
 			c.Abort()
 			return
 		}
 		token := authHeader[len(prefix):]
 		claims, err := auth.ParseToken(token)
 		if err != nil {
-			response.Unauthorized(c, 401, "token已失效或非法，请重新登录")
+			response.Unauthorized(c, "token已失效或非法，请重新登录")
 			c.Abort()
 			return
 		}
@@ -39,7 +39,7 @@ func JWTAuth(blacklist TokenBlacklistChecker) gin.HandlerFunc {
 				// fail-open:Redis 故障时放行保证可用性;安全敏感场景应 fail-closed
 				global.Logger.Warn("查询token黑名单失败，降级放行", zap.Error(err))
 			} else if revoked {
-				response.Unauthorized(c, 401, "token已失效，请重新登录")
+				response.Unauthorized(c, "token已失效，请重新登录")
 				c.Abort()
 				return
 			}

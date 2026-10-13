@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -47,7 +46,7 @@ type CreateInput struct {
 func (h *SpecHandler) Create(c *gin.Context) {
 	var req CreateInput
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 	values := make([]specapp.SpecValueInput, 0, len(req.Values))
@@ -64,7 +63,7 @@ func (h *SpecHandler) Create(c *gin.Context) {
 	}
 	spec, err := h.specSvc.Create(c, in)
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, spec)
@@ -98,12 +97,12 @@ type UpdateInput struct {
 func (h *SpecHandler) Update(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		response.BadRequest(c, http.StatusBadRequest, "ID格式错误")
+		response.BadRequest(c, "ID格式错误")
 		return
 	}
 	var req UpdateInput
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
 	values := make([]specapp.UpdateSpecValueInput, 0, len(req.Values))
@@ -120,7 +119,7 @@ func (h *SpecHandler) Update(c *gin.Context) {
 		Values: values,
 	})
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, spec)
@@ -140,12 +139,12 @@ func (h *SpecHandler) Update(c *gin.Context) {
 func (h *SpecHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		response.BadRequest(c, http.StatusBadRequest, "ID格式错误")
+		response.BadRequest(c, "ID格式错误")
 		return
 	}
 	err = h.specSvc.Delete(c, uint(id))
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, nil)
@@ -165,12 +164,12 @@ func (h *SpecHandler) Delete(c *gin.Context) {
 func (h *SpecHandler) FindByID(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		response.BadRequest(c, http.StatusBadRequest, "ID格式错误")
+		response.BadRequest(c, "ID格式错误")
 		return
 	}
 	spec, err := h.specSvc.FindByID(c, uint(id))
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 	}
 	response.Success(c, spec)
 }
@@ -189,7 +188,7 @@ func (h *SpecHandler) FindByName(c *gin.Context) {
 	name := c.Param("name")
 	spec, err := h.specSvc.FindByName(c, name)
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, spec)
@@ -219,7 +218,7 @@ type ListInput struct {
 func (h *SpecHandler) List(c *gin.Context) {
 	var req ListInput
 	if err := c.ShouldBindQuery(&req); err != nil {
-		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		response.BadRequest(c, validator.ErrorMsg(err))
 	}
 	result, err := h.specSvc.List(c, domainSpec.SpecListQuery{
 		Page:     req.Page,
@@ -228,7 +227,7 @@ func (h *SpecHandler) List(c *gin.Context) {
 		SpecID:   req.SpecID,
 	})
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, result)

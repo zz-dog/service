@@ -51,19 +51,19 @@ func NewMidiaHandler(client *ossclient.Client) *MidiaHandler {
 func (h *MidiaHandler) Upload(c *gin.Context) {
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
-		response.Fail(c, http.StatusBadRequest, 400, err.Error())
+		response.BadRequest(c, err.Error())
 		return
 	}
 	key := c.PostForm("key")
 
 	if header.Size > maxUploadSize {
-		response.Fail(c, http.StatusRequestEntityTooLarge, 413, "文件过大")
+		response.JSON(c, http.StatusRequestEntityTooLarge, "文件过大", nil)
 		return
 	}
 	contentType := header.Header.Get("Content-Type")
 	ext, ok := allowTypes[contentType]
 	if !ok {
-		response.Fail(c, http.StatusUnsupportedMediaType, 415, "不支持的媒体类型")
+		response.JSON(c, http.StatusUnsupportedMediaType, "不支持的媒体类型", nil)
 		return
 	}
 	if key == "" {
@@ -71,7 +71,7 @@ func (h *MidiaHandler) Upload(c *gin.Context) {
 	}
 	url, err := h.client.Put(c, ossclient.PutInput{Ext: ext, Reader: file}, "test")
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, url)
@@ -97,7 +97,7 @@ func (h *MidiaHandler) SignURL(c *gin.Context) {
 	key = ossclient.GenKey(key, ext)
 	url, err := h.client.Presign(c, key, ext, time.Hour)
 	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		response.ServerError(c, err.Error())
 		return
 	}
 	response.Success(c, url)
