@@ -326,7 +326,7 @@ type ProductListReq struct {
 //	@Success		200			{object}	response.Response{data=productapp.ProductListResult}
 //	@Failure		400			{object}	response.Response	"查询参数校验失败"
 //	@Failure		500			{object}	response.Response	"服务器内部错误"
-//	@Router			/catalog/product/list [post]
+//	@Router			/catalog/product/list [get]
 func (h *ProductHandler) List(c *gin.Context) {
 	var req ProductListReq
 	if err := c.ShouldBindQuery(&req); err != nil {

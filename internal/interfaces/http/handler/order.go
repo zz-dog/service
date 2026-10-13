@@ -127,10 +127,10 @@ func (h *OrderHandler) Cancel(c *gin.Context) {
 }
 
 type OrderListRequest struct {
-	Page     int  `json:"page" binding:"omitempty,min=1"`
-	PageSize int  `json:"pageSize" binding:"omitempty,min=1,max=100"`
-	Status   int  `json:"status" binding:"omitempty,oneof=0 1 2"` // 可选，若不传则查询所有状态的订单
-	UserID   uint `json:"userId" binding:"required"`
+	Page     int  `form:"page" binding:"omitempty,min=1"`
+	PageSize int  `form:"pageSize" binding:"omitempty,min=1,max=100"`
+	Status   int  `form:"status" binding:"omitempty,oneof=0 1 2"` // 可选，若不传则查询所有状态的订单
+	UserID   uint `form:"userId" binding:"required"`
 }
 
 // List 分页查询订单列表
@@ -138,18 +138,20 @@ type OrderListRequest struct {
 //	@Summary		分页查询订单列表
 //	@Description	按用户分页查询订单，可按状态过滤：不传或 0 查全部，1-待支付，2-已支付。需要登录（JWT）
 //	@Tags			订单
-//	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			request	body		OrderListRequest	true	"查询条件"
-//	@Success		200		{object}	response.Response{data=orderapp.OrderListResult}
+//	@Param			userId		query	uint	true	"用户ID"
+//	@Param			page		query	int		false	"页码，默认 1"
+//	@Param			pageSize	query	int		false	"每页数量，默认 10，最大 100"
+//	@Param			status		query	int		false	"状态：不传或 0 查全部，1-待支付，2-已支付"
+//	@Success		200			{object}	response.Response{data=orderapp.OrderListResult}
 //	@Failure		400		{object}	response.Response	"参数校验失败"
 //	@Failure		401		{object}	response.Response	"未登录或 token 失效"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/order/list [post]
+//	@Router			/order/list [get]
 func (h *OrderHandler) List(c *gin.Context) {
 	var req OrderListRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBindQuery(&req); err != nil {
 		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
 		return
 	}

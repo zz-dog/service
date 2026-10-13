@@ -363,27 +363,6 @@ definitions:
     required:
     - name
     type: object
-  internal_interfaces_http_handler.OrderListRequest:
-    properties:
-      page:
-        minimum: 1
-        type: integer
-      pageSize:
-        maximum: 100
-        minimum: 1
-        type: integer
-      status:
-        description: 可选，若不传则查询所有状态的订单
-        enum:
-        - 0
-        - 1
-        - 2
-        type: integer
-      userId:
-        type: integer
-    required:
-    - userId
-    type: object
   internal_interfaces_http_handler.SkU:
     properties:
       picture:
@@ -448,6 +427,22 @@ definitions:
         type: integer
     required:
     - name
+    type: object
+  internal_interfaces_http_handler.addInventoryReq:
+    properties:
+      productId:
+        description: 商品ID
+        type: integer
+      qty:
+        description: 增加的库存数量
+        type: integer
+      skuCode:
+        description: SKU编码
+        type: string
+    required:
+    - productId
+    - qty
+    - skuCode
     type: object
   internal_interfaces_http_handler.changeStatusRequest:
     properties:
@@ -595,6 +590,26 @@ definitions:
         type: integer
     required:
     - productId
+    type: object
+  internal_interfaces_http_handler.updateSKUReq:
+    properties:
+      picture:
+        description: 商品图片
+        type: string
+      price:
+        description: 单价(分)
+        type: integer
+      productId:
+        description: 商品ID
+        type: integer
+      skuCode:
+        description: SKU编码
+        type: string
+    required:
+    - picture
+    - price
+    - productId
+    - skuCode
     type: object
   internal_interfaces_http_handler.updateUserRequest:
     properties:
@@ -861,8 +876,65 @@ paths:
       summary: 创建商品
       tags:
       - 商品
-  /catalog/product/list:
+  /catalog/product/delete/{id}:
+    delete:
+      description: 根据商品ID删除商品；上架状态的商品需先下架才能删除
+      parameters:
+      - description: 商品ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "400":
+          description: ID格式错误、商品不存在或商品为上架状态
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+      summary: 删除商品
+      tags:
+      - 商品
+  /catalog/product/inventory/add:
     post:
+      consumes:
+      - application/json
+      description: 根据商品ID和SKU编码增加库存（进货）
+      parameters:
+      - description: 库存信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_interfaces_http_handler.addInventoryReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "400":
+          description: 参数校验失败、商品规格不存在或库存数量无效
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+      summary: 添加库存
+      tags:
+      - 商品
+  /catalog/product/list:
+    get:
       description: 根据分类、商品ID或名称筛选商品并分页返回
       parameters:
       - description: 分类ID
@@ -873,10 +945,14 @@ paths:
         in: query
         name: productId
         type: integer
-      - description: 商品名称
+      - description: 商品名称（模糊匹配）
         in: query
         name: name
         type: string
+      - description: 状态：1上架 2下架，不传查全部
+        in: query
+        name: status
+        type: integer
       - description: 页码
         in: query
         name: page
@@ -908,6 +984,68 @@ paths:
           schema:
             $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
       summary: 分页查询商品
+      tags:
+      - 商品
+  /catalog/product/sku/delete/{productId}/{skuCode}:
+    delete:
+      description: 根据商品ID和SKU编码删除SKU；仅下架商品可删，且商品至少保留一个SKU
+      parameters:
+      - description: 商品ID
+        in: path
+        name: productId
+        required: true
+        type: integer
+      - description: SKU编码
+        in: path
+        name: skuCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "400":
+          description: ID格式错误、商品或SKU不存在、商品为上架状态或仅剩最后一个SKU
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+      summary: 删除SKU
+      tags:
+      - 商品
+  /catalog/product/sku/update:
+    post:
+      consumes:
+      - application/json
+      description: 根据商品ID和SKU编码更新SKU的价格和图片；规格组合和库存不变
+      parameters:
+      - description: SKU更新信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_interfaces_http_handler.updateSKUReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "400":
+          description: 参数校验失败、商品或SKU不存在、价格无效
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/github_com_wsc-zz_service_pkg_response.Response'
+      summary: 更新SKU
       tags:
       - 商品
   /catalog/product/update:
@@ -1338,17 +1476,26 @@ paths:
       tags:
       - 订单
   /order/list:
-    post:
-      consumes:
-      - application/json
+    get:
       description: 按用户分页查询订单，可按状态过滤：不传或 0 查全部，1-待支付，2-已支付。需要登录（JWT）
       parameters:
-      - description: 查询条件
-        in: body
-        name: request
+      - description: 用户ID
+        in: query
+        name: userId
         required: true
-        schema:
-          $ref: '#/definitions/internal_interfaces_http_handler.OrderListRequest'
+        type: integer
+      - description: 页码，默认 1
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量，默认 10，最大 100
+        in: query
+        name: pageSize
+        type: integer
+      - description: 状态：不传或 0 查全部，1-待支付，2-已支付
+        in: query
+        name: status
+        type: integer
       produces:
       - application/json
       responses:

@@ -402,8 +402,95 @@ const docTemplate = `{
                 }
             }
         },
-        "/catalog/product/list": {
+        "/catalog/product/delete/{id}": {
+            "delete": {
+                "description": "根据商品ID删除商品；上架状态的商品需先下架才能删除",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "商品"
+                ],
+                "summary": "删除商品",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "商品ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "ID格式错误、商品不存在或商品为上架状态",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/catalog/product/inventory/add": {
             "post": {
+                "description": "根据商品ID和SKU编码增加库存（进货）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "商品"
+                ],
+                "summary": "添加库存",
+                "parameters": [
+                    {
+                        "description": "库存信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_interfaces_http_handler.addInventoryReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "参数校验失败、商品规格不存在或库存数量无效",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/catalog/product/list": {
+            "get": {
                 "description": "根据分类、商品ID或名称筛选商品并分页返回",
                 "produces": [
                     "application/json"
@@ -427,8 +514,14 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "商品名称",
+                        "description": "商品名称（模糊匹配）",
                         "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "状态：1上架 2下架，不传查全部",
+                        "name": "status",
                         "in": "query"
                     },
                     {
@@ -467,6 +560,100 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "查询参数校验失败",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/catalog/product/sku/delete/{productId}/{skuCode}": {
+            "delete": {
+                "description": "根据商品ID和SKU编码删除SKU；仅下架商品可删，且商品至少保留一个SKU",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "商品"
+                ],
+                "summary": "删除SKU",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "商品ID",
+                        "name": "productId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "SKU编码",
+                        "name": "skuCode",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "ID格式错误、商品或SKU不存在、商品为上架状态或仅剩最后一个SKU",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/catalog/product/sku/update": {
+            "post": {
+                "description": "根据商品ID和SKU编码更新SKU的价格和图片；规格组合和库存不变",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "商品"
+                ],
+                "summary": "更新SKU",
+                "parameters": [
+                    {
+                        "description": "SKU更新信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_interfaces_http_handler.updateSKUReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "参数校验失败、商品或SKU不存在、价格无效",
                         "schema": {
                             "$ref": "#/definitions/github_com_wsc-zz_service_pkg_response.Response"
                         }
@@ -1182,16 +1369,13 @@ const docTemplate = `{
             }
         },
         "/order/list": {
-            "post": {
+            "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
                 "description": "按用户分页查询订单，可按状态过滤：不传或 0 查全部，1-待支付，2-已支付。需要登录（JWT）",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1201,13 +1385,29 @@ const docTemplate = `{
                 "summary": "分页查询订单列表",
                 "parameters": [
                     {
-                        "description": "查询条件",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_interfaces_http_handler.OrderListRequest"
-                        }
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "userId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "页码，默认 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "每页数量，默认 10，最大 100",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "状态：不传或 0 查全部，1-待支付，2-已支付",
+                        "name": "status",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2158,35 +2358,6 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_interfaces_http_handler.OrderListRequest": {
-            "type": "object",
-            "required": [
-                "userId"
-            ],
-            "properties": {
-                "page": {
-                    "type": "integer",
-                    "minimum": 1
-                },
-                "pageSize": {
-                    "type": "integer",
-                    "maximum": 100,
-                    "minimum": 1
-                },
-                "status": {
-                    "description": "可选，若不传则查询所有状态的订单",
-                    "type": "integer",
-                    "enum": [
-                        0,
-                        1,
-                        2
-                    ]
-                },
-                "userId": {
-                    "type": "integer"
-                }
-            }
-        },
         "internal_interfaces_http_handler.SkU": {
             "type": "object",
             "required": [
@@ -2280,6 +2451,28 @@ const docTemplate = `{
                 "specValueId": {
                     "description": "规格值ID，0 表示新增",
                     "type": "integer"
+                }
+            }
+        },
+        "internal_interfaces_http_handler.addInventoryReq": {
+            "type": "object",
+            "required": [
+                "productId",
+                "qty",
+                "skuCode"
+            ],
+            "properties": {
+                "productId": {
+                    "description": "商品ID",
+                    "type": "integer"
+                },
+                "qty": {
+                    "description": "增加的库存数量",
+                    "type": "integer"
+                },
+                "skuCode": {
+                    "description": "SKU编码",
+                    "type": "string"
                 }
             }
         },
@@ -2486,6 +2679,33 @@ const docTemplate = `{
                 },
                 "productId": {
                     "type": "integer"
+                }
+            }
+        },
+        "internal_interfaces_http_handler.updateSKUReq": {
+            "type": "object",
+            "required": [
+                "picture",
+                "price",
+                "productId",
+                "skuCode"
+            ],
+            "properties": {
+                "picture": {
+                    "description": "商品图片",
+                    "type": "string"
+                },
+                "price": {
+                    "description": "单价(分)",
+                    "type": "integer"
+                },
+                "productId": {
+                    "description": "商品ID",
+                    "type": "integer"
+                },
+                "skuCode": {
+                    "description": "SKU编码",
+                    "type": "string"
                 }
             }
         },

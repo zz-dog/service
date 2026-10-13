@@ -44,6 +44,6 @@ func registerOrderRoutes(api *gin.RouterGroup) {
 	{
 		orderApi.POST("create", middleware.OrderCreateGuard(limiter, 3*time.Second), h.Create)
 		orderApi.POST("cancel", h.Cancel)
-		orderApi.POST("list", h.List)
+		orderApi.GET("list", h.List)
 	}
 }

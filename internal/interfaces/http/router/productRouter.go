@@ -34,7 +34,7 @@ func registerProductRouter(r *gin.RouterGroup) {
 	{
 		productApi.POST("/create", h.Create, middleware.JWTAuth(blacklist))
 		productApi.POST("/update", h.Update, middleware.JWTAuth(blacklist))
-		productApi.POST("/list", h.List)
+		productApi.GET("/list", h.List)
 		productApi.DELETE("/delete/:id", h.Delete, middleware.JWTAuth(blacklist))
 		productApi.POST("/inventory/add", h.AddInventory, middleware.JWTAuth(blacklist))
 		productApi.POST("/sku/update", h.UpdateSKU, middleware.JWTAuth(blacklist))
