@@ -184,6 +184,43 @@ func (h *ProductHandler) AddInventory(c *gin.Context) {
 	response.Success(c, nil)
 }
 
+type updateSKUReq struct {
+	ProductID uint   `json:"productId" binding:"required"` // 商品ID
+	SKUCode   string `json:"skuCode" binding:"required"`   // SKU编码
+	Price     int64  `json:"price" binding:"required,gt=0"` // 单价(分)
+	Picture   string `json:"picture" binding:"required"`   // 商品图片
+}
+
+// UpdateSKU 更新SKU
+//
+//	@Summary		更新SKU
+//	@Description	根据商品ID和SKU编码更新SKU的价格和图片；规格组合和库存不变
+//	@Tags			商品
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		updateSKUReq	true	"SKU更新信息"
+//	@Success		200		{object}	response.Response
+//	@Failure		400		{object}	response.Response	"参数校验失败、商品或SKU不存在、价格无效"
+//	@Failure		500		{object}	response.Response	"服务器内部错误"
+//	@Router			/catalog/product/sku/update [post]
+func (h *ProductHandler) UpdateSKU(c *gin.Context) {
+	var req updateSKUReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
+		return
+	}
+	err := h.productSvc.UpdateSKU(c.Request.Context(), req.ProductID, req.SKUCode, req.Price, req.Picture)
+	if err != nil {
+		if isBadRequest(err) {
+			response.BadRequest(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		return
+	}
+	response.Success(c, nil)
+}
+
 type updateProductReq struct {
 	ProductID  uint       `json:"productId" binding:"required"`
 	CategoryID uint       `json:"categoryId"`
@@ -227,6 +264,41 @@ func (h *ProductHandler) Update(c *gin.Context) {
 		return
 	}
 	response.Success(c, resp)
+}
+
+// DeleteSKU 删除SKU
+//
+//	@Summary		删除SKU
+//	@Description	根据商品ID和SKU编码删除SKU；仅下架商品可删，且商品至少保留一个SKU
+//	@Tags			商品
+//	@Produce		json
+//	@Param			productId	path		int					true	"商品ID"
+//	@Param			skuCode		path		string				true	"SKU编码"
+//	@Success		200			{object}	response.Response
+//	@Failure		400			{object}	response.Response	"ID格式错误、商品或SKU不存在、商品为上架状态或仅剩最后一个SKU"
+//	@Failure		500			{object}	response.Response	"服务器内部错误"
+//	@Router			/catalog/product/sku/delete/{productId}/{skuCode} [delete]
+func (h *ProductHandler) DeleteSKU(c *gin.Context) {
+	productID, err := strconv.ParseUint(c.Param("productId"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, http.StatusBadRequest, "商品ID格式错误")
+		return
+	}
+	skuCode := c.Param("skuCode")
+	if skuCode == "" {
+		response.BadRequest(c, http.StatusBadRequest, "SKU编码不能为空")
+		return
+	}
+	err = h.productSvc.DeleteSKU(c.Request.Context(), uint(productID), skuCode)
+	if err != nil {
+		if isBadRequest(err) {
+			response.BadRequest(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		return
+	}
+	response.Success(c, nil)
 }
 
 type ProductListReq struct {

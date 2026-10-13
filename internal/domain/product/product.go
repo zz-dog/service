@@ -73,6 +73,39 @@ func (p *Product) ReplaceSKUs(skus []SKU) error {
 	return nil
 }
 
+// UpdateSKU 更新某 SKU 的价格和图片（管理端调价）。
+// 编码由规格组合派生，定位已有 SKU 只认 skuCode；规格组合和库存不动。
+func (p *Product) UpdateSKU(skuCode string, price int64, picture string) error {
+	if price <= 0 {
+		return ErrInvalidPrice
+	}
+	idx, ok := p.FindSKU(skuCode)
+	if !ok {
+		return ErrSKUNotFound
+	}
+	p.SKUs[idx].Price = price
+	p.SKUs[idx].Picture = picture
+	return nil
+}
+
+// RemoveSKU 删除某 SKU（管理端下架规格）。
+// 与删除商品一致，仅下架状态允许；至少保留一个 SKU。
+// 订单只引用 SKUCode 快照，删除不影响历史订单展示。
+func (p *Product) RemoveSKU(skuCode string) error {
+	if !p.IsOnShelf() {
+		return ErrProductOnShelf
+	}
+	if len(p.SKUs) <= 1 {
+		return ErrEmptySKUs
+	}
+	idx, ok := p.FindSKU(skuCode)
+	if !ok {
+		return ErrSKUNotFound
+	}
+	p.SKUs = append(p.SKUs[:idx], p.SKUs[idx+1:]...)
+	return nil
+}
+
 // validateSKUs 校验 SKU 列表：非空、字段合法、编码与规格组合一一对应、组合不重复。
 // 编码由 DeriveSKUCode 派生，组合重复等价于编码重复，一并拒绝。
 func validateSKUs(skus []SKU) error {

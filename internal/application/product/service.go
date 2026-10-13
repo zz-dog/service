@@ -91,6 +91,32 @@ func (s *Service) AddInventory(ctx context.Context, productID uint, skuCode stri
 	return s.repo.RestockStock(ctx, productID, skuCode, qty)
 }
 
+// UpdateSKU 更新 SKU 的价格和图片：
+// ① 加载聚合定位 SKU，规格组合和库存不动；
+// ② 落库走 Save（联合主键 Upsert），只覆盖价格/图片字段。
+func (s *Service) UpdateSKU(ctx context.Context, productID uint, skuCode string, price int64, picture string) error {
+	p, err := s.repo.FindByID(ctx, productID)
+	if err != nil {
+		return err
+	}
+	if err := p.UpdateSKU(skuCode, price, picture); err != nil {
+		return err
+	}
+	return s.repo.Save(ctx, p)
+}
+
+// DeleteSKU 删除 SKU：仅允许删除下架商品的 SKU，且至少保留一个 SKU。
+func (s *Service) DeleteSKU(ctx context.Context, productID uint, skuCode string) error {
+	p, err := s.repo.FindByID(ctx, productID)
+	if err != nil {
+		return err
+	}
+	if err := p.RemoveSKU(skuCode); err != nil {
+		return err
+	}
+	return s.repo.Save(ctx, p)
+}
+
 // buildSKUs 把输入 SKU 转为领域 SKU：
 // 规格项必须在分类绑定的规格集内，名称快照取权威值填充；
 // SKUCode 不收客户端值，由规格组合派生（DeriveSKUCode）。

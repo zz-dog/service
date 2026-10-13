@@ -76,10 +76,28 @@ func (r *ProductRepository) Save(ctx context.Context, p *domainproduct.Product) 
 			Delete(&ProductMediaPO{}).Error; err != nil {
 			return err
 		}
+		// SKU 同理：从聚合中移除的 SKU 不会被 FullSaveAssociations 删除，
+		// 先删掉本次不在集合内的旧 SKU 行（规格项随联合外键 OnDelete:CASCADE 级联删除）
+		if err := deleteRemovedSKUs(tx, po.ProductID, po.SKUs); err != nil {
+			return err
+		}
 		// FullSaveAssociations：更新时同步 Upsert 子表（SKU / 规格项 / 媒体）
 		return tx.Session(&gorm.Session{FullSaveAssociations: true}).
 			Save(&po).Error
 	})
+}
+
+// deleteRemovedSKUs 删除该商品下本次集合外的旧 SKU 行；集合为空则删全部。
+func deleteRemovedSKUs(tx *gorm.DB, productID uint, skus []SKUPO) error {
+	db := tx.Where("product_id = ?", productID)
+	if len(skus) > 0 {
+		codes := make([]string, 0, len(skus))
+		for _, sku := range skus {
+			codes = append(codes, sku.SKUCode)
+		}
+		db = db.Not("sku_code IN ?", codes)
+	}
+	return db.Delete(&SKUPO{}).Error
 }
 
 func (r *ProductRepository) CountByCategory(ctx context.Context, categoryID uint) (int64, error) {
