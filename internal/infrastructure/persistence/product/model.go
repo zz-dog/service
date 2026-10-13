@@ -4,6 +4,8 @@ import (
 	"time"
 
 	domainproduct "github.com/wsc-zz/service/internal/domain/product"
+
+	"gorm.io/gorm"
 )
 
 type SKUPO struct {
@@ -43,6 +45,7 @@ type ProductPO struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Status    domainproduct.Status `gorm:"tinyint;not null;default:1;comment:商品状态 1上架 0下架"`
+	DeletedAt gorm.DeletedAt       `gorm:"index;comment:软删除时间"`
 }
 
 // ProductMediaPO 商品媒体资源：图片/视频/3D模型等展示素材。

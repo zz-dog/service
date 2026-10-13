@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	productapp "github.com/wsc-zz/service/internal/application/product"
@@ -17,6 +18,8 @@ var badRequestErrors = []error{
 	productapp.ErrSpecNotBoundToCategory,
 	productapp.ErrSpecValueNotInSpec,
 	domaincategory.ErrCategoryNotFound,
+	domainproduct.ErrProductNotFound,
+	domainproduct.ErrProductOnShelf,
 	domainproduct.ErrEmptyProductName,
 	domainproduct.ErrEmptySKUs,
 	domainproduct.ErrEmptySKUCode,
@@ -115,6 +118,34 @@ func (h *ProductHandler) Create(c *gin.Context) {
 	}
 	response.Success(c, resp)
 }
+// Delete 删除商品
+//
+//	@Summary		删除商品
+//	@Description	根据商品ID删除商品；上架状态的商品需先下架才能删除
+//	@Tags			商品
+//	@Produce		json
+//	@Param			id	path		int					true	"商品ID"
+//	@Success		200	{object}	response.Response
+//	@Failure		400	{object}	response.Response	"ID格式错误、商品不存在或商品为上架状态"
+//	@Failure		500	{object}	response.Response	"服务器内部错误"
+//	@Router			/catalog/product/delete/{id} [delete]
+func (h *ProductHandler) Delete(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, http.StatusBadRequest, "ID格式错误")
+		return
+	}
+	err = h.productSvc.Delete(c.Request.Context(), uint(id))
+	if err != nil {
+		if isBadRequest(err) {
+			response.BadRequest(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		response.Fail(c, http.StatusInternalServerError, 500, err.Error())
+		return
+	}
+	response.Success(c, nil)
+}
 
 type updateProductReq struct {
 	ProductID  uint       `json:"productId" binding:"required"`
@@ -161,13 +192,14 @@ func (h *ProductHandler) Update(c *gin.Context) {
 	response.Success(c, resp)
 }
 
-type ProdectListReq struct {
-	CategoryID uint `form:"categoryId"`
-	ProductID  uint `form:"productId"`
-	Name       string
-	Page       int `form:"page" binding:"required"`
-	PageSize   int `form:"pageSize" binding:"required"`
-	status     domainproduct.Status
+type ProductListReq struct {
+	CategoryID uint   `form:"categoryId"`
+	ProductID  uint   `form:"productId"`
+	Name       string `form:"name"`
+	// Status 1上架 2下架；不传或传0查全部（避免与零值 StatusOnShelf=0 冲突，查询参数整体偏移 +1）
+	Status   int `form:"status" binding:"omitempty,oneof=0 1 2"`
+	Page     int `form:"page" binding:"required"`
+	PageSize int `form:"pageSize" binding:"required"`
 }
 
 // List 分页查询商品
@@ -178,7 +210,8 @@ type ProdectListReq struct {
 //	@Produce		json
 //	@Param			categoryId	query		int		false	"分类ID"
 //	@Param			productId	query		int		false	"商品ID"
-//	@Param			name		query		string	false	"商品名称"
+//	@Param			name		query		string	false	"商品名称（模糊匹配）"
+//	@Param			status		query		int		false	"状态：1上架 2下架，不传查全部"
 //	@Param			page		query		int		true	"页码"
 //	@Param			pageSize	query		int		true	"每页数量"
 //	@Success		200			{object}	response.Response{data=productapp.ProductListResult}
@@ -186,10 +219,16 @@ type ProdectListReq struct {
 //	@Failure		500			{object}	response.Response	"服务器内部错误"
 //	@Router			/catalog/product/list [post]
 func (h *ProductHandler) List(c *gin.Context) {
-	var req ProdectListReq
+	var req ProductListReq
 	if err := c.ShouldBindQuery(&req); err != nil {
 		response.BadRequest(c, http.StatusBadRequest, validator.ErrorMsg(err))
 		return
+	}
+	// 查询参数 1上架 2下架，偏移 -1 映射回领域状态（0上架 1下架）；不传不过滤
+	var status *domainproduct.Status
+	if req.Status > 0 {
+		s := domainproduct.Status(req.Status - 1)
+		status = &s
 	}
 	result, err := h.productSvc.List(c.Request.Context(), domainproduct.ListQuery{
 		CategoryID: req.CategoryID,
@@ -197,7 +236,7 @@ func (h *ProductHandler) List(c *gin.Context) {
 		Page:       req.Page,
 		PageSize:   req.PageSize,
 		ProductID:  req.ProductID,
-		Status:     req.status,
+		Status:     status,
 	})
 	if err != nil {
 		response.Fail(c, http.StatusInternalServerError, 500, err.Error())

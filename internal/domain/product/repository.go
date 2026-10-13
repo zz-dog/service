@@ -11,6 +11,8 @@ type ProductRepository interface {
 	FindByProductAndSKUCode(ctx context.Context, productID uint, skuCode string) (*Product, error)
 
 	Create(ctx context.Context, p *Product) error
+	// Delete 软删除商品；未找到不报错（幂等）
+	Delete(ctx context.Context, id uint) error
 	// Save 新增或更新商品（含 SKU）
 	Save(ctx context.Context, p *Product) error
 	// DeductStock 原子扣减某 SKU 库存，并发安全；库存不足返回 ErrInsufficientStock
@@ -25,7 +27,7 @@ type ProductRepository interface {
 type ListQuery struct {
 	Page       int
 	PageSize   int
-	Status     Status
+	Status     *Status // nil 不过滤；指向具体状态则只查该状态（区分零值 0=上架 与"不传"）
 	Name       string
 	CategoryID uint
 	ProductID  uint

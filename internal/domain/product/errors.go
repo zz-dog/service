@@ -24,4 +24,6 @@ var (
 	ErrEmptyMediaURL            = errors.New("媒体资源地址不能为空")
 	ErrEmptyCategoryName        = errors.New("分类名称不能为空")
 	ErrCategoryHasProduct       = errors.New("分类下还有商品，不能删除")
+
+	ErrProductOnShelf = errors.New("商品为上架状态，请先下架再删除")
 )

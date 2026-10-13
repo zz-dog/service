@@ -42,7 +42,17 @@ func (s *Service) Create(ctx context.Context, in CreateProductInput) (*ProductDT
 	dto := toProductDTO(p)
 	return &dto, nil
 }
-
+// Delete 删除商品：仅允许删除已下架商品
+func (s *Service) Delete(ctx context.Context, productID uint) error {
+	p, err := s.repo.FindByID(ctx, productID)
+	if err != nil {
+		return err
+	}
+	if !p.CanDelete() {
+		return domainproduct.ErrProductOnShelf
+	}
+	return s.repo.Delete(ctx, productID)
+}
 func (s *Service) List(ctx context.Context, in domainproduct.ListQuery) (ProductListResult, error) {
 	products, total, err := s.repo.List(ctx, in)
 	return ProductListResult{

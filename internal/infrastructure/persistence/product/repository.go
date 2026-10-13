@@ -33,7 +33,10 @@ func (r *ProductRepository) FindByID(ctx context.Context, id uint) (*domainprodu
 	}
 	return toProduct(po), nil
 }
-
+func (r *ProductRepository) Delete(ctx context.Context, id uint) error {
+	// 依赖 gorm.DeletedAt 软删除：UPDATE ... SET deleted_at = NOW()
+	return r.db.WithContext(ctx).Where("product_id = ?", id).Delete(&ProductPO{}).Error
+}
 func (r *ProductRepository) FindByProductAndSKUCode(ctx context.Context, productID uint, skuCode string) (*domainproduct.Product, error) {
 	// SKU 编码在 product_skus 上，先定位商品再加载聚合
 	var sku SKUPO
@@ -145,8 +148,8 @@ func (r *ProductRepository) List(ctx context.Context, q domainproduct.ListQuery)
 	if q.ProductID > 0 {
 		db = db.Where("product_id = ?", q.ProductID)
 	}
-	if q.Status > 0 {
-		db = db.Where("status = ?", q.Status)
+	if q.Status != nil {
+		db = db.Where("status = ?", *q.Status)
 	}
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err

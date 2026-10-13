@@ -147,3 +147,7 @@ func (p *Product) Restock(skuCode string, qty int) error {
 	p.SKUs[idx].Stock += qty
 	return nil
 }
+
+func (p *Product) CanDelete() bool {
+	return p.Status == StatusOffShelf
+}
