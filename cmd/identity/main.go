@@ -17,6 +17,7 @@ import (
 	"github.com/wsc-zz/service/global"
 	nacosconfig "github.com/wsc-zz/service/internal/infrastructure/configcenter/nacos"
 	"github.com/wsc-zz/service/internal/infrastructure/discovery/nacos"
+	addresspo "github.com/wsc-zz/service/internal/infrastructure/persistence/address"
 	userpo "github.com/wsc-zz/service/internal/infrastructure/persistence/user"
 	identityrouter "github.com/wsc-zz/service/internal/interfaces/http/router"
 )
@@ -41,9 +42,9 @@ func main() {
 
 	// identity 服务默认端口 8081（config.yaml 的 service.port 属于 main 服务），可用 SERVICE_PORT 覆盖
 
-	if err := global.DB.AutoMigrate(&userpo.UserPO{}); err != nil {
-		global.Logger.Error("用户表迁移失败", zap.Error(err))
-		panic("用户表迁移失败: " + err.Error())
+	if err := global.DB.AutoMigrate(&userpo.UserPO{}, &addresspo.AddressPO{}); err != nil {
+		global.Logger.Error("数据库迁移失败", zap.Error(err))
+		panic("数据库迁移失败: " + err.Error())
 	}
 
 	r := gin.Default()
