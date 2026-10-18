@@ -29,11 +29,11 @@ type Config struct {
 }
 
 type OssConfig struct {
-	Region                string `yaml:"region"`
-	AccessKeyId           string `yaml:"access_key_id"`
-	AccessAccessKeySecret string `yaml:"access_key_secret"`
-	Bucket                string `yaml:"bucket"`
-	PublicBaseUrl         string `yaml:"public_base_url"`
+	Region                string `yaml:"region" mapstructure:"region"`
+	AccessKeyId           string `yaml:"access_key_id" mapstructure:"access_key_id"`
+	AccessAccessKeySecret string `yaml:"access_key_secret" mapstructure:"access_key_secret"`
+	Bucket                string `yaml:"bucket" mapstructure:"bucket"`
+	PublicBaseUrl         string `yaml:"public_base_url" mapstructure:"public_base_url"`
 }
 type PaymentConfig struct {
 	NotifyUrl string    `yaml:"notify_url"`
