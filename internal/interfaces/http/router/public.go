@@ -21,6 +21,7 @@ func registerPublicRoutes(r *gin.RouterGroup) {
 	publicApi := r.Group("/public", middleware.JWTAuth(blacklist))
 	{
 		publicApi.POST("/media/upload", h.Upload)
+		publicApi.GET("/media/uploadURL", h.UploadURL)
 		publicApi.GET("/media/signURL", h.SignURL)
 	}
 }

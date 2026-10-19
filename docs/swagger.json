@@ -726,7 +726,7 @@
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "按 key 与扩展名生成 OSS 预签名 URL,有效期 1 小时。需要登录（JWT）",
+                "description": "按 key 生成 OSS 预签名读 URL(私有 Bucket 读取用),有效期 1 小时。需要登录（JWT）",
                 "consumes": [
                     "application/json"
                 ],
@@ -742,13 +742,6 @@
                         "type": "string",
                         "description": "对象 key",
                         "name": "key",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "扩展名（png/jpg/webp/gif）",
-                        "name": "ext",
                         "in": "query",
                         "required": true
                     }
@@ -770,6 +763,12 @@
                                     }
                                 }
                             ]
+                        }
+                    },
+                    "400": {
+                        "description": "缺少 key",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "401": {
@@ -865,6 +864,79 @@
                     },
                     "500": {
                         "description": "上传 OSS 失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/catalog/public/media/uploadURL": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "按扩展名生成对象 key 与预签名 PUT URL,前端直接 PUT 文件本体到该 URL",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "媒体资源"
+                ],
+                "summary": "获取 OSS 直传签名 URL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "扩展名（png/jpg/webp/gif）",
+                        "name": "ext",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "key 与签名 URL",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.UploadURLResp"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "缺少 ext",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "415": {
+                        "description": "不支持的扩展名",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "生成签名 URL 失败",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -2449,6 +2521,17 @@
                 "specValueId": {
                     "description": "规格值ID，0 表示新增",
                     "type": "integer"
+                }
+            }
+        },
+        "handler.UploadURLResp": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
                 }
             }
         },
