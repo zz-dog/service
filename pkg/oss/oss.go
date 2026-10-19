@@ -80,7 +80,11 @@ func ContentType(ext string) string {
 	return "application/octet-stream"
 }
 func GenKey(prefix, ext string) string {
-	return fmt.Sprintf("%s/%s/%s.%s", prefix, time.Now().Format("20060102"), uuid.NewString(), ext)
+	key := fmt.Sprintf("%s/%s.%s", time.Now().Format("20060102"), uuid.NewString(), ext)
+	if prefix != "" {
+		key = prefix + "/" + key
+	}
+	return key
 }
 
 func (c *Client) Presign(ctx context.Context, key, ext string, ttl time.Duration) (string, error) {

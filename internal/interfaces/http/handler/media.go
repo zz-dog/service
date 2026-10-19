@@ -78,7 +78,7 @@ func (h *MidiaHandler) Upload(c *gin.Context) {
 	if key == "" {
 		key = ossclient.GenKey("", ext)
 	}
-	url, err := h.client.Put(c, ossclient.PutInput{Ext: ext, Reader: file}, "test")
+	url, err := h.client.Put(c, ossclient.PutInput{Ext: ext, Reader: file}, key)
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
