@@ -57,8 +57,16 @@ func (u *Client) Put(ctx context.Context, in PutInput, key string) (url string, 
 	return u.base + "/" + key, nil
 }
 
-func (c *Client) SignURL(ctx context.Context, key string, contentType string, ttl time.Duration) (string, error) {
-	return "", nil
+// SignURL 生成对象的预签名读 URL(私有 Bucket 读取用),ttl 内有效
+func (c *Client) SignURL(ctx context.Context, key string, ttl time.Duration) (string, error) {
+	result, err := c.Client.Presign(ctx, &oss.GetObjectRequest{
+		Bucket: oss.Ptr(c.bucket),
+		Key:    oss.Ptr(key),
+	}, oss.PresignExpires(ttl))
+	if err != nil {
+		return "", err
+	}
+	return result.URL, nil
 }
 
 // URL 对象的公网访问地址(Put 的返回值就是它;签名直传、引用历史 key 时单独用)

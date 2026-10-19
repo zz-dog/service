@@ -80,22 +80,24 @@ func (h *MidiaHandler) Upload(c *gin.Context) {
 // SignURL 获取媒体文件的签名访问 URL
 //
 //	@Summary		获取媒体签名 URL
-//	@Description	按 key 与扩展名生成 OSS 预签名 URL,有效期 1 小时。需要登录（JWT）
+//	@Description	按 key 生成 OSS 预签名读 URL(私有 Bucket 读取用),有效期 1 小时。需要登录（JWT）
 //	@Tags			媒体资源
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
 //	@Param			key	query	string	true	"对象 key"
-//	@Param			ext	query	string	true	"扩展名（png/jpg/webp/gif）"
 //	@Success		200	{object}	response.Response{data=string}	"签名 URL"
+//	@Failure		400	{object}	response.Response	"缺少 key"
 //	@Failure		401	{object}	response.Response	"未登录或 token 失效"
 //	@Failure		500	{object}	response.Response	"生成签名 URL 失败"
 //	@Router			/catalog/public/media/signURL [get]
 func (h *MidiaHandler) SignURL(c *gin.Context) {
 	key := c.Query("key")
-	ext := c.Query("ext")
-	key = ossclient.GenKey(key, ext)
-	url, err := h.client.Presign(c, key, ext, time.Hour)
+	if key == "" {
+		response.BadRequest(c, "缺少 key")
+		return
+	}
+	url, err := h.client.SignURL(c, key, time.Hour)
 	if err != nil {
 		response.ServerError(c, err.Error())
 		return
