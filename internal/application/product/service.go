@@ -149,6 +149,7 @@ func buildSKUs(inputs []SKUInput, specs []*CategorySpecView) ([]domainproduct.SK
 			SpecItems: items,
 			Price:     in.Price,
 			Stock:     in.Stock,
+			Picture:   in.Picture,
 		})
 	}
 	return skus, nil
