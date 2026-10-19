@@ -23,6 +23,15 @@ var allowTypes = map[string]string{
 	"image/gif":  "gif",
 }
 
+// allowExts 是 allowTypes 的反向映射:扩展名(ext 参数/key 用) → MIME(签名 URL 的 Content-Type 用)。
+var allowExts = map[string]string{
+	"png":  "image/png",
+	"jpg":  "image/jpeg",
+	"jpeg": "image/jpeg",
+	"webp": "image/webp",
+	"gif":  "image/gif",
+}
+
 const maxUploadSize = 10 << 20 // 10MB:图片上限。视频走阶段五直传,别在这里放宽
 
 func NewMidiaHandler(client *ossclient.Client) *MidiaHandler {
@@ -106,7 +115,8 @@ func (h *MidiaHandler) UploadURL(c *gin.Context) {
 		response.BadRequest(c, "缺少 ext")
 		return
 	}
-	if _, ok := allowTypes[ext]; !ok {
+	// allowExts 的 value(对应 MIME)仅作文档参考,校验只看 key
+	if _, ok := allowExts[ext]; !ok {
 		response.JSON(c, http.StatusUnsupportedMediaType, "不支持的扩展名", nil)
 		return
 	}
