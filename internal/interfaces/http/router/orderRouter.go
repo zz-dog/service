@@ -17,6 +17,9 @@ import (
 	inventory "github.com/wsc-zz/service/internal/interfaces/rpc/inventory"
 )
 
+// registerOrderRoutes 订单是纯 C 端业务(下单/取消/查自己的订单),暂无管理端接口。
+// AutoCancelExpired 是后台任务不是路由,放在注册函数里(它属于这个服务的生命周期,
+// 不能因为挪管理端路由就跟着消失)
 func registerOrderRoutes(api *gin.RouterGroup) {
 	orderRepo := orderpo.NewOrderRepository(global.DB)
 

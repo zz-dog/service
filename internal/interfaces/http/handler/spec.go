@@ -35,14 +35,14 @@ type CreateInput struct {
 //
 //	@Summary		创建规格
 //	@Description	创建一个新的规格维度（如颜色、尺寸等），可同时传入规格值列表一次性创建；同名规格已存在时返回错误
-//	@Tags			规格
+//	@Tags			管理端-规格
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		CreateInput	true	"规格信息"
 //	@Success		200		{object}	response.Response{data=specapp.SpecDTO}
 //	@Failure		400		{object}	response.Response	"参数校验失败"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/catalog/spec/register [post]
+//	@Router			/catalog/admin/spec/register [post]
 func (h *SpecHandler) Create(c *gin.Context) {
 	var req CreateInput
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -85,7 +85,7 @@ type UpdateInput struct {
 //
 //	@Summary		整包更新规格
 //	@Description	根据规格ID更新规格维度及规格值。Values 须传该规格的完整值列表：带ID的值被更新、不带ID的值被新增、库中缺席的值被删除；单事务保证一致
-//	@Tags			规格
+//	@Tags			管理端-规格
 //	@Accept			json
 //	@Produce		json
 //	@Param			id		path		int			true	"规格ID"
@@ -93,7 +93,7 @@ type UpdateInput struct {
 //	@Success		200		{object}	response.Response{data=specapp.SpecDTO}
 //	@Failure		400		{object}	response.Response	"参数校验失败"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/catalog/spec/update/{id} [put]
+//	@Router			/catalog/admin/spec/update/{id} [put]
 func (h *SpecHandler) Update(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -129,13 +129,13 @@ func (h *SpecHandler) Update(c *gin.Context) {
 //
 //	@Summary		删除规格
 //	@Description	根据规格ID删除规格维度
-//	@Tags			规格
+//	@Tags			管理端-规格
 //	@Produce		json
 //	@Param			id	path		int	true	"规格ID"
 //	@Success		200	{object}	response.Response
 //	@Failure		400	{object}	response.Response	"规格ID格式错误"
 //	@Failure		500	{object}	response.Response	"服务器内部错误"
-//	@Router			/catalog/spec/delete/{id} [delete]
+//	@Router			/catalog/admin/spec/delete/{id} [delete]
 func (h *SpecHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {

@@ -11,7 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
 	"github.com/wsc-zz/service/global"
@@ -19,7 +18,7 @@ import (
 	"github.com/wsc-zz/service/internal/infrastructure/discovery/nacos"
 	addresspo "github.com/wsc-zz/service/internal/infrastructure/persistence/address"
 	userpo "github.com/wsc-zz/service/internal/infrastructure/persistence/user"
-	identityrouter "github.com/wsc-zz/service/internal/interfaces/http/router"
+	"github.com/wsc-zz/service/internal/interfaces/http/router"
 )
 
 func main() {
@@ -47,9 +46,7 @@ func main() {
 		panic("数据库迁移失败: " + err.Error())
 	}
 
-	r := gin.Default()
-	r.Use(identityrouter.CORSMiddleware())
-	identityrouter.RegisterIdentityRoutes(r.Group("/api"))
+	r := router.InitIdentityRouter()
 
 	// 先监听端口，服务可达后再注册 Nacos，避免注册后请求打到尚未监听的实例
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(global.Conf.Identity.ServicePort))

@@ -85,14 +85,14 @@ type SkU struct {
 //
 //	@Summary		创建商品
 //	@Description	创建商品及其 SKU；SKU 编码和规格名称由服务端生成
-//	@Tags			商品
+//	@Tags			管理端-商品
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		createProductReq	true	"商品信息"
 //	@Success		200		{object}	response.Response{data=productapp.ProductDTO}
 //	@Failure		400		{object}	response.Response	"参数校验失败或商品信息无效"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/catalog/product/create [post]
+//	@Router			/catalog/admin/product/create [post]
 func (h *ProductHandler) Create(c *gin.Context) {
 	var req createProductReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -122,13 +122,13 @@ func (h *ProductHandler) Create(c *gin.Context) {
 //
 //	@Summary		删除商品
 //	@Description	根据商品ID删除商品；上架状态的商品需先下架才能删除
-//	@Tags			商品
+//	@Tags			管理端-商品
 //	@Produce		json
 //	@Param			id	path		int					true	"商品ID"
 //	@Success		200	{object}	response.Response
 //	@Failure		400	{object}	response.Response	"ID格式错误、商品不存在或商品为上架状态"
 //	@Failure		500	{object}	response.Response	"服务器内部错误"
-//	@Router			/catalog/product/delete/{id} [delete]
+//	@Router			/catalog/admin/product/delete/{id} [delete]
 func (h *ProductHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -157,14 +157,14 @@ type addInventoryReq struct {
 //
 //	@Summary		添加库存
 //	@Description	根据商品ID和SKU编码增加库存（进货）
-//	@Tags			商品
+//	@Tags			管理端-商品
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		addInventoryReq	true	"库存信息"
 //	@Success		200		{object}	response.Response
 //	@Failure		400		{object}	response.Response	"参数校验失败、商品规格不存在或库存数量无效"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/catalog/product/inventory/add [post]
+//	@Router			/catalog/admin/product/inventory/add [post]
 func (h *ProductHandler) AddInventory(c *gin.Context) {
 	var req addInventoryReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -194,14 +194,14 @@ type updateSKUReq struct {
 //
 //	@Summary		更新SKU
 //	@Description	根据商品ID和SKU编码更新SKU的价格和图片；规格组合和库存不变
-//	@Tags			商品
+//	@Tags			管理端-商品
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		updateSKUReq	true	"SKU更新信息"
 //	@Success		200		{object}	response.Response
 //	@Failure		400		{object}	response.Response	"参数校验失败、商品或SKU不存在、价格无效"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/catalog/product/sku/update [post]
+//	@Router			/catalog/admin/product/sku/update [post]
 func (h *ProductHandler) UpdateSKU(c *gin.Context) {
 	var req updateSKUReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -232,14 +232,14 @@ type updateProductReq struct {
 //
 //	@Summary		更新商品
 //	@Description	根据商品ID更新商品的分类、名称、描述和媒体资源（整体替换）
-//	@Tags			商品
+//	@Tags			管理端-商品
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		updateProductReq	true	"商品更新信息"
 //	@Success		200		{object}	response.Response{data=productapp.ProductDTO}
 //	@Failure		400		{object}	response.Response	"参数校验失败或商品信息无效"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/catalog/product/update [post]
+//	@Router			/catalog/admin/product/update [post]
 func (h *ProductHandler) Update(c *gin.Context) {
 	var req updateProductReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -269,14 +269,14 @@ func (h *ProductHandler) Update(c *gin.Context) {
 //
 //	@Summary		删除SKU
 //	@Description	根据商品ID和SKU编码删除SKU；仅下架商品可删，且商品至少保留一个SKU
-//	@Tags			商品
+//	@Tags			管理端-商品
 //	@Produce		json
 //	@Param			productId	path		int					true	"商品ID"
 //	@Param			skuCode		path		string				true	"SKU编码"
 //	@Success		200			{object}	response.Response
 //	@Failure		400			{object}	response.Response	"ID格式错误、商品或SKU不存在、商品为上架状态或仅剩最后一个SKU"
 //	@Failure		500			{object}	response.Response	"服务器内部错误"
-//	@Router			/catalog/product/sku/delete/{productId}/{skuCode} [delete]
+//	@Router			/catalog/admin/product/sku/delete/{productId}/{skuCode} [delete]
 func (h *ProductHandler) DeleteSKU(c *gin.Context) {
 	productID, err := strconv.ParseUint(c.Param("productId"), 10, 64)
 	if err != nil {

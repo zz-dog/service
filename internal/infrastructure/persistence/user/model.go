@@ -33,7 +33,7 @@ type UserPO struct {
 	Avatar   string     `gorm:"size:255;default:'';comment:头像地址"`
 	Gender   int8       `gorm:"tinyint;default:0;comment:0未知 1男 2女"`
 	Birthday *time.Time `gorm:"comment:生日，允许为空"`
-
+	Role     user.Role  `gorm:"tinyint;not null;default:0;comment:角色 0普通用户 1管理员"`
 	// 账号状态
 	Status user.Status `gorm:"tinyint;not null;default:1;comment:账号状态 1正常 0禁用"`
 
@@ -63,6 +63,7 @@ func toDomain(po *UserPO) *user.User {
 		Gender:       po.Gender,
 		Birthday:     po.Birthday,
 		Status:       po.Status,
+		Role:         po.Role,
 		LastLoginIP:  po.LastLoginIP,
 		LastLoginAt:  po.LastLoginAt,
 	}
@@ -87,6 +88,7 @@ func toPO(u *user.User) *UserPO {
 		Gender:       u.Gender,
 		Birthday:     u.Birthday,
 		Status:       u.Status,
+		Role:         u.Role,
 		LastLoginIP:  u.LastLoginIP,
 		LastLoginAt:  u.LastLoginAt,
 	}

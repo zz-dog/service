@@ -43,8 +43,8 @@ func NewMidiaHandler(client *ossclient.Client) *MidiaHandler {
 //	@Summary		上传媒体文件
 //	@Description	上传图片到 OSS,返回访问 URL。multipart/form-data:file 必传(≤10MB,
 //	             	仅 png/jpeg/webp/gif,类型按请求嗅探的真身校验);key 可选,不传则
-//	             	由服务端生成。需要登录（JWT）
-//	@Tags			媒体资源
+//	             	由服务端生成。需要管理端权限（JWT + AdminAuth）
+//	@Tags			管理端-媒体资源
 //	@Accept			multipart/form-data
 //	@Produce		json
 //	@Security		ApiKeyAuth
@@ -56,7 +56,7 @@ func NewMidiaHandler(client *ossclient.Client) *MidiaHandler {
 //	@Failure		413		{object}	response.Response	"文件过大（上限 10MB）"
 //	@Failure		415		{object}	response.Response	"不支持的媒体类型"
 //	@Failure		500		{object}	response.Response	"上传 OSS 失败"
-//	@Router			/catalog/public/media/upload [post]
+//	@Router			/catalog/admin/media/upload [post]
 func (h *MidiaHandler) Upload(c *gin.Context) {
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
@@ -97,8 +97,8 @@ type UploadURLResp struct {
 //	@Summary		获取 OSS 直传签名 URL
 //	@Description	按扩展名生成对象 key 与预签名 PUT URL,前端直接 PUT 文件本体到该 URL
 //	             	(Content-Type 须与扩展名对应的 MIME 一致),有效期 1 小时。
-//	             	上传后凭返回的 key 调 /media/signURL 换读 URL。需要登录（JWT）
-//	@Tags			媒体资源
+//	             	上传后凭返回的 key 调 /admin/media/signURL 换读 URL。需要管理端权限（JWT + AdminAuth）
+//	@Tags			管理端-媒体资源
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
@@ -108,7 +108,7 @@ type UploadURLResp struct {
 //	@Failure		401	{object}	response.Response	"未登录或 token 失效"
 //	@Failure		415	{object}	response.Response	"不支持的扩展名"
 //	@Failure		500	{object}	response.Response	"生成签名 URL 失败"
-//	@Router			/catalog/public/media/uploadURL [get]
+//	@Router			/catalog/admin/media/uploadURL [get]
 func (h *MidiaHandler) UploadURL(c *gin.Context) {
 	ext := c.Query("ext")
 	if ext == "" {
@@ -132,8 +132,8 @@ func (h *MidiaHandler) UploadURL(c *gin.Context) {
 // SignURL 获取媒体文件的签名访问 URL
 //
 //	@Summary		获取媒体签名 URL
-//	@Description	按 key 生成 OSS 预签名读 URL(私有 Bucket 读取用),有效期 1 小时。需要登录（JWT）
-//	@Tags			媒体资源
+//	@Description	按 key 生成 OSS 预签名读 URL(私有 Bucket 读取用),有效期 1 小时。需要管理端权限（JWT + AdminAuth）
+//	@Tags			管理端-媒体资源
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
@@ -142,7 +142,7 @@ func (h *MidiaHandler) UploadURL(c *gin.Context) {
 //	@Failure		400	{object}	response.Response	"缺少 key"
 //	@Failure		401	{object}	response.Response	"未登录或 token 失效"
 //	@Failure		500	{object}	response.Response	"生成签名 URL 失败"
-//	@Router			/catalog/public/media/signURL [get]
+//	@Router			/catalog/admin/media/signURL [get]
 func (h *MidiaHandler) SignURL(c *gin.Context) {
 	key := c.Query("key")
 	if key == "" {

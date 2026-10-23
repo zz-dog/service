@@ -16,7 +16,6 @@ import (
 )
 
 func registerUserRoutes(r *gin.RouterGroup) {
-
 	userRepo := userpo.NewUserRepository(global.DB)
 	hasher := security.NewBcryptHasher()
 	tokenIssuer := auth.NewJWTTokenIssuer()
@@ -24,13 +23,13 @@ func registerUserRoutes(r *gin.RouterGroup) {
 	userSvc := userapp.NewService(userRepo, hasher, tokenIssuer, tokenBlacklist)
 	h := handler.NewHandler(userSvc)
 	apiGroup := r.Group("/user")
+
 	// 健康检查：供部署流水线 / 负载均衡探活使用，不校验 JWT
 	apiGroup.GET("/health", healthCheck)
 
 	apiGroup.POST("/register", h.Register)
 	apiGroup.POST("/login", h.Login)
-	apiGroup.GET("/list", middleware.JWTAuth(tokenBlacklist), h.GetUserList)
-	apiGroup.PUT("/status", middleware.JWTAuth(tokenBlacklist), h.ChangeStatus)
+
 	// 用户资料：需要登录（JWT 中间件校验 token 并写入 userId）
 	apiGroup.PUT("/user/profile", middleware.JWTAuth(tokenBlacklist), h.UpdateUser) // 更新当前用户资料
 
@@ -47,6 +46,16 @@ func registerUserRoutes(r *gin.RouterGroup) {
 		addr.DELETE("/:id", ah.Delete)  // /api/user/address/:id
 		addr.PUT("/:id/default", ah.SetDefault)
 	}
+
+	// 用户管理:管理端接口,/admin 段收口。identity 只有一个域要收口,管理端组
+	// 就近写在域路由文件里,不单独开 admin.go。
+	// JWTAuth 与 AdminAuth 显式串联:与 catalog 的 admin 组同款两层结构。
+	// 用户应用服务只装配一份,管理端/C 端共用同一个 handler——拆的是路由,不是服务
+	admin := apiGroup.Group("/admin", middleware.JWTAuth(tokenBlacklist), middleware.AdminAuth())
+	{
+		admin.GET("/list", h.GetUserList)    // /api/user/admin/list
+		admin.PUT("/status", h.ChangeStatus) // /api/user/admin/status
+	}
 }
 
 // healthCheck 健康检查
@@ -59,9 +68,4 @@ func registerUserRoutes(r *gin.RouterGroup) {
 //	@Router			/user/health [get]
 func healthCheck(c *gin.Context) {
 	response.SuccessMsg(c, "ok", nil)
-}
-
-// RegisterIdentityRoutes 注册 identity 服务的用户接口，不包含其他业务域路由。
-func RegisterIdentityRoutes(apiGroup *gin.RouterGroup) {
-	registerUserRoutes(apiGroup)
 }

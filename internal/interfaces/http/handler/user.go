@@ -110,8 +110,8 @@ type getUserListRequest struct {
 // GetUserList 分页查询用户列表
 //
 //	@Summary		分页查询用户列表
-//	@Description	分页查询用户，支持按用户ID精确过滤；需要登录（JWT）
-//	@Tags			用户
+//	@Description	分页查询用户，支持按用户ID精确过滤。需要管理端权限（JWT + AdminAuth）
+//	@Tags			管理端-用户
 //	@Produce		json
 //	@Security		ApiKeyAuth
 //	@Param			page		query		int		true	"页码（从1开始）"
@@ -122,7 +122,7 @@ type getUserListRequest struct {
 //	@Failure		400			{object}	response.Response	"参数校验失败"
 //	@Failure		401			{object}	response.Response	"未登录或 token 失效"
 //	@Failure		500			{object}	response.Response	"服务器内部错误"
-//	@Router			/user/list [get]
+//	@Router			/user/admin/list [get]
 func (h *Handler) GetUserList(c *gin.Context) {
 	var req getUserListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -208,8 +208,8 @@ type changeStatusRequest struct {
 // ChangeStatus 修改用户状态
 //
 //	@Summary		修改用户状态
-//	@Description	启用或禁用指定用户。status：0-禁用，1-正常。需要登录（JWT）
-//	@Tags			用户
+//	@Description	启用或禁用指定用户。status：0-禁用，1-正常。需要管理端权限（JWT + AdminAuth）
+//	@Tags			管理端-用户
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
@@ -219,7 +219,7 @@ type changeStatusRequest struct {
 //	@Failure		401		{object}	response.Response	"未登录或 token 失效"
 //	@Failure		404		{object}	response.Response	"用户不存在"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/user/status [put]
+//	@Router			/user/admin/status [put]
 func (h *Handler) ChangeStatus(c *gin.Context) {
 	var req changeStatusRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

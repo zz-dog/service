@@ -10,16 +10,19 @@ import (
 
 	"github.com/wsc-zz/service/global"
 	userapp "github.com/wsc-zz/service/internal/application/user"
+	domainuser "github.com/wsc-zz/service/internal/domain/user"
 )
 
 // UserClaims JWT 载荷
 type UserClaims struct {
-	Username string `json:"username"`
-	UserID   string `json:"user_id"`
+	Username string          `json:"username"`
+	UserID   string          `json:"user_id"`
+	Role     domainuser.Role `json:"role"`
 	jwt.RegisteredClaims
 }
 
 // JWTTokenIssuer 是 userapp.TokenIssuer 的 JWT 实现。
+// 编译期断言：端口签名一变，这行第一个报错，且指向实现本身而非装配点
 var _ userapp.TokenIssuer = (*JWTTokenIssuer)(nil)
 
 // JWTTokenIssuer 使用 HS256 签发 JWT，密钥与过期时间来自全局配置。
@@ -29,7 +32,7 @@ type JWTTokenIssuer struct{}
 func NewJWTTokenIssuer() *JWTTokenIssuer { return &JWTTokenIssuer{} }
 
 // Issue 为指定用户签发 token。
-func (t *JWTTokenIssuer) Issue(userID uint, username string) (string, error) {
+func (t *JWTTokenIssuer) Issue(userID uint, username string, role domainuser.Role) (string, error) {
 	secret := global.Conf.Jwt.Secret
 	if len(secret) < 32 {
 		return "", errors.New("JWT secret must be at least 32 bytes")
@@ -43,6 +46,7 @@ func (t *JWTTokenIssuer) Issue(userID uint, username string) (string, error) {
 	claims := UserClaims{
 		UserID:   strconv.Itoa(int(userID)),
 		Username: username,
+		Role:     role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        uuid.NewString(),
 			ExpiresAt: jwt.NewNumericDate(now.Add(expire)), // 设置过期时间

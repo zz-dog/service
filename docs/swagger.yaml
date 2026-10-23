@@ -718,7 +718,7 @@ info:
   title: Demo Service API
   version: "1.0"
 paths:
-  /catalog/category/{id}:
+  /catalog/admin/category/{id}:
     delete:
       description: 根据分类ID删除分类
       parameters:
@@ -744,7 +744,7 @@ paths:
             $ref: '#/definitions/response.Response'
       summary: 删除分类
       tags:
-      - 分类
+      - 管理端-分类
     put:
       consumes:
       - application/json
@@ -783,8 +783,8 @@ paths:
             $ref: '#/definitions/response.Response'
       summary: 更新分类
       tags:
-      - 分类
-  /catalog/category/bindSpec:
+      - 管理端-分类
+  /catalog/admin/category/bindSpec:
     post:
       consumes:
       - application/json
@@ -810,8 +810,8 @@ paths:
               type: object
       summary: 绑定规格到分类
       tags:
-      - 分类
-  /catalog/category/create:
+      - 管理端-分类
+  /catalog/admin/category/create:
     post:
       consumes:
       - application/json
@@ -845,7 +845,458 @@ paths:
             $ref: '#/definitions/response.Response'
       summary: 创建分类
       tags:
-      - 分类
+      - 管理端-分类
+  /catalog/admin/category/unbindSpec:
+    delete:
+      description: 删除分类与规格维度的绑定关系
+      parameters:
+      - description: 分类ID
+        in: query
+        name: categoryId
+        required: true
+        type: integer
+      - description: 规格ID
+        in: query
+        name: specId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 解除规格绑定
+      tags:
+      - 管理端-分类
+  /catalog/admin/media/signURL:
+    get:
+      consumes:
+      - application/json
+      description: 按 key 生成 OSS 预签名读 URL(私有 Bucket 读取用),有效期 1 小时。需要管理端权限（JWT + AdminAuth）
+      parameters:
+      - description: 对象 key
+        in: query
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 签名 URL
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: 缺少 key
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 生成签名 URL 失败
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取媒体签名 URL
+      tags:
+      - 管理端-媒体资源
+  /catalog/admin/media/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传图片到 OSS,返回访问 URL。multipart/form-data:file 必传(≤10MB,
+      parameters:
+      - description: 图片文件（≤10MB）
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: 对象 key 前缀，不传自动生成
+        in: formData
+        name: key
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 图片访问 URL
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: 缺少 file 字段
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "413":
+          description: 文件过大（上限 10MB）
+          schema:
+            $ref: '#/definitions/response.Response'
+        "415":
+          description: 不支持的媒体类型
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 上传 OSS 失败
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 上传媒体文件
+      tags:
+      - 管理端-媒体资源
+  /catalog/admin/media/uploadURL:
+    get:
+      consumes:
+      - application/json
+      description: 按扩展名生成对象 key 与预签名 PUT URL,前端直接 PUT 文件本体到该 URL
+      parameters:
+      - description: 扩展名（png/jpg/webp/gif）
+        in: query
+        name: ext
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: key 与签名 URL
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.UploadURLResp'
+              type: object
+        "400":
+          description: 缺少 ext
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "415":
+          description: 不支持的扩展名
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 生成签名 URL 失败
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取 OSS 直传签名 URL
+      tags:
+      - 管理端-媒体资源
+  /catalog/admin/product/create:
+    post:
+      consumes:
+      - application/json
+      description: 创建商品及其 SKU；SKU 编码和规格名称由服务端生成
+      parameters:
+      - description: 商品信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createProductReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/productapp.ProductDTO'
+              type: object
+        "400":
+          description: 参数校验失败或商品信息无效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 创建商品
+      tags:
+      - 管理端-商品
+  /catalog/admin/product/delete/{id}:
+    delete:
+      description: 根据商品ID删除商品；上架状态的商品需先下架才能删除
+      parameters:
+      - description: 商品ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: ID格式错误、商品不存在或商品为上架状态
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 删除商品
+      tags:
+      - 管理端-商品
+  /catalog/admin/product/inventory/add:
+    post:
+      consumes:
+      - application/json
+      description: 根据商品ID和SKU编码增加库存（进货）
+      parameters:
+      - description: 库存信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.addInventoryReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 参数校验失败、商品规格不存在或库存数量无效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 添加库存
+      tags:
+      - 管理端-商品
+  /catalog/admin/product/sku/delete/{productId}/{skuCode}:
+    delete:
+      description: 根据商品ID和SKU编码删除SKU；仅下架商品可删，且商品至少保留一个SKU
+      parameters:
+      - description: 商品ID
+        in: path
+        name: productId
+        required: true
+        type: integer
+      - description: SKU编码
+        in: path
+        name: skuCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: ID格式错误、商品或SKU不存在、商品为上架状态或仅剩最后一个SKU
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 删除SKU
+      tags:
+      - 管理端-商品
+  /catalog/admin/product/sku/update:
+    post:
+      consumes:
+      - application/json
+      description: 根据商品ID和SKU编码更新SKU的价格和图片；规格组合和库存不变
+      parameters:
+      - description: SKU更新信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateSKUReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 参数校验失败、商品或SKU不存在、价格无效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 更新SKU
+      tags:
+      - 管理端-商品
+  /catalog/admin/product/update:
+    post:
+      consumes:
+      - application/json
+      description: 根据商品ID更新商品的分类、名称、描述和媒体资源（整体替换）
+      parameters:
+      - description: 商品更新信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateProductReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/productapp.ProductDTO'
+              type: object
+        "400":
+          description: 参数校验失败或商品信息无效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 更新商品
+      tags:
+      - 管理端-商品
+  /catalog/admin/spec/delete/{id}:
+    delete:
+      description: 根据规格ID删除规格维度
+      parameters:
+      - description: 规格ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 规格ID格式错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 删除规格
+      tags:
+      - 管理端-规格
+  /catalog/admin/spec/register:
+    post:
+      consumes:
+      - application/json
+      description: 创建一个新的规格维度（如颜色、尺寸等），可同时传入规格值列表一次性创建；同名规格已存在时返回错误
+      parameters:
+      - description: 规格信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/specapp.SpecDTO'
+              type: object
+        "400":
+          description: 参数校验失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 创建规格
+      tags:
+      - 管理端-规格
+  /catalog/admin/spec/update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: 根据规格ID更新规格维度及规格值。Values 须传该规格的完整值列表：带ID的值被更新、不带ID的值被新增、库中缺席的值被删除；单事务保证一致
+      parameters:
+      - description: 规格ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 规格信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/specapp.SpecDTO'
+              type: object
+        "400":
+          description: 参数校验失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 整包更新规格
+      tags:
+      - 管理端-规格
   /catalog/category/findAll:
     get:
       description: 返回全部分类列表（不分页）
@@ -896,122 +1347,6 @@ paths:
       summary: 查询分类绑定的规格
       tags:
       - 分类
-  /catalog/category/unbindSpec:
-    delete:
-      description: 删除分类与规格维度的绑定关系
-      parameters:
-      - description: 分类ID
-        in: query
-        name: categoryId
-        required: true
-        type: integer
-      - description: 规格ID
-        in: query
-        name: specId
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 解除规格绑定
-      tags:
-      - 分类
-  /catalog/product/create:
-    post:
-      consumes:
-      - application/json
-      description: 创建商品及其 SKU；SKU 编码和规格名称由服务端生成
-      parameters:
-      - description: 商品信息
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.createProductReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/productapp.ProductDTO'
-              type: object
-        "400":
-          description: 参数校验失败或商品信息无效
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 创建商品
-      tags:
-      - 商品
-  /catalog/product/delete/{id}:
-    delete:
-      description: 根据商品ID删除商品；上架状态的商品需先下架才能删除
-      parameters:
-      - description: 商品ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-        "400":
-          description: ID格式错误、商品不存在或商品为上架状态
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 删除商品
-      tags:
-      - 商品
-  /catalog/product/inventory/add:
-    post:
-      consumes:
-      - application/json
-      description: 根据商品ID和SKU编码增加库存（进货）
-      parameters:
-      - description: 库存信息
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.addInventoryReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-        "400":
-          description: 参数校验失败、商品规格不存在或库存数量无效
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 添加库存
-      tags:
-      - 商品
   /catalog/product/list:
     get:
       description: 根据分类、商品ID或名称筛选商品并分页返回
@@ -1065,266 +1400,6 @@ paths:
       summary: 分页查询商品
       tags:
       - 商品
-  /catalog/product/sku/delete/{productId}/{skuCode}:
-    delete:
-      description: 根据商品ID和SKU编码删除SKU；仅下架商品可删，且商品至少保留一个SKU
-      parameters:
-      - description: 商品ID
-        in: path
-        name: productId
-        required: true
-        type: integer
-      - description: SKU编码
-        in: path
-        name: skuCode
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-        "400":
-          description: ID格式错误、商品或SKU不存在、商品为上架状态或仅剩最后一个SKU
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 删除SKU
-      tags:
-      - 商品
-  /catalog/product/sku/update:
-    post:
-      consumes:
-      - application/json
-      description: 根据商品ID和SKU编码更新SKU的价格和图片；规格组合和库存不变
-      parameters:
-      - description: SKU更新信息
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.updateSKUReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-        "400":
-          description: 参数校验失败、商品或SKU不存在、价格无效
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 更新SKU
-      tags:
-      - 商品
-  /catalog/product/update:
-    post:
-      consumes:
-      - application/json
-      description: 根据商品ID更新商品的分类、名称、描述和媒体资源（整体替换）
-      parameters:
-      - description: 商品更新信息
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.updateProductReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/productapp.ProductDTO'
-              type: object
-        "400":
-          description: 参数校验失败或商品信息无效
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 更新商品
-      tags:
-      - 商品
-  /catalog/public/media/signURL:
-    get:
-      consumes:
-      - application/json
-      description: 按 key 生成 OSS 预签名读 URL(私有 Bucket 读取用),有效期 1 小时。需要登录（JWT）
-      parameters:
-      - description: 对象 key
-        in: query
-        name: key
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 签名 URL
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "400":
-          description: 缺少 key
-          schema:
-            $ref: '#/definitions/response.Response'
-        "401":
-          description: 未登录或 token 失效
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 生成签名 URL 失败
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: 获取媒体签名 URL
-      tags:
-      - 媒体资源
-  /catalog/public/media/upload:
-    post:
-      consumes:
-      - multipart/form-data
-      description: 上传图片到 OSS,返回访问 URL。multipart/form-data:file 必传(≤10MB,
-      parameters:
-      - description: 图片文件（≤10MB）
-        in: formData
-        name: file
-        required: true
-        type: file
-      - description: 对象 key 前缀，不传自动生成
-        in: formData
-        name: key
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 图片访问 URL
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "400":
-          description: 缺少 file 字段
-          schema:
-            $ref: '#/definitions/response.Response'
-        "401":
-          description: 未登录或 token 失效
-          schema:
-            $ref: '#/definitions/response.Response'
-        "413":
-          description: 文件过大（上限 10MB）
-          schema:
-            $ref: '#/definitions/response.Response'
-        "415":
-          description: 不支持的媒体类型
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 上传 OSS 失败
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: 上传媒体文件
-      tags:
-      - 媒体资源
-  /catalog/public/media/uploadURL:
-    get:
-      consumes:
-      - application/json
-      description: 按扩展名生成对象 key 与预签名 PUT URL,前端直接 PUT 文件本体到该 URL
-      parameters:
-      - description: 扩展名（png/jpg/webp/gif）
-        in: query
-        name: ext
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: key 与签名 URL
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.UploadURLResp'
-              type: object
-        "400":
-          description: 缺少 ext
-          schema:
-            $ref: '#/definitions/response.Response'
-        "401":
-          description: 未登录或 token 失效
-          schema:
-            $ref: '#/definitions/response.Response'
-        "415":
-          description: 不支持的扩展名
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 生成签名 URL 失败
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: 获取 OSS 直传签名 URL
-      tags:
-      - 媒体资源
-  /catalog/spec/delete/{id}:
-    delete:
-      description: 根据规格ID删除规格维度
-      parameters:
-      - description: 规格ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-        "400":
-          description: 规格ID格式错误
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 删除规格
-      tags:
-      - 规格
   /catalog/spec/findById/{id}:
     get:
       description: 根据规格ID查询规格详情（含规格值列表）
@@ -1426,81 +1501,6 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: 分页查询规格列表
-      tags:
-      - 规格
-  /catalog/spec/register:
-    post:
-      consumes:
-      - application/json
-      description: 创建一个新的规格维度（如颜色、尺寸等），可同时传入规格值列表一次性创建；同名规格已存在时返回错误
-      parameters:
-      - description: 规格信息
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.CreateInput'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/specapp.SpecDTO'
-              type: object
-        "400":
-          description: 参数校验失败
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 创建规格
-      tags:
-      - 规格
-  /catalog/spec/update/{id}:
-    put:
-      consumes:
-      - application/json
-      description: 根据规格ID更新规格维度及规格值。Values 须传该规格的完整值列表：带ID的值被更新、不带ID的值被新增、库中缺席的值被删除；单事务保证一致
-      parameters:
-      - description: 规格ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: 规格信息
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.UpdateInput'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/specapp.SpecDTO'
-              type: object
-        "400":
-          description: 参数校验失败
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 整包更新规格
       tags:
       - 规格
   /order/cancel:
@@ -1869,22 +1869,9 @@ paths:
       summary: 设为默认地址
       tags:
       - 地址
-  /user/health:
+  /user/admin/list:
     get:
-      description: 供部署流水线 / 负载均衡探活使用，不校验 JWT
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 健康检查
-      tags:
-      - 用户
-  /user/list:
-    get:
-      description: 分页查询用户，支持按用户ID精确过滤；需要登录（JWT）
+      description: 分页查询用户，支持按用户ID精确过滤。需要管理端权限（JWT + AdminAuth）
       parameters:
       - description: 页码（从1开始）
         in: query
@@ -1931,6 +1918,59 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: 分页查询用户列表
+      tags:
+      - 管理端-用户
+  /user/admin/status:
+    put:
+      consumes:
+      - application/json
+      description: 启用或禁用指定用户。status：0-禁用，1-正常。需要管理端权限（JWT + AdminAuth）
+      parameters:
+      - description: 用户ID与目标状态
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.changeStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 参数校验失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 用户不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 修改用户状态
+      tags:
+      - 管理端-用户
+  /user/health:
+    get:
+      description: 供部署流水线 / 负载均衡探活使用，不校验 JWT
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 健康检查
       tags:
       - 用户
   /user/login:
@@ -2009,46 +2049,6 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: 注册用户
-      tags:
-      - 用户
-  /user/status:
-    put:
-      consumes:
-      - application/json
-      description: 启用或禁用指定用户。status：0-禁用，1-正常。需要登录（JWT）
-      parameters:
-      - description: 用户ID与目标状态
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handler.changeStatusRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-        "400":
-          description: 参数校验失败
-          schema:
-            $ref: '#/definitions/response.Response'
-        "401":
-          description: 未登录或 token 失效
-          schema:
-            $ref: '#/definitions/response.Response'
-        "404":
-          description: 用户不存在
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: 修改用户状态
       tags:
       - 用户
   /user/user/profile:

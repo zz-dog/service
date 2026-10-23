@@ -12,7 +12,7 @@ import (
 // TokenIssuer 是令牌签发的端口（应用层定义契约，基础设施层提供 JWT 实现）。
 type TokenIssuer interface {
 	// Issue 为指定用户签发 token
-	Issue(userID uint, username string) (string, error)
+	Issue(userID uint, username string, role user.Role) (string, error)
 }
 
 // Service 是用户应用服务，编排注册/登录等用例。
@@ -77,7 +77,9 @@ func (s *Service) Login(ctx context.Context, in LoginInput) (*LoginResult, error
 		return nil, fmt.Errorf("更新登录信息失败: %w", err)
 	}
 
-	token, err := s.tokenIssuer.Issue(u.UserID, u.Username)
+	// 角色取自领域实体：DB 里 role=1 的管理员签出来的 token 才带管理员角色，
+	// 写死 RoleUser 会让 AdminAuth 永远拒绝真管理员
+	token, err := s.tokenIssuer.Issue(u.UserID, u.Username, u.Role)
 	if err != nil {
 		return nil, fmt.Errorf("生成 token 失败: %w", err)
 	}

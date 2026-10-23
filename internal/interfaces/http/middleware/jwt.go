@@ -48,6 +48,7 @@ func JWTAuth(blacklist TokenBlacklistChecker) gin.HandlerFunc {
 		c.Set("userId", claims.UserID)
 		c.Set("username", claims.Username)
 		c.Set("jti", claims.ID)
+		c.Set("role", claims.Role)
 		if claims.ExpiresAt != nil {
 			c.Set("tokenExp", claims.ExpiresAt.Time)
 		}
