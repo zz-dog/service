@@ -10,10 +10,14 @@ type ApplicationRepository interface {
 	FindPendingByUser(ctx context.Context, userID uint) (*MerchantApplication, error)
 	// ListByUser 某用户的申请历史,时间倒序——"我的申请"页
 	ListByUser(ctx context.Context, userID uint) ([]MerchantApplication, error)
-	// Approve 条件更新 待审核→已通过;返回是否本请求生效(并发审核只有一方 RowsAffected==1)
+	// ListAll 全部申请单,时间倒序——管理端审核列表(教学版全量,分页进阶)
+	ListAll(ctx context.Context) ([]MerchantApplication, error)
+	// Approve 条件更新 待审核→已通过;返回本请求是否生效(并发审核只有一方 changed==true)
 	Approve(ctx context.Context, id uint) (bool, error)
 	// Reject 条件更新 待审核→已驳回(带理由);返回语义同 Approve
 	Reject(ctx context.Context, id uint, reason string) (bool, error)
+	// Withdraw 条件更新 待审核→已撤回;user_id 一起进 WHERE,归属与状态一次原子裁决
+	Withdraw(ctx context.Context, id, userID uint) (bool, error)
 	// BindMerchant 回填 merchant_id,审计关联;只在已通过状态做
 	BindMerchant(ctx context.Context, id uint, merchantID uint) error
 }

@@ -16,10 +16,16 @@ type MerchantApplication struct {
 	RejectReason string      // 驳回理由,必填
 	MerchantID   *uint       // 通过后回填,指向产出的商户(审计关联;待审核时为 nil)
 	CreatedAt    time.Time
+	UpdatedAt    time.Time
 	ReviewedAt   *time.Time // 审核动作发生的时间
 }
 
-func NewMerchantApplication(userID uint, shopName, contactName, contactPhone, licenseURL, idCardURL string) *MerchantApplication {
+// NewMerchantApplication 充血构造函数:校验必填字段非空,状态直接是待审核。
+// 为什么没有草稿态:教学版提交即审;真实系统要"存草稿"再加一个状态 + 定时清理,先不做。
+func NewMerchantApplication(userID uint, shopName, contactName, contactPhone, licenseURL, idCardURL string) (*MerchantApplication, error) {
+	if userID == 0 || shopName == "" || contactName == "" || contactPhone == "" || licenseURL == "" || idCardURL == "" {
+		return nil, ErrInvalidApplication
+	}
 	return &MerchantApplication{
 		UserID:       userID,
 		ShopName:     shopName,
@@ -28,27 +34,41 @@ func NewMerchantApplication(userID uint, shopName, contactName, contactPhone, li
 		LicenseURL:   licenseURL,
 		IDCardURL:    idCardURL,
 		Status:       AppStatusPending,
-	}
+	}, nil
 }
 
-func (app *MerchantApplication) Reject(reason string) (bool, error) {
+// Approve 待审核 → 已通过。非法迁移返回 ErrInvalidStatusTransition。
+// 只改内存状态,落库的条件更新在仓储——和 Payment.Pay() 同款双层结构:
+// 领域管规则,仓储管并发。
+func (app *MerchantApplication) Approve() error {
 	if app.Status != AppStatusPending {
-		return false, ErrInvalidStatusTransition
-	}
-	app.Status = AppStatusRejected
-	return true, nil
-}
-func (app *MerchantApplication) Approve() (bool, error) {
-	if app.Status != AppStatusPending {
-		return false, ErrInvalidStatusTransition
+		return ErrInvalidStatusTransition
 	}
 	app.Status = AppStatusApproved
-	return true, nil
+	return nil
 }
 
-func (app *MerchantApplication) Withdraw() (bool, error) {
-	if app.Status != AppStatusPending {
-		return false, ErrInvalidStatusTransition
+// Reject 待审核 → 已驳回,理由必填(空理由的驳回是官僚主义,拒绝它)。
+// 理由同时记进内存状态:驳回单是凭证,"为什么被拒"是凭证的一部分。
+func (app *MerchantApplication) Reject(reason string) error {
+	if reason == "" {
+		return ErrInvalidRejectReason
 	}
-	return true, nil
+	if app.Status != AppStatusPending {
+		return ErrInvalidStatusTransition
+	}
+	app.Status = AppStatusRejected
+	app.RejectReason = reason
+	return nil
+}
+
+// Withdraw 待审核 → 已撤回。
+// 为什么"已通过"不能撤:商户已经诞生,退出要走停业/封禁,那是商户状态链的事;
+// 在申请单上开"撤回已通过"的口子,商户和申请单就会各说各话。
+func (app *MerchantApplication) Withdraw() error {
+	if app.Status != AppStatusPending {
+		return ErrInvalidStatusTransition
+	}
+	app.Status = AppStatusWithdraw
+	return nil
 }

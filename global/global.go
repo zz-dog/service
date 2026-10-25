@@ -24,6 +24,7 @@ type Config struct {
 	Catalog  ServiceConfig `yaml:"catalog"`
 	Identity ServiceConfig `yaml:"identity"`
 	Order    ServiceConfig `yaml:"order"`
+	Merchant ServiceConfig `yaml:"merchant"`
 	Payment  PaymentConfig `yaml:"payment"`
 	Oss      OssConfig     `yaml:"oss"`
 }

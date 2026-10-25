@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	orderapp "github.com/wsc-zz/service/internal/application/order"
@@ -167,24 +166,7 @@ func (h *OrderHandler) List(c *gin.Context) {
 	response.SuccessMsg(c, "queryOrders", result)
 }
 
-// getCurrentUserID 从 gin 上下文取 JWT 中间件写入的 userID。
-// JWT 中间件写入的是 string（见 auth.UserClaims.UserID），这里转成 uint。
-// 提示：后续其他 handler 也会用到，可提取到 handler 包的公共文件 base.go。
-func getCurrentUserID(c *gin.Context) (uint, bool) {
-	v, exists := c.Get("userId")
-	if !exists {
-		return 0, false
-	}
-	s, ok := v.(string)
-	if !ok {
-		return 0, false
-	}
-	id, err := strconv.ParseUint(s, 10, 64)
-	if err != nil {
-		return 0, false
-	}
-	return uint(id), true
-}
+// getCurrentUserID 已提取到 base.go(供多个 handler 共用)。
 
 //
 
