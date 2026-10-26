@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package merchant.v1;
+
+option go_package = "github.com/wsc-zz/service/internal/interfaces/rpc/merchantpb;merchantpb";
+
+// MerchantService 商户域对 catalog 域开放的 RPC 契约。
+// 契约变更规则:merchant 和 catalog 必须同一次提交里同步改,靠编译期报错保证两边一致。
+service MerchantService {
+  // GetMerchantByUserID 按归属用户查商户。只做取数,不做策略:
+  // "这个人能不能发布商品"由 catalog 裁决(和 GetPayableOrder 同一纪律)。
+  rpc GetMerchantByUserID(GetMerchantByUserIDRequest) returns (GetMerchantByUserIDResponse);
+}
+
+message GetMerchantByUserIDRequest {
+  // 键是 userId 不是 merchantId:调用方(catalog)手里只有 JWT 解出来的 userId;
+  // 若契约收 merchantId,catalog 就得信前端传来的 merchantId 去反查——恰是我们要堵的洞。
+  uint64 user_id = 1;
+}
+
+message GetMerchantByUserIDResponse {
+  uint64 merchant_id = 1; // 没有商户时为 0:"没有商户"是正常业务态,不是错误
+  string name = 2;
+  int32 status = 3; // merchant.status,catalog 据此判断是否营业中
+}

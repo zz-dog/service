@@ -26,6 +26,7 @@ type SKUInput struct {
 }
 type CreateProductInput struct {
 	CategoryID uint
+	MerchantID uint // 管理端语义:代谁铺货;0 = 平台自营。商户端发布不收这个字段(服务端推导)
 	Name       string
 	Desc       string
 	SKUs       []SKUInput
@@ -69,15 +70,17 @@ type SKUDTO struct {
 	Stock     int           `json:"stock"`
 }
 type ProductDTO struct {
-	ProductID  uint       `json:"productId"`
-	CategoryID uint       `json:"categoryId"`
-	Name       string     `json:"name"`
-	Desc       string     `json:"desc"`
-	Status     int        `json:"status"`
-	SKUs       []SKUDTO   `json:"skus"`
-	Medias     []MediaDTO `json:"medias"`
-	CreatedAt  time.Time  `json:"createdAt"`
-	UpdatedAt  time.Time  `json:"updatedAt"`
+	ProductID    uint       `json:"productId"`
+	CategoryID   uint       `json:"categoryId"`
+	MerchantID   uint       `json:"merchantId"`   // 归属商户;0 = 平台自营
+	Name         string     `json:"name"`
+	Desc         string     `json:"desc"`
+	Status       int        `json:"status"`       // 1上架 2下架 3待审核 4已驳回 5违规下架
+	RejectReason string     `json:"rejectReason"` // 平台否决理由;商户在"我的商品"里看
+	SKUs         []SKUDTO   `json:"skus"`
+	Medias       []MediaDTO `json:"medias"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	UpdatedAt    time.Time  `json:"updatedAt"`
 }
 
 type ProductListResult struct {

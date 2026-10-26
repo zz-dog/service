@@ -8,32 +8,24 @@ import (
 )
 
 type Service struct {
-	repo    domainproduct.ProductRepository
-	specDir SpecDirectory
+	repo       domainproduct.ProductRepository
+	specDir    SpecDirectory
+	merchantGw MerchantGateway // 商户身份推导(catalog→merchant gRPC);发布/归属校验的信任锚
 }
 
-func NewService(repo domainproduct.ProductRepository, specDir SpecDirectory) *Service {
-	return &Service{repo: repo, specDir: specDir}
+func NewService(repo domainproduct.ProductRepository, specDir SpecDirectory, merchantGw MerchantGateway) *Service {
+	return &Service{repo: repo, specDir: specDir, merchantGw: merchantGw}
 }
 
-// Create 创建商品：
+// Create 创建商品(管理端:自营/代商户铺货,body 的 merchantId 可信——能进这组路由的已是管理员):
 // ① 校验 SKU 规格项 (SpecID, ValueID) 属于分类绑定的规格集；
 // ② 快照名称一律取规格库权威值，不采信客户端传入的名称；
-// ③ 落库走 Create（纯插入）并回填 ProductID，返回的 DTO 带真实 ID 和时间戳。
+// ③ 出生即上架(可信方创建不走审核),落库走 Create（纯插入）并回填 ProductID。
 func (s *Service) Create(ctx context.Context, in CreateProductInput) (*ProductDTO, error) {
-	specs, err := s.specDir.SpecsForCategory(ctx, in.CategoryID)
+	p, err := s.compose(ctx, func(skus []domainproduct.SKU) (*domainproduct.Product, error) {
+		return domainproduct.NewProduct(in.MerchantID, in.CategoryID, in.Name, in.Desc, skus)
+	}, in.CategoryID, in.SKUs, in.Medias)
 	if err != nil {
-		return nil, err
-	}
-	skus, err := buildSKUs(in.SKUs, specs)
-	if err != nil {
-		return nil, err
-	}
-	p, err := domainproduct.NewProduct(in.CategoryID, in.Name, in.Desc, skus)
-	if err != nil {
-		return nil, err
-	}
-	if err := p.ReplaceMedias(toMedias(in.Medias)); err != nil {
 		return nil, err
 	}
 	if err := s.repo.Create(ctx, p); err != nil {
@@ -41,6 +33,27 @@ func (s *Service) Create(ctx context.Context, in CreateProductInput) (*ProductDT
 	}
 	dto := toProductDTO(p)
 	return &dto, nil
+}
+
+// compose 商品装配公共段:规格校验建 SKU → 构造函数(由调用方按身份选择)→ 挂媒体。
+// 构造函数作为参数传入,是因为"初态"由调用者身份裁决,这个裁决不该埋进装配细节里。
+func (s *Service) compose(ctx context.Context, ctor func([]domainproduct.SKU) (*domainproduct.Product, error), categoryID uint, skuInputs []SKUInput, mediaInputs []MediaInput) (*domainproduct.Product, error) {
+	specs, err := s.specDir.SpecsForCategory(ctx, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	skus, err := buildSKUs(skuInputs, specs)
+	if err != nil {
+		return nil, err
+	}
+	p, err := ctor(skus)
+	if err != nil {
+		return nil, err
+	}
+	if err := p.ReplaceMedias(toMedias(mediaInputs)); err != nil {
+		return nil, err
+	}
+	return p, nil
 }
 
 // Delete 删除商品：仅允许删除已下架商品
@@ -209,15 +222,17 @@ func toProductDTO(p *domainproduct.Product) ProductDTO {
 		})
 	}
 	return ProductDTO{
-		ProductID:  p.ProductID,
-		CategoryID: p.CategoryID,
-		Name:       p.Name,
-		Desc:       p.Desc,
-		Status:     int(p.Status),
-		SKUs:       skus,
-		Medias:     toMediaDTOs(p.Medias),
-		CreatedAt:  p.CreatedAt,
-		UpdatedAt:  p.UpdatedAt,
+		ProductID:    p.ProductID,
+		CategoryID:   p.CategoryID,
+		MerchantID:   p.MerchantID,
+		Name:         p.Name,
+		Desc:         p.Desc,
+		Status:       int(p.Status),
+		RejectReason: p.RejectReason,
+		SKUs:         skus,
+		Medias:       toMediaDTOs(p.Medias),
+		CreatedAt:    p.CreatedAt,
+		UpdatedAt:    p.UpdatedAt,
 	}
 }
 

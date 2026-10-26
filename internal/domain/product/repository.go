@@ -22,13 +22,21 @@ type ProductRepository interface {
 	// CountByCategory 统计某分类下的商品数量（删除分类前校验）
 	CountByCategory(ctx context.Context, categoryID uint) (int64, error)
 	List(ctx context.Context, q ListQuery) ([]*Product, int, error)
+	// UpdateStatus 条件更新 from→to,返回是否本请求生效——上下架共用
+	UpdateStatus(ctx context.Context, id uint, from, to Status) (bool, error)
+	// Reject 条件更新 待审核→已驳回,理由随行
+	Reject(ctx context.Context, id uint, reason string) (bool, error)
+	// Takedown 条件更新 已上架→违规下架,理由随行。
+	// 与 Reject 分开命名:接口上读得出"这是处置不是审核"
+	Takedown(ctx context.Context, id uint, reason string) (bool, error)
 }
 
 type ListQuery struct {
 	Page       int
 	PageSize   int
-	Status     *Status // nil 不过滤；指向具体状态则只查该状态（区分零值 0=上架 与"不传"）
+	Status     *Status // nil 不过滤；指向具体状态则只查该状态(1上架 2下架 3待审核 4已驳回 5违规下架)
 	Name       string
 	CategoryID uint
 	ProductID  uint
+	MerchantID uint // >0 按归属过滤——商户"我的商品"靠它,归属即过滤条件
 }

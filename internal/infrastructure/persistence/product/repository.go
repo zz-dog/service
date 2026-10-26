@@ -166,6 +166,10 @@ func (r *ProductRepository) List(ctx context.Context, q domainproduct.ListQuery)
 	if q.ProductID > 0 {
 		db = db.Where("product_id = ?", q.ProductID)
 	}
+	// 归属即过滤条件:商户"我的商品"没有"查别人商品"的入口,越权无从谈起
+	if q.MerchantID > 0 {
+		db = db.Where("merchant_id = ?", q.MerchantID)
+	}
 	if q.Status != nil {
 		db = db.Where("status = ?", *q.Status)
 	}
@@ -186,15 +190,17 @@ func (r *ProductRepository) List(ctx context.Context, q domainproduct.ListQuery)
 }
 func toProduct(p ProductPO) *domainproduct.Product {
 	return &domainproduct.Product{
-		ProductID:  p.ProductID,
-		CategoryID: p.CategoryID,
-		Name:       p.Name,
-		Desc:       p.Desc,
-		Status:     p.Status,
-		SKUs:       toSKUs(p.SKUs),
-		Medias:     toMedias(p.Medias),
-		CreatedAt:  p.CreatedAt,
-		UpdatedAt:  p.UpdatedAt,
+		ProductID:    p.ProductID,
+		CategoryID:   p.CategoryID,
+		MerchantID:   p.MerchantID,
+		Name:         p.Name,
+		Desc:         p.Desc,
+		Status:       p.Status,
+		RejectReason: p.RejectReason,
+		SKUs:         toSKUs(p.SKUs),
+		Medias:       toMedias(p.Medias),
+		CreatedAt:    p.CreatedAt,
+		UpdatedAt:    p.UpdatedAt,
 	}
 }
 
@@ -243,13 +249,15 @@ func toSpecItems(items []SKUSpecItemPO) []domainproduct.SpecItem {
 
 func toPO(p *domainproduct.Product) ProductPO {
 	return ProductPO{
-		ProductID:  p.ProductID,
-		CategoryID: p.CategoryID,
-		Name:       p.Name,
-		Desc:       p.Desc,
-		Status:     p.Status,
-		SKUs:       toSKUPO(p.SKUs),
-		Medias:     toMediaPO(p.Medias),
+		ProductID:    p.ProductID,
+		CategoryID:   p.CategoryID,
+		MerchantID:   p.MerchantID,
+		Name:         p.Name,
+		Desc:         p.Desc,
+		Status:       p.Status,
+		RejectReason: p.RejectReason,
+		SKUs:         toSKUPO(p.SKUs),
+		Medias:       toMediaPO(p.Medias),
 	}
 }
 
@@ -295,4 +303,29 @@ func toSpecItemPO(items []domainproduct.SpecItem) []SKUSpecItemPO {
 		}
 	}
 	return target
+}
+
+// UpdateStatus 条件更新 from→to;返回是否本请求生效。
+// 并发下(两个管理员同时审、审核与商户改内容赛跑)只有一方 RowsAffected==1。
+func (r *ProductRepository) UpdateStatus(ctx context.Context, id uint, from, to domainproduct.Status) (bool, error) {
+	res := r.db.WithContext(ctx).Model(&ProductPO{}).
+		Where("product_id = ? AND status = ?", id, from).
+		Update("status", to)
+	return res.RowsAffected == 1, res.Error
+}
+// Reject 条件更新 待审核→已驳回,理由随行——"为什么被拒"是商户有权看到的,
+// 只改 status 不落理由,商户端就只剩一个干巴巴的"已驳回"。
+func (r *ProductRepository) Reject(ctx context.Context, id uint, reason string) (bool, error) {
+	res := r.db.WithContext(ctx).Model(&ProductPO{}).
+		Where("product_id = ? AND status = ?", id, domainproduct.StatusPendingReview).
+		Updates(map[string]any{"status": domainproduct.StatusRejected, "reject_reason": reason})
+	return res.RowsAffected == 1, res.Error
+}
+
+// Takedown 条件更新 已上架→违规下架,理由随行(与 Reject 同理,处置必须留理由)。
+func (r *ProductRepository) Takedown(ctx context.Context, id uint, reason string) (bool, error) {
+	res := r.db.WithContext(ctx).Model(&ProductPO{}).
+		Where("product_id = ? AND status = ?", id, domainproduct.StatusOnShelf).
+		Updates(map[string]any{"status": domainproduct.StatusBanned, "reject_reason": reason})
+	return res.RowsAffected == 1, res.Error
 }

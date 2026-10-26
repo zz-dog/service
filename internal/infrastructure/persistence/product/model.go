@@ -44,8 +44,13 @@ type ProductPO struct {
 	Medias    []ProductMediaPO `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;comment:商品媒体资源"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	Status    domainproduct.Status `gorm:"tinyint;not null;default:1;comment:商品状态 1上架 0下架"`
-	DeletedAt gorm.DeletedAt       `gorm:"index;comment:软删除时间"`
+	// 状态值与领域枚举对齐:1上架 2下架 3待审核 4已驳回 5违规下架。
+	// default:1 现在语义正确(顺带拆掉了"零值+default 标签落库变 1"的老雷),
+	// 但别依赖它——构造函数显式赋状态,default 只是最后一道防线
+	Status       domainproduct.Status `gorm:"tinyint;not null;default:1;comment:商品状态 1上架 2下架 3待审核 4已驳回 5违规下架"`
+	MerchantID   uint                 `gorm:"index;comment:归属商户,0=平台自营"`
+	RejectReason string               `gorm:"size:255;comment:平台否决理由(驳回/违规下架)"`
+	DeletedAt    gorm.DeletedAt       `gorm:"index;comment:软删除时间"`
 }
 
 // ProductMediaPO 商品媒体资源：图片/视频/3D模型等展示素材。

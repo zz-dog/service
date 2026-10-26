@@ -280,6 +280,9 @@ definitions:
         items:
           $ref: '#/definitions/handler.mediaReq'
         type: array
+      merchantId:
+        description: 管理端语义:代谁铺货;不传/0 = 平台自营。商户端发布不收此字段(服务端推导)
+        type: integer
       name:
         description: 商品名称
         type: string
@@ -320,6 +323,46 @@ definitions:
     - type
     - url
     type: object
+  handler.merchantInventoryReq:
+    properties:
+      qty:
+        type: integer
+      skuCode:
+        type: string
+    required:
+    - qty
+    - skuCode
+    type: object
+  handler.merchantUpdateProductReq:
+    properties:
+      categoryId:
+        type: integer
+      desc:
+        type: string
+      medias:
+        description: 整体替换:不传则清空
+        items:
+          $ref: '#/definitions/handler.mediaReq'
+        type: array
+      name:
+        type: string
+    required:
+    - categoryId
+    - name
+    type: object
+  handler.merchantUpdateSKUReq:
+    properties:
+      picture:
+        type: string
+      price:
+        type: integer
+      skuCode:
+        type: string
+    required:
+    - picture
+    - price
+    - skuCode
+    type: object
   handler.orderItemRequest:
     properties:
       productId:
@@ -351,6 +394,27 @@ definitions:
     - phone
     - username
     type: object
+  handler.reviewApplicationReq:
+    properties:
+      approve:
+        type: boolean
+      reason:
+        type: string
+    required:
+    - approve
+    type: object
+  handler.reviewReq:
+    properties:
+      approve:
+        description: |-
+          指针:JSON 不传 approve 和传 false 必须区分开——
+          binding:"required" 对 bool 零值会误伤语义正确的 false,指针判 nil 才严谨
+        type: boolean
+      reason:
+        type: string
+    required:
+    - approve
+    type: object
   handler.specItemReq:
     properties:
       specId:
@@ -362,6 +426,37 @@ definitions:
     required:
     - specId
     - valueId
+    type: object
+  handler.submitApplicationReq:
+    properties:
+      contactName:
+        maxLength: 32
+        type: string
+      contactPhone:
+        maxLength: 16
+        type: string
+      idCardUrl:
+        maxLength: 512
+        type: string
+      licenseUrl:
+        maxLength: 512
+        type: string
+      shopName:
+        maxLength: 64
+        type: string
+    required:
+    - contactName
+    - contactPhone
+    - idCardUrl
+    - licenseUrl
+    - shopName
+    type: object
+  handler.takedownReq:
+    properties:
+      reason:
+        type: string
+    required:
+    - reason
     type: object
   handler.updateAddressReq:
     properties:
@@ -421,6 +516,20 @@ definitions:
     - productId
     - skuCode
     type: object
+  handler.updateShopReq:
+    properties:
+      desc:
+        maxLength: 512
+        type: string
+      logo:
+        maxLength: 512
+        type: string
+      name:
+        maxLength: 64
+        type: string
+    required:
+    - name
+    type: object
   handler.updateUserRequest:
     properties:
       avatar:
@@ -441,6 +550,52 @@ definitions:
         type: string
     required:
     - nickname
+    type: object
+  merchantapp.ApplicationDTO:
+    properties:
+      contactName:
+        type: string
+      contactPhone:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      idCardUrl:
+        type: string
+      licenseUrl:
+        type: string
+      merchantId:
+        type: integer
+      rejectReason:
+        type: string
+      reviewedAt:
+        type: string
+      shopName:
+        type: string
+      status:
+        type: integer
+      userId:
+        type: integer
+    type: object
+  merchantapp.MerchantDTO:
+    properties:
+      createdAt:
+        type: string
+      desc:
+        type: string
+      logo:
+        type: string
+      merchantId:
+        type: integer
+      name:
+        type: string
+      status:
+        type: integer
+      updatedAt:
+        type: string
+      userId:
+        type: integer
     type: object
   orderapp.OrderDTO:
     properties:
@@ -539,15 +694,22 @@ definitions:
         items:
           $ref: '#/definitions/productapp.MediaDTO'
         type: array
+      merchantId:
+        description: 归属商户;0 = 平台自营
+        type: integer
       name:
         type: string
       productId:
         type: integer
+      rejectReason:
+        description: 平台否决理由;商户在"我的商品"里看
+        type: string
       skus:
         items:
           $ref: '#/definitions/productapp.SKUDTO'
         type: array
       status:
+        description: 1上架 2下架 3待审核 4已驳回 5违规下架
         type: integer
       updatedAt:
         type: string
@@ -1006,6 +1168,76 @@ paths:
       summary: 获取 OSS 直传签名 URL
       tags:
       - 管理端-媒体资源
+  /catalog/admin/product/{id}/review:
+    post:
+      consumes:
+      - application/json
+      description: 对待审核商品做出通过/驳回决定;驳回理由必填,商户在"我的商品"可见
+      parameters:
+      - description: 商品ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 审核决定
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.reviewReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 商品不存在/当前状态不允许审核/驳回理由不能为空
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 审核商品(管理端)
+      tags:
+      - 管理端-商品审核
+  /catalog/admin/product/{id}/takedown:
+    post:
+      consumes:
+      - application/json
+      description: 对已上架商品做违规处置(理由必填);违规下架是终态,商户不可自行恢复
+      parameters:
+      - description: 商品ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 处置理由
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.takedownReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 商品不存在/仅已上架可处置/理由不能为空
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 违规下架(管理端)
+      tags:
+      - 管理端-商品审核
   /catalog/admin/product/create:
     post:
       consumes:
@@ -1098,6 +1330,47 @@ paths:
       summary: 添加库存
       tags:
       - 管理端-商品
+  /catalog/admin/product/pending:
+    get:
+      description: 商户提交的待审核商品,审核队列;自营商品不走审核,不在此列
+      parameters:
+      - description: 商品名称(模糊匹配)
+        in: query
+        name: name
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/productapp.ProductListResult'
+              type: object
+        "400":
+          description: 查询参数校验失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 待审核列表(管理端)
+      tags:
+      - 管理端-商品审核
   /catalog/admin/product/sku/delete/{productId}/{skuCode}:
     delete:
       description: 根据商品ID和SKU编码删除SKU；仅下架商品可删，且商品至少保留一个SKU
@@ -1347,6 +1620,308 @@ paths:
       summary: 查询分类绑定的规格
       tags:
       - 分类
+  /catalog/merchant/product:
+    post:
+      consumes:
+      - application/json
+      description: 商户发布商品,服务端推导归属商户;商品进入待审核,审核通过才对 C 端可见
+      parameters:
+      - description: 商品信息(merchantId 不收,服务端推导)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createProductReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/productapp.ProductDTO'
+              type: object
+        "400":
+          description: 参数校验失败/无店铺/店铺未营业
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 发布商品(商户)
+      tags:
+      - 商户端-商品
+  /catalog/merchant/product/{id}:
+    delete:
+      description: 仅已下架/已驳回的商品可删除(软删除)
+      parameters:
+      - description: 商品ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 商品不存在(含非本店商品)或当前状态不允许删除
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 删除商品(商户)
+      tags:
+      - 商户端-商品
+    put:
+      consumes:
+      - application/json
+      description: 修改商品资料,内容变更回待审核;违规下架的商品不可修改
+      parameters:
+      - description: 商品ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 商品更新信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.merchantUpdateProductReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/productapp.ProductDTO'
+              type: object
+        "400":
+          description: 参数校验失败/商品不存在(含非本店商品)
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 修改商品(商户)
+      tags:
+      - 商户端-商品
+  /catalog/merchant/product/{id}/inventory:
+    post:
+      consumes:
+      - application/json
+      description: 为本店商品的指定 SKU 增加库存;经营数据,不回审核队列
+      parameters:
+      - description: 商品ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 库存信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.merchantInventoryReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 参数校验失败/商品或规格不存在(含非本店商品)
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 补货(商户)
+      tags:
+      - 商户端-商品
+  /catalog/merchant/product/{id}/off-shelf:
+    post:
+      description: 已上架的商品下架,下架后 C 端不可见
+      parameters:
+      - description: 商品ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 商品不存在(含非本店商品)或当前状态不允许下架
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 下架(商户)
+      tags:
+      - 商户端-商品
+  /catalog/merchant/product/{id}/on-shelf:
+    post:
+      description: 已下架的商品重新上架,免重审(下架是经营决策,不是合规否决)
+      parameters:
+      - description: 商品ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 商品不存在(含非本店商品)或当前状态不允许上架
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 上架(商户)
+      tags:
+      - 商户端-商品
+  /catalog/merchant/product/{id}/sku:
+    put:
+      consumes:
+      - application/json
+      description: 修改本店商品 SKU 的价格和图片;经营数据,不回审核队列
+      parameters:
+      - description: 商品ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: SKU更新信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.merchantUpdateSKUReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 参数校验失败/商品或规格不存在(含非本店商品)
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 调价/换图(商户)
+      tags:
+      - 商户端-商品
+  /catalog/merchant/product/{id}/sku/{skuCode}:
+    delete:
+      description: 删除本店商品的指定 SKU;仅已下架商品可删,且至少保留一个 SKU
+      parameters:
+      - description: 商品ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: SKU编码
+        in: path
+        name: skuCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 商品或规格不存在(含非本店商品)/仅下架可删/至少保留一个SKU
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 删除规格(商户)
+      tags:
+      - 商户端-商品
+  /catalog/merchant/product/my:
+    get:
+      description: 当前商户的全部商品,含待审核/已驳回(带理由)/已下架;归属即过滤条件
+      parameters:
+      - description: 分类ID
+        in: query
+        name: categoryId
+        type: integer
+      - description: 商品名称(模糊匹配)
+        in: query
+        name: name
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/productapp.ProductListResult'
+              type: object
+        "400":
+          description: 查询参数校验失败/无店铺
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 我的商品列表(全状态)
+      tags:
+      - 商户端-商品
   /catalog/product/list:
     get:
       description: 根据分类、商品ID或名称筛选商品并分页返回
@@ -1363,10 +1938,6 @@ paths:
         in: query
         name: name
         type: string
-      - description: 状态：1上架 2下架，不传查全部
-        in: query
-        name: status
-        type: integer
       - description: 页码
         in: query
         name: page
@@ -1503,6 +2074,401 @@ paths:
       summary: 分页查询规格列表
       tags:
       - 规格
+  /merchant/admin/applications:
+    get:
+      description: 全部入驻申请,时间倒序,供管理员审核。教学版全量,分页进阶。需要管理员(JWT+AdminAuth)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/merchantapp.ApplicationDTO'
+                  type: array
+              type: object
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: 需要管理员权限
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 申请单列表
+      tags:
+      - 商户管理
+  /merchant/admin/applications/{id}/review:
+    post:
+      consumes:
+      - application/json
+      description: approve=true 走通过三连(同事务:申请单迁移+建商户+回填 merchant_id),
+      parameters:
+      - description: 申请单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 审核决定
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.reviewApplicationReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: 参数缺失/驳回理由为空/当前状态不允许该操作(并发败北)
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: 需要管理员权限
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 申请单不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 审核入驻申请
+      tags:
+      - 商户管理
+  /merchant/admin/merchants/{id}/ban:
+    post:
+      description: 营业中|已停业 → 已封禁(平台处罚,不可自行恢复)。需要管理员(JWT+AdminAuth)
+      parameters:
+      - description: 商户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: 当前状态不允许封禁(如已封禁)
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: 需要管理员权限
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 店铺不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 封禁商户
+      tags:
+      - 商户管理
+  /merchant/application:
+    post:
+      consumes:
+      - application/json
+      description: 提交入驻申请,状态直接是待审核。材料 URL 来自 OSS 上传接口。
+      parameters:
+      - description: 申请信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.submitApplicationReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/merchantapp.ApplicationDTO'
+              type: object
+        "400":
+          description: 参数校验失败/已有待审核申请/已拥有店铺/申请信息不完整
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 提交入驻申请
+      tags:
+      - 商户
+  /merchant/application/{id}/withdraw:
+    post:
+      description: 撤回自己的待审核申请。只能撤本人的单(别人的单与不存在同错误),
+      parameters:
+      - description: 申请单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: 当前状态不允许撤回
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 申请单不存在(别人的单同此错误,不泄露存在性)
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 撤回申请
+      tags:
+      - 商户
+  /merchant/application/my:
+    get:
+      description: 当前用户的全部入驻申请,时间倒序。归属即过滤条件(userID 取自 JWT)。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/merchantapp.ApplicationDTO'
+                  type: array
+              type: object
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 我的申请历史
+      tags:
+      - 商户
+  /merchant/my:
+    get:
+      description: 当前登录用户的店铺。一人一店:FindByUserID 查出来的店就是你的,
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/merchantapp.MerchantDTO'
+              type: object
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 还没有店铺
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 我的店铺
+      tags:
+      - 商户
+    put:
+      consumes:
+      - application/json
+      description: 更新自己店铺的名称/Logo/描述(全字段替换)。改名次数限制是阶段五的进阶。
+      parameters:
+      - description: 店铺资料
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateShopReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/merchantapp.MerchantDTO'
+              type: object
+        "400":
+          description: 参数校验失败/店铺信息不完整
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 还没有店铺
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 更新店铺资料
+      tags:
+      - 商户
+  /merchant/my/resume:
+    post:
+      description: 已停业 → 营业中,只有店主本人可操作;封禁的店不在此列。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: 当前状态不允许该操作(如已封禁)
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 还没有店铺
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 恢复营业
+      tags:
+      - 商户
+  /merchant/my/suspend:
+    post:
+      description: 营业中 → 已停业,只有店主本人可操作(userID 取自 JWT)。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: 当前状态不允许该操作(如已封禁)
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 还没有店铺
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 停业
+      tags:
+      - 商户
   /order/cancel:
     post:
       consumes:

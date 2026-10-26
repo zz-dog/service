@@ -12,12 +12,16 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	"github.com/wsc-zz/service/global"
 	nacosconfig "github.com/wsc-zz/service/internal/infrastructure/configcenter/nacos"
 	"github.com/wsc-zz/service/internal/infrastructure/discovery/nacos"
 	merchantpo "github.com/wsc-zz/service/internal/infrastructure/persistence/merchant"
 	"github.com/wsc-zz/service/internal/interfaces/http/router"
+	"github.com/wsc-zz/service/internal/interfaces/rpc/merchantpb"
+	merchantrpc "github.com/wsc-zz/service/internal/interfaces/rpc/merchantrpc"
 )
 
 //	@title						Merchant Service API
@@ -82,10 +86,31 @@ func main() {
 			panic(err)
 		}
 	}()
+
+	// gRPC:catalog 发布商品前按 userId 验商户身份(9085),与 HTTP 双端口共存(仿 cmd/catalog)
+	grpcServer := grpc.NewServer()
+	merchantpb.RegisterMerchantServiceServer(grpcServer, merchantrpc.NewServer(global.DB))
+	reflection.Register(grpcServer)
+	grpcListener, err := net.Listen("tcp", ":"+strconv.Itoa(global.Conf.Merchant.RpcPort))
+	if err != nil {
+		global.Logger.Error("GRPC 端口监听失败", zap.Int("port", global.Conf.Merchant.RpcPort), zap.Error(err))
+		panic("GRPC 端口监听失败: " + err.Error())
+	}
+	go func() {
+		if err := grpcServer.Serve(grpcListener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+			global.Logger.Error("GRPC 服务异常退出", zap.Error(err))
+			panic(err)
+		}
+	}()
 	global.Logger.Info("服务启动成功", zap.String("name", global.Conf.Merchant.ServiceName), zap.Int("port", global.Conf.Merchant.ServicePort))
 
 	// 注册 Nacos:Register 返回后立刻判 err——注册失败意味着网关发现不了本服务,
-	// 带着错误继续启动只会把"注册失败"埋成线上灵异问题(此坑 payment 阶段踩过)
+	// 带着错误继续启动只会把"注册失败"埋成线上灵异问题(此坑 payment 阶段踩过)。
+	// RPC 先注册(HTTP 注册是网关流量的开关,RPC 注册是 catalog 拨号的开关,缺一不可)
+	if err := registry.RpcRegister(global.Conf.Merchant.RpcName, global.Conf.Merchant.RpcPort); err != nil {
+		global.Logger.Error("Nacos RPC 服务注册失败", zap.Error(err))
+		panic(err)
+	}
 	if err := registry.ServiceRegister(global.Conf.Merchant.ServiceName, global.Conf.Merchant.ServicePort); err != nil {
 		global.Logger.Error("Nacos 服务注册失败", zap.Error(err))
 		panic(err)

@@ -7,18 +7,24 @@ import (
 	"github.com/gin-gonic/gin"
 	productapp "github.com/wsc-zz/service/internal/application/product"
 	domaincategory "github.com/wsc-zz/service/internal/domain/category"
+	domainmerchant "github.com/wsc-zz/service/internal/domain/merchant"
 	domainproduct "github.com/wsc-zz/service/internal/domain/product"
 	"github.com/wsc-zz/service/pkg/response"
 	"github.com/wsc-zz/service/pkg/validator"
 )
 
-// badRequestErrors 创建商品时属于用户输入问题的错误：返回 400 而非 500
+// badRequestErrors 属于调用方问题的错误：返回 400 而非 500
 var badRequestErrors = []error{
 	productapp.ErrSpecNotBoundToCategory,
 	productapp.ErrSpecValueNotInSpec,
 	domaincategory.ErrCategoryNotFound,
+	domainmerchant.ErrMerchantNotFound,     // 无店发布/无店操作
+	domainmerchant.ErrMerchantNotOperating, // 停业/封禁期间发布
 	domainproduct.ErrProductNotFound,
 	domainproduct.ErrProductOnShelf,
+	domainproduct.ErrInvalidStatusTransition,
+	domainproduct.ErrRejectReasonRequired,
+	domainproduct.ErrInvalidMerchantID,
 	domainproduct.ErrSKUNotFound,
 	domainproduct.ErrEmptyProductName,
 	domainproduct.ErrEmptySKUs,
@@ -61,6 +67,7 @@ type mediaReq struct {
 
 type createProductReq struct {
 	CategoryID uint       `json:"categoryId" binding:"required"` // 分类ID
+	MerchantID uint       `json:"merchantId"`                    // 管理端语义:代谁铺货;不传/0 = 平台自营。商户端发布不收此字段(服务端推导)
 	Name       string     `json:"name" binding:"required"`       // 商品名称
 	Desc       string     `json:"desc"`                          // 商品描述
 	SKUs       []SkU      `json:"skus" binding:"required"`       // 商品规格
@@ -102,6 +109,7 @@ func (h *ProductHandler) Create(c *gin.Context) {
 
 	in := productapp.CreateProductInput{
 		CategoryID: req.CategoryID,
+		MerchantID: req.MerchantID,
 		Name:       req.Name,
 		Desc:       req.Desc,
 		SKUs:       toSKUInputs(req.SKUs),
@@ -304,8 +312,8 @@ type ProductListReq struct {
 	CategoryID uint   `form:"categoryId"`
 	ProductID  uint   `form:"productId"`
 	Name       string `form:"name"`
-	// Status 1上架 2下架；不传或传0查全部（避免与零值 StatusOnShelf=0 冲突，查询参数整体偏移 +1）
-	Status   int `form:"status" binding:"omitempty,oneof=0 1 2"`
+	// 没有 status 参数:C 端参数白名单,翻页/搜索词/类目是 C 端的词汇,
+	// 状态过滤不是——强制只查已上架,想看别的状态走商户端/管理端接口
 	Page     int `form:"page" binding:"required"`
 	PageSize int `form:"pageSize" binding:"required"`
 }
@@ -319,7 +327,6 @@ type ProductListReq struct {
 //	@Param			categoryId	query		int		false	"分类ID"
 //	@Param			productId	query		int		false	"商品ID"
 //	@Param			name		query		string	false	"商品名称（模糊匹配）"
-//	@Param			status		query		int		false	"状态：1上架 2下架，不传查全部"
 //	@Param			page		query		int		true	"页码"
 //	@Param			pageSize	query		int		true	"每页数量"
 //	@Success		200			{object}	response.Response{data=productapp.ProductListResult}
@@ -332,19 +339,16 @@ func (h *ProductHandler) List(c *gin.Context) {
 		response.BadRequest(c, validator.ErrorMsg(err))
 		return
 	}
-	// 查询参数 1上架 2下架，偏移 -1 映射回领域状态（0上架 1下架）；不传不过滤
-	var status *domainproduct.Status
-	if req.Status > 0 {
-		s := domainproduct.Status(req.Status - 1)
-		status = &s
-	}
+	// C 端强制只查已上架:待审核/已驳回/违规下架的商品从这里开始就不存在。
+	// 顺带拆掉了旧版"查询参数 +1 偏移"的补丁——那是 0=上架 顶着零值陷阱时的绕法
+	onShelf := domainproduct.StatusOnShelf
 	result, err := h.productSvc.List(c.Request.Context(), domainproduct.ListQuery{
 		CategoryID: req.CategoryID,
 		Name:       req.Name,
 		Page:       req.Page,
 		PageSize:   req.PageSize,
 		ProductID:  req.ProductID,
-		Status:     status,
+		Status:     &onShelf,
 	})
 	if err != nil {
 		response.ServerError(c, err.Error())

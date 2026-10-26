@@ -25,5 +25,9 @@ var (
 	ErrEmptyCategoryName        = errors.New("分类名称不能为空")
 	ErrCategoryHasProduct       = errors.New("分类下还有商品，不能删除")
 
-	ErrProductOnShelf = errors.New("商品为上架状态，请先下架再删除")
+	ErrProductOnShelf          = errors.New("商品为上架状态，请先下架再删除")
+	ErrInvalidStatusTransition = errors.New("当前状态不允许该操作")
+	ErrRejectReasonRequired    = errors.New("理由不能为空")
+	// ErrInvalidMerchantID 商户商品必须归属某个商户;0 意味着无主商品,构造函数直接拒绝
+	ErrInvalidMerchantID = errors.New("商户商品必须归属某个商户")
 )

@@ -23,7 +23,20 @@ func InitCatalogRouter() *gin.Engine {
 	// 管理端写接口:/admin 段统一收口;/api/catalog/admin/** 仍命中网关的
 	// /api/catalog 前缀(最长前缀匹配),网关路由表不用改
 	registerCatalogAdminRoutes(catalogGroup)
+
+	// 商户端商品接口:/merchant 段(JWTAuth,无 AdminAuth)——商户是普通登录用户,
+	// 资格由应用层推导店铺并校验归属,路由层只管认证
+	registerCatalogMerchantRoutes(catalogGroup)
 	return r
+}
+
+// registerCatalogMerchantRoutes catalog 商户端路由:商户经营自己的商品,
+// 鉴权模型是"登录即可,归属后置校验",与 /admin 组(JWTAuth+AdminAuth 双闸)分开——
+// 分组的依据是授权模型,不是"有多少种身份"
+func registerCatalogMerchantRoutes(catalogGroup *gin.RouterGroup) {
+	blacklist := NewTokenBlacklist()
+	merchantApi := catalogGroup.Group("/merchant", middleware.JWTAuth(blacklist))
+	registerMerchantProductRoutes(merchantApi)
 }
 
 // registerCatalogAdminRoutes catalog 管理端路由:全部挂在 /admin 段下,由 AdminAuth
