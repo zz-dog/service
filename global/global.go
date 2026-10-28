@@ -37,9 +37,16 @@ type OssConfig struct {
 	PublicBaseUrl         string `yaml:"public_base_url" mapstructure:"public_base_url"`
 }
 type PaymentConfig struct {
-	NotifyUrl string    `yaml:"notify_url"`
-	ReturnUrl string    `yaml:"return_url"`
-	Alipay    payConfug `yaml:"alipay"`
+	ServiceName string `yaml:"service_name" mapstructure:"service_name"`
+	ServicePort int    `yaml:"service_port" mapstructure:"service_port"`
+	Channel     string `yaml:"channel" mapstructure:"channel"` // mock | alipay,渠道装配选择器
+	// mock 渠道两件套:secret 是回调验签密钥(真实渠道的等价物是渠道商户密钥);
+	// pay_base_url 是收银台跳转地址,走网关拼
+	MockChannelSecret string `yaml:"mock_channel_secret" mapstructure:"mock_channel_secret"`
+	PayBaseURL        string `yaml:"pay_base_url" mapstructure:"pay_base_url"`
+	NotifyUrl         string    `yaml:"notify_url"`
+	ReturnUrl         string    `yaml:"return_url"`
+	Alipay            payConfug `yaml:"alipay"`
 }
 type payConfug struct {
 	AppID      string `yaml:"app_id" mapstructure:"app_id"`

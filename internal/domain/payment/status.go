@@ -15,4 +15,5 @@ type Channel int
 const (
 	ChannelWechat Channel = iota // 微信支付
 	ChannelAlipay         = 1    // 支付宝
+	ChannelMock           = 2    // mock 渠道(教学);流水里如实记录本单用的是哪颗心脏
 )

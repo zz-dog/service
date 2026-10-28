@@ -53,6 +53,17 @@ func (r *paymentRepository) MarkPaid(ctx context.Context, payNo string) (bool, e
 		})
 	return result.RowsAffected == 1, result.Error
 }
+
+// MarkRefundPending 条件更新 已支付→待退款,和 MarkPaid 同骨架:
+// WHERE status=已支付 保证只有"确实还在已支付态"的单会被转走,
+// 并发双通知/与退款 job 竞争时只有一人生效。
+func (r *paymentRepository) MarkRefundPending(ctx context.Context, payNo string) (bool, error) {
+	result := r.db.WithContext(ctx).Model(&PaymentPO{}).
+		Where("pay_no = ? AND status = ?", payNo, domainpayment.StatusPaid).
+		Update("status", int(domainpayment.StatusRefundPending))
+	return result.RowsAffected == 1, result.Error
+}
+
 func toDomain(po PaymentPO) *domainpayment.Payment {
 	return &domainpayment.Payment{
 		PayNo:   po.PayNo,

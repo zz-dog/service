@@ -14,4 +14,7 @@ type Repository interface {
 	MarkPaid(ctx context.Context, payNo string) (
 		bool, error,
 	)
+	// MarkRefundPending 条件更新 已支付→待退款。
+	// 取消竞态专用:支付成功但订单已被取消(自动取消/用户取消),钱还在手里必须退。
+	MarkRefundPending(ctx context.Context, payNo string) (bool, error)
 }
