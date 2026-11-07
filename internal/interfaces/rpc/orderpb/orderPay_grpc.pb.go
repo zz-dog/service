@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	OrderPayService_GetPayableOrder_FullMethodName = "/orderpay.v1.OrderPayService/GetPayableOrder"
-	OrderPayService_NotifyPaid_FullMethodName      = "/orderpay.v1.OrderPayService/NotifyPaid"
+	OrderPayService_GetPayableOrder_FullMethodName    = "/orderpay.v1.OrderPayService/GetPayableOrder"
+	OrderPayService_NotifyPaid_FullMethodName         = "/orderpay.v1.OrderPayService/NotifyPaid"
+	OrderPayService_GetOrderSettlement_FullMethodName = "/orderpay.v1.OrderPayService/GetOrderSettlement"
 )
 
 // OrderPayServiceClient is the client API for OrderPayService service.
@@ -37,6 +38,7 @@ type OrderPayServiceClient interface {
 	// 订单已取消 → FailedPrecondition(payment 侧转"待退款");
 	// 金额与订单总额不一致 → InvalidArgument(人工介入,绝不自动放行)。
 	NotifyPaid(ctx context.Context, in *NotifyPaidRequest, opts ...grpc.CallOption) (*NotifyPaidResponse, error)
+	GetOrderSettlement(ctx context.Context, in *GetOrderSettlementsRequest, opts ...grpc.CallOption) (*GetOrderSettlementsResponse, error)
 }
 
 type orderPayServiceClient struct {
@@ -67,6 +69,16 @@ func (c *orderPayServiceClient) NotifyPaid(ctx context.Context, in *NotifyPaidRe
 	return out, nil
 }
 
+func (c *orderPayServiceClient) GetOrderSettlement(ctx context.Context, in *GetOrderSettlementsRequest, opts ...grpc.CallOption) (*GetOrderSettlementsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetOrderSettlementsResponse)
+	err := c.cc.Invoke(ctx, OrderPayService_GetOrderSettlement_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrderPayServiceServer is the server API for OrderPayService service.
 // All implementations must embed UnimplementedOrderPayServiceServer
 // for forward compatibility.
@@ -81,6 +93,7 @@ type OrderPayServiceServer interface {
 	// 订单已取消 → FailedPrecondition(payment 侧转"待退款");
 	// 金额与订单总额不一致 → InvalidArgument(人工介入,绝不自动放行)。
 	NotifyPaid(context.Context, *NotifyPaidRequest) (*NotifyPaidResponse, error)
+	GetOrderSettlement(context.Context, *GetOrderSettlementsRequest) (*GetOrderSettlementsResponse, error)
 	mustEmbedUnimplementedOrderPayServiceServer()
 }
 
@@ -96,6 +109,9 @@ func (UnimplementedOrderPayServiceServer) GetPayableOrder(context.Context, *GetP
 }
 func (UnimplementedOrderPayServiceServer) NotifyPaid(context.Context, *NotifyPaidRequest) (*NotifyPaidResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method NotifyPaid not implemented")
+}
+func (UnimplementedOrderPayServiceServer) GetOrderSettlement(context.Context, *GetOrderSettlementsRequest) (*GetOrderSettlementsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetOrderSettlement not implemented")
 }
 func (UnimplementedOrderPayServiceServer) mustEmbedUnimplementedOrderPayServiceServer() {}
 func (UnimplementedOrderPayServiceServer) testEmbeddedByValue()                         {}
@@ -154,6 +170,24 @@ func _OrderPayService_NotifyPaid_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrderPayService_GetOrderSettlement_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrderSettlementsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderPayServiceServer).GetOrderSettlement(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrderPayService_GetOrderSettlement_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderPayServiceServer).GetOrderSettlement(ctx, req.(*GetOrderSettlementsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrderPayService_ServiceDesc is the grpc.ServiceDesc for OrderPayService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -168,6 +202,10 @@ var OrderPayService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "NotifyPaid",
 			Handler:    _OrderPayService_NotifyPaid_Handler,
+		},
+		{
+			MethodName: "GetOrderSettlement",
+			Handler:    _OrderPayService_GetOrderSettlement_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

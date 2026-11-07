@@ -77,3 +77,31 @@ func (s *Server) GetPayableOrder(ctx context.Context, req *orderpb.GetPayableOrd
 		Status:      int64(o.Status),
 	}, nil
 }
+
+// GetOrderSettlement 结算视图:给分账用的订单明细快照(归属 + 行小计)。
+// 只做取数,不做策略:分组和算钱是结算域的职责(与 GetPayableOrder 同纪律)。
+// 未支付/已取消的订单也照给——教学版不校验状态:分账单只在支付回调路径创建,
+// 这里返回的只是数据,不会流到钱上(校验离决策近,payment 侧建单前已对锚金额)。
+func (s *Server) GetOrderSettlement(ctx context.Context, req *orderpb.GetOrderSettlementsRequest) (*orderpb.GetOrderSettlementsResponse, error) {
+	if req.GetOrderNo() == "" {
+		return nil, status.Error(codes.InvalidArgument, "order_no 不能为空")
+	}
+	// FindByOrderNo 预加载了 Items(订单详情在用);行小计用领域对象的 Subtotal(),
+	// price×quantity 的语义 order 最懂,不让 payment 侧重算一遍
+	o, err := s.repo.FindByOrderNo(ctx, req.GetOrderNo())
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "订单不存在")
+	}
+	lines := make([]*orderpb.SettlementLine, 0, len(o.Items))
+	for i := range o.Items {
+		lines = append(lines, &orderpb.SettlementLine{
+			MerchantId: uint64(o.Items[i].MerchantID),
+			Amount:     o.Items[i].Subtotal(),
+		})
+	}
+	return &orderpb.GetOrderSettlementsResponse{
+		OrderNo:     o.OrderNo,
+		TotalAmount: o.TotalAmount,
+		Lines:       lines,
+	}, nil
+}

@@ -19,6 +19,7 @@ type DeductedItem struct {
 	ProductID   uint
 	SKUCode     string
 	ProductName string
+	MerchantID  uint
 	UnitPrice   int64 // 分
 	Quantity    int
 }

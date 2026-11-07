@@ -42,11 +42,19 @@ type PaymentConfig struct {
 	Channel     string `yaml:"channel" mapstructure:"channel"` // mock | alipay,渠道装配选择器
 	// mock 渠道两件套:secret 是回调验签密钥(真实渠道的等价物是渠道商户密钥);
 	// pay_base_url 是收银台跳转地址,走网关拼
-	MockChannelSecret string `yaml:"mock_channel_secret" mapstructure:"mock_channel_secret"`
-	PayBaseURL        string `yaml:"pay_base_url" mapstructure:"pay_base_url"`
-	NotifyUrl         string    `yaml:"notify_url"`
-	ReturnUrl         string    `yaml:"return_url"`
-	Alipay            payConfug `yaml:"alipay"`
+	MockChannelSecret string       `yaml:"mock_channel_secret" mapstructure:"mock_channel_secret"`
+	PayBaseURL        string       `yaml:"pay_base_url" mapstructure:"pay_base_url"`
+	NotifyUrl         string       `yaml:"notify_url"`
+	ReturnUrl         string       `yaml:"return_url"`
+	Alipay            payConfug    `yaml:"alipay"`
+	Settle            settleConfig `yaml:"settle"`
+}
+
+type settleConfig struct {
+	CommissionRateBps  int  `yaml:"commission_rate_bps"`
+	MaxRetry           int  `yaml:"max_retry"`
+	JobIntervalSeconds int  `yaml:"job_interval_seconds"`
+	MockFail           bool `yaml:"mock_fail"`
 }
 type payConfug struct {
 	AppID      string `yaml:"app_id" mapstructure:"app_id"`

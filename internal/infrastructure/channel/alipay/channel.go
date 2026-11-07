@@ -2,6 +2,7 @@ package alipay
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -11,6 +12,7 @@ import (
 	alipay "github.com/smartwalle/alipay/v3"
 
 	prepayapp "github.com/wsc-zz/service/internal/application/payment"
+	settlementapp "github.com/wsc-zz/service/internal/application/settlement"
 )
 
 // Channel 支付宝渠道(公钥模式);isProduction=false 时 SDK 走沙箱网关。
@@ -34,7 +36,7 @@ func NewChannel(appId string, privateKey string, publickey string, notifyURL str
 func (c *Channel) Prepay(ctx context.Context, req prepayapp.PrepayRequest) (string, error) {
 	var p = alipay.TradeWapPay{
 		Trade: alipay.Trade{
-			OutTradeNo:  req.PayNo,        // 商户单号 = payNo,回调靠它认单(一单可能多张支付单,不能用 orderNo)
+			OutTradeNo:  req.PayNo, // 商户单号 = payNo,回调靠它认单(一单可能多张支付单,不能用 orderNo)
 			TotalAmount: toYuan(req.Amount),
 			Subject:     req.Subject,
 			ProductCode: "QUICK_WAP_WAY", // 手机网站支付
@@ -80,6 +82,11 @@ func (c *Channel) ParseNotify(ctx context.Context, form url.Values) (*NotifyResu
 		// 单子还没付或不需记账,渠道之后会再推最终态
 	}
 	return r, nil
+}
+
+func (c *Channel) Settle(ctx context.Context, req settlementapp.SettleRequest) error {
+	return errors.New("alipay 分账未对接")
+
 }
 
 // AckNotification 通知处理成功的回执:字面量 "success",回 JSON 支付宝不认。

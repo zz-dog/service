@@ -5,9 +5,11 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	prepayapp "github.com/wsc-zz/service/internal/application/payment"
+	settlementapp "github.com/wsc-zz/service/internal/application/settlement"
 )
 
 // MockChannel mock 渠道:把"第三方支付"整体塞进一个端口实现里。
@@ -15,20 +17,26 @@ import (
 // 验签密钥来自配置——除了没有真钱,流程与真实渠道同构:
 // 预支付 → 用户在渠道收银台确认 → 渠道异步通知商户 → 商户验签后记账。
 type MockChannel struct {
-	secret  []byte // HMAC 密钥,来自 payment.mock_channel_secret
-	baseURL string // 网关地址,拼收银台跳转链接
+	secret     []byte // HMAC 密钥,来自 payment.mock_channel_secret
+	baseURL    string // 网关地址,拼收银台跳转链接
+	settleFail bool
 }
 
-func NewMockChannel(baseURL string, secret string) *MockChannel {
-	return &MockChannel{secret: []byte(secret), baseURL: baseURL}
+func NewMockChannel(baseURL string, secret string, settleFail bool) *MockChannel {
+	return &MockChannel{secret: []byte(secret), baseURL: baseURL, settleFail: settleFail}
 }
 func (c *MockChannel) Prepay(ctx context.Context, req prepayapp.PrepayRequest) (payUrl string, err error) {
 	// 签名只覆盖 payNo:同一支付单重复预支付得到同一 URL,天然支持复用
-	
+
 	return fmt.Sprintf("%s/api/payment/mock/cashier?pay_no=%s&sign=%s",
 		c.baseURL, req.PayNo, c.sign(req.PayNo)), nil
 }
-
+func (c *MockChannel) Settle(ctx context.Context, req settlementapp.SettleRequest) error {
+	if c.settleFail {
+		return errors.New("mock 渠道故障:分账失败开关打开")
+	}
+	return nil
+}
 func (c *MockChannel) sign(s string) string {
 	mac := hmac.New(sha256.New, c.secret)
 	mac.Write([]byte(s))

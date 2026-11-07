@@ -229,6 +229,162 @@ func (*NotifyPaidResponse) Descriptor() ([]byte, []int) {
 	return file_internal_interfaces_rpc_orderpb_orderPay_proto_rawDescGZIP(), []int{3}
 }
 
+type GetOrderSettlementsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OrderNo       string                 `protobuf:"bytes,1,opt,name=order_no,json=orderNo,proto3" json:"order_no,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetOrderSettlementsRequest) Reset() {
+	*x = GetOrderSettlementsRequest{}
+	mi := &file_internal_interfaces_rpc_orderpb_orderPay_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetOrderSettlementsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOrderSettlementsRequest) ProtoMessage() {}
+
+func (x *GetOrderSettlementsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_interfaces_rpc_orderpb_orderPay_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOrderSettlementsRequest.ProtoReflect.Descriptor instead.
+func (*GetOrderSettlementsRequest) Descriptor() ([]byte, []int) {
+	return file_internal_interfaces_rpc_orderpb_orderPay_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetOrderSettlementsRequest) GetOrderNo() string {
+	if x != nil {
+		return x.OrderNo
+	}
+	return ""
+}
+
+type SettlementLine struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MerchantId    uint64                 `protobuf:"varint,1,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"` // 0 = 平台自营(结算域据此过滤)
+	Amount        int64                  `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`                           // 行小计(分)= price × quantity
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SettlementLine) Reset() {
+	*x = SettlementLine{}
+	mi := &file_internal_interfaces_rpc_orderpb_orderPay_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SettlementLine) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SettlementLine) ProtoMessage() {}
+
+func (x *SettlementLine) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_interfaces_rpc_orderpb_orderPay_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SettlementLine.ProtoReflect.Descriptor instead.
+func (*SettlementLine) Descriptor() ([]byte, []int) {
+	return file_internal_interfaces_rpc_orderpb_orderPay_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *SettlementLine) GetMerchantId() uint64 {
+	if x != nil {
+		return x.MerchantId
+	}
+	return 0
+}
+
+func (x *SettlementLine) GetAmount() int64 {
+	if x != nil {
+		return x.Amount
+	}
+	return 0
+}
+
+type GetOrderSettlementsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OrderNo       string                 `protobuf:"bytes,1,opt,name=order_no,json=orderNo,proto3" json:"order_no,omitempty"`              // 订单号
+	TotalAmount   int64                  `protobuf:"varint,3,opt,name=total_amount,json=totalAmount,proto3" json:"total_amount,omitempty"` // 订单金额
+	Lines         []*SettlementLine      `protobuf:"bytes,2,rep,name=lines,proto3" json:"lines,omitempty"`                                 // 结算明细
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetOrderSettlementsResponse) Reset() {
+	*x = GetOrderSettlementsResponse{}
+	mi := &file_internal_interfaces_rpc_orderpb_orderPay_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetOrderSettlementsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOrderSettlementsResponse) ProtoMessage() {}
+
+func (x *GetOrderSettlementsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_interfaces_rpc_orderpb_orderPay_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOrderSettlementsResponse.ProtoReflect.Descriptor instead.
+func (*GetOrderSettlementsResponse) Descriptor() ([]byte, []int) {
+	return file_internal_interfaces_rpc_orderpb_orderPay_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *GetOrderSettlementsResponse) GetOrderNo() string {
+	if x != nil {
+		return x.OrderNo
+	}
+	return ""
+}
+
+func (x *GetOrderSettlementsResponse) GetTotalAmount() int64 {
+	if x != nil {
+		return x.TotalAmount
+	}
+	return 0
+}
+
+func (x *GetOrderSettlementsResponse) GetLines() []*SettlementLine {
+	if x != nil {
+		return x.Lines
+	}
+	return nil
+}
+
 var File_internal_interfaces_rpc_orderpb_orderPay_proto protoreflect.FileDescriptor
 
 const file_internal_interfaces_rpc_orderpb_orderPay_proto_rawDesc = "" +
@@ -245,11 +401,22 @@ const file_internal_interfaces_rpc_orderpb_orderPay_proto_rawDesc = "" +
 	"\border_no\x18\x01 \x01(\tR\aorderNo\x12\x15\n" +
 	"\x06pay_no\x18\x02 \x01(\tR\x05payNo\x12\x16\n" +
 	"\x06amount\x18\x03 \x01(\x03R\x06amount\"\x14\n" +
-	"\x12NotifyPaidResponse2\xbe\x01\n" +
+	"\x12NotifyPaidResponse\"7\n" +
+	"\x1aGetOrderSettlementsRequest\x12\x19\n" +
+	"\border_no\x18\x01 \x01(\tR\aorderNo\"I\n" +
+	"\x0eSettlementLine\x12\x1f\n" +
+	"\vmerchant_id\x18\x01 \x01(\x04R\n" +
+	"merchantId\x12\x16\n" +
+	"\x06amount\x18\x02 \x01(\x03R\x06amount\"\x8e\x01\n" +
+	"\x1bGetOrderSettlementsResponse\x12\x19\n" +
+	"\border_no\x18\x01 \x01(\tR\aorderNo\x12!\n" +
+	"\ftotal_amount\x18\x03 \x01(\x03R\vtotalAmount\x121\n" +
+	"\x05lines\x18\x02 \x03(\v2\x1b.orderpay.v1.SettlementLineR\x05lines2\xa7\x02\n" +
 	"\x0fOrderPayService\x12\\\n" +
 	"\x0fGetPayableOrder\x12#.orderpay.v1.GetPayableOrderRequest\x1a$.orderpay.v1.GetPayableOrderResponse\x12M\n" +
 	"\n" +
-	"NotifyPaid\x12\x1e.orderpay.v1.NotifyPaidRequest\x1a\x1f.orderpay.v1.NotifyPaidResponseBCZAgithub.com/wsc-zz/service/internal/interfaces/rpc/orderpb;orderpbb\x06proto3"
+	"NotifyPaid\x12\x1e.orderpay.v1.NotifyPaidRequest\x1a\x1f.orderpay.v1.NotifyPaidResponse\x12g\n" +
+	"\x12GetOrderSettlement\x12'.orderpay.v1.GetOrderSettlementsRequest\x1a(.orderpay.v1.GetOrderSettlementsResponseBCZAgithub.com/wsc-zz/service/internal/interfaces/rpc/orderpb;orderpbb\x06proto3"
 
 var (
 	file_internal_interfaces_rpc_orderpb_orderPay_proto_rawDescOnce sync.Once
@@ -263,23 +430,29 @@ func file_internal_interfaces_rpc_orderpb_orderPay_proto_rawDescGZIP() []byte {
 	return file_internal_interfaces_rpc_orderpb_orderPay_proto_rawDescData
 }
 
-var file_internal_interfaces_rpc_orderpb_orderPay_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_internal_interfaces_rpc_orderpb_orderPay_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_internal_interfaces_rpc_orderpb_orderPay_proto_goTypes = []any{
-	(*GetPayableOrderRequest)(nil),  // 0: orderpay.v1.GetPayableOrderRequest
-	(*GetPayableOrderResponse)(nil), // 1: orderpay.v1.GetPayableOrderResponse
-	(*NotifyPaidRequest)(nil),       // 2: orderpay.v1.NotifyPaidRequest
-	(*NotifyPaidResponse)(nil),      // 3: orderpay.v1.NotifyPaidResponse
+	(*GetPayableOrderRequest)(nil),      // 0: orderpay.v1.GetPayableOrderRequest
+	(*GetPayableOrderResponse)(nil),     // 1: orderpay.v1.GetPayableOrderResponse
+	(*NotifyPaidRequest)(nil),           // 2: orderpay.v1.NotifyPaidRequest
+	(*NotifyPaidResponse)(nil),          // 3: orderpay.v1.NotifyPaidResponse
+	(*GetOrderSettlementsRequest)(nil),  // 4: orderpay.v1.GetOrderSettlementsRequest
+	(*SettlementLine)(nil),              // 5: orderpay.v1.SettlementLine
+	(*GetOrderSettlementsResponse)(nil), // 6: orderpay.v1.GetOrderSettlementsResponse
 }
 var file_internal_interfaces_rpc_orderpb_orderPay_proto_depIdxs = []int32{
-	0, // 0: orderpay.v1.OrderPayService.GetPayableOrder:input_type -> orderpay.v1.GetPayableOrderRequest
-	2, // 1: orderpay.v1.OrderPayService.NotifyPaid:input_type -> orderpay.v1.NotifyPaidRequest
-	1, // 2: orderpay.v1.OrderPayService.GetPayableOrder:output_type -> orderpay.v1.GetPayableOrderResponse
-	3, // 3: orderpay.v1.OrderPayService.NotifyPaid:output_type -> orderpay.v1.NotifyPaidResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	5, // 0: orderpay.v1.GetOrderSettlementsResponse.lines:type_name -> orderpay.v1.SettlementLine
+	0, // 1: orderpay.v1.OrderPayService.GetPayableOrder:input_type -> orderpay.v1.GetPayableOrderRequest
+	2, // 2: orderpay.v1.OrderPayService.NotifyPaid:input_type -> orderpay.v1.NotifyPaidRequest
+	4, // 3: orderpay.v1.OrderPayService.GetOrderSettlement:input_type -> orderpay.v1.GetOrderSettlementsRequest
+	1, // 4: orderpay.v1.OrderPayService.GetPayableOrder:output_type -> orderpay.v1.GetPayableOrderResponse
+	3, // 5: orderpay.v1.OrderPayService.NotifyPaid:output_type -> orderpay.v1.NotifyPaidResponse
+	6, // 6: orderpay.v1.OrderPayService.GetOrderSettlement:output_type -> orderpay.v1.GetOrderSettlementsResponse
+	4, // [4:7] is the sub-list for method output_type
+	1, // [1:4] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_internal_interfaces_rpc_orderpb_orderPay_proto_init() }
@@ -293,7 +466,7 @@ func file_internal_interfaces_rpc_orderpb_orderPay_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_interfaces_rpc_orderpb_orderPay_proto_rawDesc), len(file_internal_interfaces_rpc_orderpb_orderPay_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

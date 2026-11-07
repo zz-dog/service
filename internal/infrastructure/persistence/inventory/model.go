@@ -16,7 +16,9 @@ type LedgerPO struct {
 	ProductID   uint
 	SKUCode     string `gorm:"type:varchar(64)"`
 	ProductName string
-	UnitPrice   int64 // 分
-	Quantity    int
-	CreatedAt   time.Time
+	MerchantID  uint // 商品归属快照,0 = 自营。分账依据的源头
+
+	UnitPrice int64 // 分
+	Quantity  int
+	CreatedAt time.Time
 }

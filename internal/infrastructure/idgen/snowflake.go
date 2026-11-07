@@ -6,6 +6,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 
 	"github.com/wsc-zz/service/internal/domain/payment"
+	domainsettlement "github.com/wsc-zz/service/internal/domain/settlement"
 )
 
 // SnowflakeGenerator 雪花算法支付单号生成器,实现 domain/payment.PayNoGenerator。
@@ -31,5 +32,15 @@ func (g *SnowflakeGenerator) NextPayNo() string {
 	return strconv.FormatInt(g.node.Generate().Int64(), 10)
 }
 
+// NextSettleNo 结算单号,与 NextPayNo 共用同一颗雪花:同一个 node 生成的号全局唯一,
+// 两类单号靠各自表的唯一索引当幂等锚点,互不冲突。教程原话:复用同一颗雪花再开一个方法,
+// 单号格式自定、全局唯一即可。
+func (g *SnowflakeGenerator) NextSettleNo() string {
+	return strconv.FormatInt(g.node.Generate().Int64(), 10)
+}
+
 // 编译期保证实现了领域端口
-var _ payment.PayNoGenerator = (*SnowflakeGenerator)(nil)
+var (
+	_ payment.PayNoGenerator             = (*SnowflakeGenerator)(nil)
+	_ domainsettlement.SettleNoGenerator = (*SnowflakeGenerator)(nil)
+)

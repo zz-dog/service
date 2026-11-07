@@ -17,6 +17,7 @@ import (
 	nacosconfig "github.com/wsc-zz/service/internal/infrastructure/configcenter/nacos"
 	"github.com/wsc-zz/service/internal/infrastructure/discovery/nacos"
 	paymentpo "github.com/wsc-zz/service/internal/infrastructure/persistence/payment"
+	settlepo "github.com/wsc-zz/service/internal/infrastructure/persistence/settle"
 	"github.com/wsc-zz/service/internal/interfaces/http/router"
 )
 
@@ -52,6 +53,8 @@ func main() {
 	// 2. 自动迁移持久化对象,确保表已创建/更新
 	if err := global.DB.AutoMigrate(
 		&paymentpo.PaymentPO{},
+		&settlepo.SettlementPO{},
+		&settlepo.SettlementDetailPO{},
 	); err != nil {
 		global.Logger.Error("数据表迁移失败", zap.Error(err))
 		panic("数据表迁移失败:" + err.Error())

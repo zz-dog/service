@@ -14,6 +14,7 @@ import (
 	"github.com/wsc-zz/service/global"
 	paymentapp "github.com/wsc-zz/service/internal/application/payment"
 	domainpayment "github.com/wsc-zz/service/internal/domain/payment"
+	domainsettlement "github.com/wsc-zz/service/internal/domain/settlement"
 	"github.com/wsc-zz/service/internal/interfaces/rpc/orderpb"
 )
 
@@ -92,6 +93,32 @@ func (c *Client) GetPayableOrder(ctx context.Context, orderNo string) (paymentap
 		return paymentapp.PayableOrder{}, mapStatus(err)
 	}
 	return toPayableOrder(resp.(*orderpb.GetPayableOrderResponse)), nil
+}
+
+// GetOrderSettlement 拉结算视图:订单明细的归属快照(哪行钱归谁)+ 订单总额。
+// 策略在应用层(分组/算钱是结算域的职责),协议在适配器——适配器 import 应用层,方向正确。
+func (c *Client) GetOrderSettlement(ctx context.Context, orderNo string) ([]domainsettlement.SettlementSource, int64, error) {
+	resp, err := c.call(ctx, func(ctx context.Context) (any, error) {
+		return c.stub.GetOrderSettlement(ctx, &orderpb.GetOrderSettlementsRequest{
+			OrderNo: orderNo,
+		})
+	})
+	if err != nil {
+		return nil, 0, mapStatus(err)
+	}
+	return toSources(resp.(*orderpb.GetOrderSettlementsResponse))
+}
+
+// toSources 把契约明细行翻译回领域值对象,顺便带出总额(应用层要对锚的双账本之一)
+func toSources(pb *orderpb.GetOrderSettlementsResponse) ([]domainsettlement.SettlementSource, int64, error) {
+	sources := make([]domainsettlement.SettlementSource, 0, len(pb.GetLines()))
+	for _, l := range pb.GetLines() {
+		sources = append(sources, domainsettlement.SettlementSource{
+			MerchantID: uint(l.GetMerchantId()),
+			Amount:     l.GetAmount(),
+		})
+	}
+	return sources, pb.GetTotalAmount(), nil
 }
 
 func (c *Client) call(ctx context.Context, do func(context.Context) (any, error)) (any, error) {

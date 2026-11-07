@@ -7,12 +7,11 @@
 package inventorypb
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -141,6 +140,7 @@ type DeductedItem struct {
 	ProductName   string                 `protobuf:"bytes,3,opt,name=product_name,json=productName,proto3" json:"product_name,omitempty"` // 名称快照,订单明细展示用
 	UnitPrice     int64                  `protobuf:"varint,4,opt,name=unit_price,json=unitPrice,proto3" json:"unit_price,omitempty"`      // 单价快照,单位:分(与领域层 SKU.Price 一致)
 	Quantity      int32                  `protobuf:"varint,5,opt,name=quantity,proto3" json:"quantity,omitempty"`
+	MerchantId    uint64                 `protobuf:"varint,6,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -206,6 +206,13 @@ func (x *DeductedItem) GetUnitPrice() int64 {
 func (x *DeductedItem) GetQuantity() int32 {
 	if x != nil {
 		return x.Quantity
+	}
+	return 0
+}
+
+func (x *DeductedItem) GetMerchantId() uint64 {
+	if x != nil {
+		return x.MerchantId
 	}
 	return 0
 }
@@ -356,7 +363,7 @@ const file_internal_interfaces_rpc_inventorypb_inventory_proto_rawDesc = "" +
 	"\x12DeductBatchRequest\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tR\trequestId\x12.\n" +
-	"\x05items\x18\x02 \x03(\v2\x18.inventory.v1.DeductItemR\x05items\"\xa6\x01\n" +
+	"\x05items\x18\x02 \x03(\v2\x18.inventory.v1.DeductItemR\x05items\"\xc7\x01\n" +
 	"\fDeductedItem\x12\x1d\n" +
 	"\n" +
 	"product_id\x18\x01 \x01(\x04R\tproductId\x12\x19\n" +
@@ -364,7 +371,9 @@ const file_internal_interfaces_rpc_inventorypb_inventory_proto_rawDesc = "" +
 	"\fproduct_name\x18\x03 \x01(\tR\vproductName\x12\x1d\n" +
 	"\n" +
 	"unit_price\x18\x04 \x01(\x03R\tunitPrice\x12\x1a\n" +
-	"\bquantity\x18\x05 \x01(\x05R\bquantity\"G\n" +
+	"\bquantity\x18\x05 \x01(\x05R\bquantity\x12\x1f\n" +
+	"\vmerchant_id\x18\x06 \x01(\x04R\n" +
+	"merchantId\"G\n" +
 	"\x13DeductBatchResponse\x120\n" +
 	"\x05items\x18\x01 \x03(\v2\x1a.inventory.v1.DeductedItemR\x05items\"d\n" +
 	"\x13RestockBatchRequest\x12\x1d\n" +

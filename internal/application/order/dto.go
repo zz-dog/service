@@ -52,27 +52,28 @@ type OrderItemDTO struct {
 	SKUCode     string `json:"skuCode"`
 	ProductName string `json:"productName"`
 	Quantity    int    `json:"quantity"`
-	Price       int64  `json:"price"`    // 单位：分
-	Subtotal    int64  `json:"subtotal"` // 小计，单位：分
+	MerchantID  uint   `json:"merchantId"` // 商家ID
+	Price       int64  `json:"price"`      // 单位：分
+	Subtotal    int64  `json:"subtotal"`   // 小计，单位：分
 }
 
 // OrderDTO 订单视图
 type OrderDTO struct {
-	OrderID          uint               `json:"orderId"`               // 订单ID
-	UserID           uint               `json:"userId"`                // 用户ID
-	OrderNo          string             `json:"orderNo"`               // 订单编号
+	OrderID          uint               `json:"orderId"`                      // 订单ID
+	UserID           uint               `json:"userId"`                       // 用户ID
+	OrderNo          string             `json:"orderNo"`                      // 订单编号
 	Status           domainOrder.Status `json:"status" swaggertype:"integer"` // 订单状态：1-待支付，2-已支付，3-已发货，4-已完成，5-已取消
-	StatusName       string             `json:"statusName"`            // 订单状态名称
-	TotalAmount      int64              `json:"totalAmount"`           // 单位：分
-	ConsigneeName    string             `json:"consigneeName"`         // 收货人姓名
-	ConsigneePhone   string             `json:"consigneePhone"`        // 收货人手机号
-	ConsigneeAddress string             `json:"consigneeAddress"`      // 收货人地址
-	LogisticsNo      string             `json:"logisticsNo"`           // 物流单号
-	Items            []OrderItemDTO     `json:"items"`                 // 订单明细
-	CreatedAt        time.Time          `json:"createdAt"`             // 创建时间
-	UpdatedAt        time.Time          `json:"updatedAt"`             // 更新时间
-	PaidAt           *time.Time         `json:"paidAt,omitempty"`      // 支付时间
-	CancelledAt      *time.Time         `json:"cancelledAt,omitempty"` // 取消时间
+	StatusName       string             `json:"statusName"`                   // 订单状态名称
+	TotalAmount      int64              `json:"totalAmount"`                  // 单位：分
+	ConsigneeName    string             `json:"consigneeName"`                // 收货人姓名
+	ConsigneePhone   string             `json:"consigneePhone"`               // 收货人手机号
+	ConsigneeAddress string             `json:"consigneeAddress"`             // 收货人地址
+	LogisticsNo      string             `json:"logisticsNo"`                  // 物流单号
+	Items            []OrderItemDTO     `json:"items"`                        // 订单明细
+	CreatedAt        time.Time          `json:"createdAt"`                    // 创建时间
+	UpdatedAt        time.Time          `json:"updatedAt"`                    // 更新时间
+	PaidAt           *time.Time         `json:"paidAt,omitempty"`             // 支付时间
+	CancelledAt      *time.Time         `json:"cancelledAt,omitempty"`        // 取消时间
 }
 
 // OrderListResult 订单分页结果

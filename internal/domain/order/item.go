@@ -6,6 +6,7 @@ type OrderItem struct {
 	ProductName string // 商品名称
 	Quantity    int    // 商品数量
 	Price       int64  // 单价，单位：分
+	MerchantID  uint   // 商户ID
 }
 
 func (o *OrderItem) Subtotal() int64 {

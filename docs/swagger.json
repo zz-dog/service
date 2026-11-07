@@ -2815,6 +2815,377 @@
                 }
             }
         },
+        "/payment/admin/settlements": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "全部分账单,时间倒序含明细,可按状态过滤。对账入口:核对 settle_amount + commission_amount == total_amount。需要管理员(JWT+AdminAuth)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "分账管理"
+                ],
+                "summary": "分账单列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "状态:不传或 0 查全部,1-待结算,2-结算中,3-已结算,4-结算失败",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "页码,默认 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "每页数量,默认 10,最大 100",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/settlementapp.SettlementListDto"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "参数校验失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "需要管理员权限",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/payment/admin/settlements/{settleNo}/execute": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "不等 job,立刻执行一张待结算分账单。与 job 共用抢锁语义(条件更新 1→2):",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "分账管理"
+                ],
+                "summary": "立即执行分账",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "结算单号",
+                        "name": "settleNo",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "结算完成",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "当前状态不允许该操作(非待结算)",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "需要管理员权限",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "分账单不存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "423": {
+                        "description": "分账单正在结算中(别人在跑,不是错误)",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/payment/admin/settlements/{settleNo}/retry": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "结算失败(终态,重试超限)→ 待结算,单子回到 job 的扫描范围。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "分账管理"
+                ],
+                "summary": "重试失败的分账单",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "结算单号",
+                        "name": "settleNo",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "已重置回待结算",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "当前状态不允许该操作(非结算失败终态)",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "需要管理员权限",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "分账单不存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/payment/mock/cashier": {
+            "get": {
+                "description": "payUrl 指向这里:验签通过后渲染确认页,点击按钮模拟渠道内部扣款并发起异步通知",
+                "tags": [
+                    "支付"
+                ],
+                "summary": "mock 渠道收银台",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "支付单号",
+                        "name": "pay_no",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "HMAC-SHA256 签名",
+                        "name": "sign",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "收银台页面",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "签名无效",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/payment/mock/notify": {
+            "post": {
+                "description": "模拟渠道服务器回调:HMAC 验签 → 状态机推进 → 通知订单。渠道回调不挂 JWT",
+                "tags": [
+                    "支付"
+                ],
+                "summary": "mock 渠道异步通知",
+                "parameters": [
+                    {
+                        "description": "支付单号",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.mockNotifyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "受理成功",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "签名无效",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/payment/notify": {
+            "post": {
+                "description": "支付宝服务器回调:公钥验签 → 终态过滤 → 金额核对 → 记账 → ack success",
+                "tags": [
+                    "支付"
+                ],
+                "summary": "支付宝异步通知",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "支付宝异步通知表单",
+                        "name": "form",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success / fail",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/payment/prepay": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "按订单号发起支付。金额与归属以订单为准,userID 取自 JWT,不采信请求参数",
+                "tags": [
+                    "支付"
+                ],
+                "summary": "预支付",
+                "parameters": [
+                    {
+                        "description": "订单号",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.prepayRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/paymentapp.PrepayDto"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "订单不可支付/参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "订单不存在(含他人的订单)",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/user/address": {
             "get": {
                 "security": [
@@ -4077,6 +4448,17 @@
                 }
             }
         },
+        "handler.mockNotifyRequest": {
+            "type": "object",
+            "required": [
+                "payNo"
+            ],
+            "properties": {
+                "payNo": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.orderItemRequest": {
             "type": "object",
             "required": [
@@ -4093,6 +4475,17 @@
                     "minimum": 1
                 },
                 "skuCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.prepayRequest": {
+            "type": "object",
+            "required": [
+                "orderNo"
+            ],
+            "properties": {
+                "orderNo": {
                     "type": "string"
                 }
             }
@@ -4482,6 +4875,10 @@
         "orderapp.OrderItemDTO": {
             "type": "object",
             "properties": {
+                "merchantId": {
+                    "description": "商家ID",
+                    "type": "integer"
+                },
                 "price": {
                     "description": "单位：分",
                     "type": "integer"
@@ -4514,6 +4911,40 @@
                     }
                 },
                 "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "paymentapp.PrepayDto": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "channel": {
+                    "description": "domainpayment.Channel 数值(mock=2 / alipay=1),swagger 可解析",
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "orderNo": {
+                    "type": "string"
+                },
+                "paidAt": {
+                    "type": "string"
+                },
+                "payNo": {
+                    "type": "string"
+                },
+                "payUrl": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "domainpayment.PaymentStatus 数值",
+                    "type": "integer"
+                },
+                "userId": {
                     "type": "integer"
                 }
             }
@@ -4642,6 +5073,81 @@
                 "data": {},
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "settlementapp.SettlementDetailDto": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "merchantId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "settlementapp.SettlementDto": {
+            "type": "object",
+            "properties": {
+                "commissionAmount": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/settlementapp.SettlementDetailDto"
+                    }
+                },
+                "failReason": {
+                    "type": "string"
+                },
+                "orderNo": {
+                    "type": "string"
+                },
+                "payNo": {
+                    "type": "string"
+                },
+                "rateBps": {
+                    "type": "integer"
+                },
+                "retryCount": {
+                    "type": "integer"
+                },
+                "settleAmount": {
+                    "type": "integer"
+                },
+                "settleNo": {
+                    "type": "string"
+                },
+                "settledAt": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "statusName": {
+                    "type": "string"
+                },
+                "totalAmount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "settlementapp.SettlementListDto": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/settlementapp.SettlementDto"
+                    }
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },

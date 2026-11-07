@@ -120,6 +120,7 @@ func toOrderDTO(o *domainOrder.Order) OrderDTO {
 			Quantity:    it.Quantity,
 			Price:       it.Price,
 			Subtotal:    it.Subtotal(),
+			MerchantID:  it.MerchantID,
 		})
 	}
 	return OrderDTO{

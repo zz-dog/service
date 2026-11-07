@@ -39,9 +39,9 @@ type OrderItemPO struct {
 	ProductName string `gorm:"size:128;comment:商品名称"`
 	Quantity    int    `gorm:"comment:购买数量"`
 	Price       int64  `gorm:"comment:单价(分)"`
-
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Merchant    uint   `gorm:"comment:商户号"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 // TableName 自定义表名（GORM 默认会把 OrderPO 推断成 order_p_o_s）

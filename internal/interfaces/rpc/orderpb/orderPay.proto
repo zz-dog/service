@@ -14,6 +14,8 @@ service OrderPayService {
   // 订单已取消 → FailedPrecondition(payment 侧转"待退款");
   // 金额与订单总额不一致 → InvalidArgument(人工介入,绝不自动放行)。
   rpc NotifyPaid (NotifyPaidRequest) returns (NotifyPaidResponse);
+
+  rpc GetOrderSettlement (GetOrderSettlementsRequest) returns (GetOrderSettlementsResponse);
 }
 
 message GetPayableOrderRequest { 
@@ -35,3 +37,17 @@ message NotifyPaidRequest {
 
 message NotifyPaidResponse { 
 }
+
+message GetOrderSettlementsRequest {
+  string order_no = 1;
+}
+message SettlementLine {
+  uint64 merchant_id  = 1;  // 0 = 平台自营(结算域据此过滤)
+  int64 amount   = 2;  // 行小计(分)= price × quantity
+}
+
+message GetOrderSettlementsResponse { 
+  string order_no = 1;  // 订单号
+  int64 total_amount = 3;  // 订单金额
+  repeated SettlementLine lines = 2;  // 结算明细
+} 

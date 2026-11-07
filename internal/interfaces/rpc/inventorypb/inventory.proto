@@ -32,6 +32,7 @@ message DeductedItem {
   string product_name = 3; // 名称快照,订单明细展示用
   int64 unit_price = 4;    // 单价快照,单位:分(与领域层 SKU.Price 一致)
   int32 quantity = 5;
+  uint64 merchant_id = 6;
 }
 
 message DeductBatchResponse {
