@@ -34,13 +34,13 @@ func InitMerchantRouter() *gin.Engine {
 func registerMerchantRoutes(api *gin.RouterGroup, h *handler.MerchantHandler, blacklist middleware.TokenBlacklistChecker) {
 	user := api.Group("", middleware.JWTAuth(blacklist))
 	{
-		user.POST("/application", h.SubmitApplication)          // 提交入驻申请
-		user.GET("/application/my", h.MyApplications)           // 我的申请历史
+		user.POST("/application", h.SubmitApplication)                // 提交入驻申请
+		user.GET("/application/my", h.MyApplications)                 // 我的申请历史
 		user.POST("/application/:id/withdraw", h.WithdrawApplication) // 撤回(仅待审核)
-		user.GET("/my", h.MyShop)                               // 我的店铺
-		user.PUT("/my", h.UpdateShop)                           // 更新店铺资料
-		user.POST("/my/suspend", h.Suspend)                     // 停业
-		user.POST("/my/resume", h.Resume)                       // 恢复营业
+		user.GET("/my", h.MyShop)                                     // 我的店铺
+		user.PUT("/my", h.UpdateShop)                                 // 更新店铺资料
+		user.POST("/my/suspend", h.Suspend)                           // 停业
+		user.POST("/my/resume", h.Resume)                             // 恢复营业
 	}
 }
 
@@ -50,8 +50,8 @@ func registerMerchantRoutes(api *gin.RouterGroup, h *handler.MerchantHandler, bl
 func registerMerchantAdminRoutes(api *gin.RouterGroup, h *handler.MerchantHandler, blacklist middleware.TokenBlacklistChecker) {
 	admin := api.Group("/admin", middleware.JWTAuth(blacklist), middleware.AdminAuth())
 	{
-		admin.GET("/applications", h.ListApplications)             // 申请列表(教学版全量)
-		admin.POST("/applications/:id/review", h.Review)           // 审核 {approve, reason}
-		admin.POST("/merchants/:id/ban", h.Ban)                    // 封禁商户
+		admin.GET("/applications", h.ListApplications)   // 申请列表(教学版全量)
+		admin.POST("/applications/:id/review", h.Review) // 审核 {approve, reason}
+		admin.POST("/merchants/:id/ban", h.Ban)          // 封禁商户
 	}
 }

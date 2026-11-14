@@ -16,17 +16,17 @@ const (
 
 // Product 是商品聚合根，管理 SKU 列表。
 type Product struct {
-	ProductID  uint      // 商品ID
-	CategoryID uint      // 分类ID
-	MerchantID uint      // 归属商户;0 = 平台自营。水平授权的锚点:商户写操作先比对这个字段
-	Name       string    // 商品名称
-	Desc       string    // 商品描述
-	Status     Status    // 商品状态(1上架 2下架 3待审核 4已驳回 5违规下架)
-	SKUs       []SKU     // 商品规格
-	Medias     []Media   // 商品媒体资源（图片/视频/3D模型）
-	RejectReason string  // 平台否决理由(驳回/违规下架共用一列;进阶上流水表再拆开)
-	CreatedAt  time.Time // 创建时间
-	UpdatedAt  time.Time // 更新时间
+	ProductID    uint      // 商品ID
+	CategoryID   uint      // 分类ID
+	MerchantID   uint      // 归属商户;0 = 平台自营。水平授权的锚点:商户写操作先比对这个字段
+	Name         string    // 商品名称
+	Desc         string    // 商品描述
+	Status       Status    // 商品状态(1上架 2下架 3待审核 4已驳回 5违规下架)
+	SKUs         []SKU     // 商品规格
+	Medias       []Media   // 商品媒体资源（图片/视频/3D模型）
+	RejectReason string    // 平台否决理由(驳回/违规下架共用一列;进阶上流水表再拆开)
+	CreatedAt    time.Time // 创建时间
+	UpdatedAt    time.Time // 更新时间
 }
 
 // NewProduct 创建商品(管理端:自营/代商户铺货,可信,出生即上架)。

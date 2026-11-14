@@ -4,10 +4,12 @@ import (
 	"context"
 
 	addressdomain "github.com/wsc-zz/service/internal/domain/address"
+	imdomain "github.com/wsc-zz/service/internal/domain/im"
 	merchantdomain "github.com/wsc-zz/service/internal/domain/merchant"
 	orderdomain "github.com/wsc-zz/service/internal/domain/order"
 	productdomain "github.com/wsc-zz/service/internal/domain/product"
 	addresspo "github.com/wsc-zz/service/internal/infrastructure/persistence/address"
+	impo "github.com/wsc-zz/service/internal/infrastructure/persistence/im"
 	merchantpo "github.com/wsc-zz/service/internal/infrastructure/persistence/merchant"
 	orderpo "github.com/wsc-zz/service/internal/infrastructure/persistence/order"
 	productpo "github.com/wsc-zz/service/internal/infrastructure/persistence/product"
@@ -42,5 +44,14 @@ func (r *Runner) RunAddress(ctx context.Context, fn func(addressdomain.AddressRe
 func (r *Runner) RunMerchant(ctx context.Context, fn func(merchantdomain.ApplicationRepository, merchantdomain.MerchantRepository) error) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		return fn(merchantpo.NewMerchantApplicationRepository(tx), merchantpo.NewMerchantRepository(tx))
+	})
+}
+
+// RunIm 在同一事务内执行 fn,fn 收到与事务绑定的会话/消息仓储。
+// 发消息 = 建会话(懒创建)+ 插消息 + 刷会话,三步同生共死:
+// 插消息成功而刷会话失败,未读计数就丢了——离线兜底全靠这行 UPDATE。
+func (r *Runner) RunIm(ctx context.Context, fn func(imdomain.ConversationRepository, imdomain.MessageRepository) error) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		return fn(impo.NewConversationRepository(tx), impo.NewMessageRepository(tx))
 	})
 }

@@ -72,7 +72,7 @@ type SKUDTO struct {
 type ProductDTO struct {
 	ProductID    uint       `json:"productId"`
 	CategoryID   uint       `json:"categoryId"`
-	MerchantID   uint       `json:"merchantId"`   // 归属商户;0 = 平台自营
+	MerchantID   uint       `json:"merchantId"` // 归属商户;0 = 平台自营
 	Name         string     `json:"name"`
 	Desc         string     `json:"desc"`
 	Status       int        `json:"status"`       // 1上架 2下架 3待审核 4已驳回 5违规下架

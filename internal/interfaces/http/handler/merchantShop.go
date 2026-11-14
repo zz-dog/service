@@ -49,12 +49,12 @@ func (h *MerchantHandler) MyShop(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			request	body	updateShopReq	true	"店铺资料"
-//	@Success		200	{object}	response.Response{data=merchantapp.MerchantDTO}
-//	@Failure		400	{object}	response.Response	"参数校验失败/店铺信息不完整"
-//	@Failure		401	{object}	response.Response	"未登录或 token 失效"
-//	@Failure		404	{object}	response.Response	"还没有店铺"
-//	@Failure		500	{object}	response.Response	"服务器内部错误"
+//	@Param			request	body		updateShopReq	true	"店铺资料"
+//	@Success		200		{object}	response.Response{data=merchantapp.MerchantDTO}
+//	@Failure		400		{object}	response.Response	"参数校验失败/店铺信息不完整"
+//	@Failure		401		{object}	response.Response	"未登录或 token 失效"
+//	@Failure		404		{object}	response.Response	"还没有店铺"
+//	@Failure		500		{object}	response.Response	"服务器内部错误"
 //	@Router			/merchant/my [put]
 func (h *MerchantHandler) UpdateShop(c *gin.Context) {
 	userID, ok := getCurrentUserID(c)

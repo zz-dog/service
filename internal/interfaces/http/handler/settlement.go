@@ -35,9 +35,9 @@ type listSettlementsRequest struct {
 //	@Tags			分账管理
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			status		query	int	false	"状态:不传或 0 查全部,1-待结算,2-结算中,3-已结算,4-结算失败"
-//	@Param			page		query	int	false	"页码,默认 1"
-//	@Param			pageSize	query	int	false	"每页数量,默认 10,最大 100"
+//	@Param			status		query		int	false	"状态:不传或 0 查全部,1-待结算,2-结算中,3-已结算,4-结算失败"
+//	@Param			page		query		int	false	"页码,默认 1"
+//	@Param			pageSize	query		int	false	"每页数量,默认 10,最大 100"
 //	@Success		200			{object}	response.Response{data=settlementapp.SettlementListDto}
 //	@Failure		400			{object}	response.Response	"参数校验失败"
 //	@Failure		401			{object}	response.Response	"未登录或 token 失效"
@@ -78,7 +78,7 @@ func (h *settlementHandler) List(c *gin.Context) {
 //	@Tags			分账管理
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			settleNo	path	string	true	"结算单号"
+//	@Param			settleNo	path		string				true	"结算单号"
 //	@Success		200			{object}	response.Response	"结算完成"
 //	@Failure		400			{object}	response.Response	"当前状态不允许该操作(非待结算)"
 //	@Failure		401			{object}	response.Response	"未登录或 token 失效"
@@ -103,7 +103,7 @@ func (h *settlementHandler) Execute(c *gin.Context) {
 //	@Tags			分账管理
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			settleNo	path	string	true	"结算单号"
+//	@Param			settleNo	path		string				true	"结算单号"
 //	@Success		200			{object}	response.Response	"已重置回待结算"
 //	@Failure		400			{object}	response.Response	"当前状态不允许该操作(非结算失败终态)"
 //	@Failure		401			{object}	response.Response	"未登录或 token 失效"

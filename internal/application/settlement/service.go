@@ -37,8 +37,9 @@ func NewService(repo domainsettlement.Repository, channel Channel, view Settleme
 // EnsureForPayment 幂等建分账单:调一次和调 N 次,库里最多一张单。
 // 回调路径的每一环都可能被渠道重放,本方法必须可重入。
 // 流程:FindByPayNo 命中 → 直接 nil;未命中 → RPC 拉结算视图 → 金额核对
-//   → NewSettlement(纯自营 ErrNothingToSettle 捕获后当"无事发生")→ Save;
-//   并发重放撞 pay_no 唯一索引 → 重查一次确认存在后当成功。
+//
+//	→ NewSettlement(纯自营 ErrNothingToSettle 捕获后当"无事发生")→ Save;
+//	并发重放撞 pay_no 唯一索引 → 重查一次确认存在后当成功。
 func (s *Service) EnsureForPayment(ctx context.Context, payNo, orderNo string, total int64) error {
 	existing, err := s.repo.FindByPayNo(ctx, payNo)
 	if err != nil {

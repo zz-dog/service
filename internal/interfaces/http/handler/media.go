@@ -48,14 +48,14 @@ func NewMidiaHandler(client *ossclient.Client) *MidiaHandler {
 //	@Accept			multipart/form-data
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			file	formData	file	true	"图片文件（≤10MB）"
-//	@Param			key		formData	string	false	"对象 key 前缀，不传自动生成"
+//	@Param			file	formData	file							true	"图片文件（≤10MB）"
+//	@Param			key		formData	string							false	"对象 key 前缀，不传自动生成"
 //	@Success		200		{object}	response.Response{data=string}	"图片访问 URL"
-//	@Failure		400		{object}	response.Response	"缺少 file 字段"
-//	@Failure		401		{object}	response.Response	"未登录或 token 失效"
-//	@Failure		413		{object}	response.Response	"文件过大（上限 10MB）"
-//	@Failure		415		{object}	response.Response	"不支持的媒体类型"
-//	@Failure		500		{object}	response.Response	"上传 OSS 失败"
+//	@Failure		400		{object}	response.Response				"缺少 file 字段"
+//	@Failure		401		{object}	response.Response				"未登录或 token 失效"
+//	@Failure		413		{object}	response.Response				"文件过大（上限 10MB）"
+//	@Failure		415		{object}	response.Response				"不支持的媒体类型"
+//	@Failure		500		{object}	response.Response				"上传 OSS 失败"
 //	@Router			/catalog/admin/media/upload [post]
 func (h *MidiaHandler) Upload(c *gin.Context) {
 	file, header, err := c.Request.FormFile("file")
@@ -102,12 +102,12 @@ type UploadURLResp struct {
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			ext	query	string	true	"扩展名（png/jpg/webp/gif）"
+//	@Param			ext	query		string											true	"扩展名（png/jpg/webp/gif）"
 //	@Success		200	{object}	response.Response{data=handler.UploadURLResp}	"key 与签名 URL"
-//	@Failure		400	{object}	response.Response	"缺少 ext"
-//	@Failure		401	{object}	response.Response	"未登录或 token 失效"
-//	@Failure		415	{object}	response.Response	"不支持的扩展名"
-//	@Failure		500	{object}	response.Response	"生成签名 URL 失败"
+//	@Failure		400	{object}	response.Response								"缺少 ext"
+//	@Failure		401	{object}	response.Response								"未登录或 token 失效"
+//	@Failure		415	{object}	response.Response								"不支持的扩展名"
+//	@Failure		500	{object}	response.Response								"生成签名 URL 失败"
 //	@Router			/catalog/admin/media/uploadURL [get]
 func (h *MidiaHandler) UploadURL(c *gin.Context) {
 	ext := c.Query("ext")
@@ -137,11 +137,11 @@ func (h *MidiaHandler) UploadURL(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			key	query	string	true	"对象 key"
+//	@Param			key	query		string							true	"对象 key"
 //	@Success		200	{object}	response.Response{data=string}	"签名 URL"
-//	@Failure		400	{object}	response.Response	"缺少 key"
-//	@Failure		401	{object}	response.Response	"未登录或 token 失效"
-//	@Failure		500	{object}	response.Response	"生成签名 URL 失败"
+//	@Failure		400	{object}	response.Response				"缺少 key"
+//	@Failure		401	{object}	response.Response				"未登录或 token 失效"
+//	@Failure		500	{object}	response.Response				"生成签名 URL 失败"
 //	@Router			/catalog/admin/media/signURL [get]
 func (h *MidiaHandler) SignURL(c *gin.Context) {
 	key := c.Query("key")

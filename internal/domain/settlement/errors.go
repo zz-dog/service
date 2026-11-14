@@ -9,5 +9,5 @@ var (
 	ErrInvalidStatusTransition = errors.New("当前状态不允许该操作")
 	ErrSettlementNotFound      = errors.New("分账单不存在")
 	ErrSettleExecuting         = errors.New("分账单正在结算中") // 抢占失败:别人在跑,不是错误也不是成功
-	ErrDuplicateSettlement     = errors.New("分账单已存在")  // pay_no/settle_no 唯一索引冲突(仓储翻译),幂等建单据此重查确认
+	ErrDuplicateSettlement     = errors.New("分账单已存在")   // pay_no/settle_no 唯一索引冲突(仓储翻译),幂等建单据此重查确认
 )

@@ -36,21 +36,21 @@ type createOrderRequest struct {
 
 // Create 创建订单
 //
-//		@Summary		创建订单
-//		@Description	下单并扣减库存（事务保证），用户ID取自 JWT；同一用户 3 秒内重复提交返回 429。
+//	@Summary		创建订单
+//	@Description	下单并扣减库存（事务保证），用户ID取自 JWT；同一用户 3 秒内重复提交返回 429。
 //	              skuCode 为创建商品时服务端派生的 SKU 编码。金额单位均为分。需要登录（JWT）
-//		@Tags			订单
-//		@Accept			json
-//		@Produce		json
-//		@Security		ApiKeyAuth
-//		@Param			request	body		createOrderRequest	true	"订单信息"
-//		@Success		200		{object}	response.Response{data=orderapp.OrderDTO}
-//		@Failure		400		{object}	response.Response	"参数校验失败/商品已下架/库存不足/收货人信息不完整"
-//		@Failure		401		{object}	response.Response	"未登录或 token 失效"
-//		@Failure		404		{object}	response.Response	"商品或 SKU 不存在"
-//		@Failure		429		{object}	response.Response	"请求过于频繁（3 秒防重窗口）"
-//		@Failure		500		{object}	response.Response	"服务器内部错误"
-//		@Router			/order/create [post]
+//	@Tags			订单
+//	@Accept			json
+//	@Produce		json
+//	@Security		ApiKeyAuth
+//	@Param			request	body		createOrderRequest	true	"订单信息"
+//	@Success		200		{object}	response.Response{data=orderapp.OrderDTO}
+//	@Failure		400		{object}	response.Response	"参数校验失败/商品已下架/库存不足/收货人信息不完整"
+//	@Failure		401		{object}	response.Response	"未登录或 token 失效"
+//	@Failure		404		{object}	response.Response	"商品或 SKU 不存在"
+//	@Failure		429		{object}	response.Response	"请求过于频繁（3 秒防重窗口）"
+//	@Failure		500		{object}	response.Response	"服务器内部错误"
+//	@Router			/order/create [post]
 func (h *OrderHandler) Create(c *gin.Context) {
 	userID, ok := getCurrentUserID(c)
 	if !ok {
@@ -138,14 +138,14 @@ type OrderListRequest struct {
 //	@Tags			订单
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			userId		query	uint	true	"用户ID"
-//	@Param			page		query	int		false	"页码，默认 1"
-//	@Param			pageSize	query	int		false	"每页数量，默认 10，最大 100"
-//	@Param			status		query	int		false	"状态：不传或 0 查全部，1-待支付，2-已支付"
+//	@Param			userId		query		uint	true	"用户ID"
+//	@Param			page		query		int		false	"页码，默认 1"
+//	@Param			pageSize	query		int		false	"每页数量，默认 10，最大 100"
+//	@Param			status		query		int		false	"状态：不传或 0 查全部，1-待支付，2-已支付"
 //	@Success		200			{object}	response.Response{data=orderapp.OrderListResult}
-//	@Failure		400		{object}	response.Response	"参数校验失败"
-//	@Failure		401		{object}	response.Response	"未登录或 token 失效"
-//	@Failure		500		{object}	response.Response	"服务器内部错误"
+//	@Failure		400			{object}	response.Response	"参数校验失败"
+//	@Failure		401			{object}	response.Response	"未登录或 token 失效"
+//	@Failure		500			{object}	response.Response	"服务器内部错误"
 //	@Router			/order/list [get]
 func (h *OrderHandler) List(c *gin.Context) {
 	var req OrderListRequest

@@ -39,7 +39,7 @@ func (h *MerchantHandler) MyApplications(c *gin.Context) {
 //	@Tags			商户
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			id	path	uint	true	"申请单ID"
+//	@Param			id	path		uint	true	"申请单ID"
 //	@Success		200	{object}	response.Response{data=string}
 //	@Failure		400	{object}	response.Response	"当前状态不允许撤回"
 //	@Failure		401	{object}	response.Response	"未登录或 token 失效"

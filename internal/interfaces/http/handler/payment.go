@@ -121,8 +121,8 @@ func (h *paymentHandler) MockNotify(c *gin.Context) {
 //	@Summary		mock 渠道收银台
 //	@Description	payUrl 指向这里:验签通过后渲染确认页,点击按钮模拟渠道内部扣款并发起异步通知
 //	@Tags			支付
-//	@Param			pay_no	query	string	true	"支付单号"
-//	@Param			sign	query	string	true	"HMAC-SHA256 签名"
+//	@Param			pay_no	query		string	true	"支付单号"
+//	@Param			sign	query		string	true	"HMAC-SHA256 签名"
 //	@Success		200		{string}	string	"收银台页面"
 //	@Failure		400		{string}	string	"签名无效"
 //	@Router			/payment/mock/cashier [get]

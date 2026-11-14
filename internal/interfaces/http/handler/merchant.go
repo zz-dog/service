@@ -41,7 +41,7 @@ func writeMerchantError(c *gin.Context, err error) {
 		errors.Is(err, domainmerchant.ErrShopNameTaken),
 		errors.Is(err, domainmerchant.ErrInvalidApplication),
 		errors.Is(err, domainmerchant.ErrInvalidMerchantInfo),
-	 errors.Is(err, domainmerchant.ErrInvalidRejectReason),
+		errors.Is(err, domainmerchant.ErrInvalidRejectReason),
 		errors.Is(err, domainmerchant.ErrInvalidStatusTransition):
 		response.BadRequest(c, err.Error())
 	default:
@@ -57,11 +57,11 @@ func writeMerchantError(c *gin.Context, err error) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			request	body	submitApplicationReq	true	"申请信息"
-//	@Success		200	{object}	response.Response{data=merchantapp.ApplicationDTO}
-//	@Failure		400	{object}	response.Response	"参数校验失败/已有待审核申请/已拥有店铺/申请信息不完整"
-//	@Failure		401	{object}	response.Response	"未登录或 token 失效"
-//	@Failure		500	{object}	response.Response	"服务器内部错误"
+//	@Param			request	body		submitApplicationReq	true	"申请信息"
+//	@Success		200		{object}	response.Response{data=merchantapp.ApplicationDTO}
+//	@Failure		400		{object}	response.Response	"参数校验失败/已有待审核申请/已拥有店铺/申请信息不完整"
+//	@Failure		401		{object}	response.Response	"未登录或 token 失效"
+//	@Failure		500		{object}	response.Response	"服务器内部错误"
 //	@Router			/merchant/application [post]
 func (h *MerchantHandler) SubmitApplication(c *gin.Context) {
 	userID, ok := getCurrentUserID(c)

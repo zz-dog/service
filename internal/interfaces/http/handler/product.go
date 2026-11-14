@@ -126,13 +126,14 @@ func (h *ProductHandler) Create(c *gin.Context) {
 	}
 	response.Success(c, resp)
 }
+
 // Delete 删除商品
 //
 //	@Summary		删除商品
 //	@Description	根据商品ID删除商品；上架状态的商品需先下架才能删除
 //	@Tags			管理端-商品
 //	@Produce		json
-//	@Param			id	path		int					true	"商品ID"
+//	@Param			id	path		int	true	"商品ID"
 //	@Success		200	{object}	response.Response
 //	@Failure		400	{object}	response.Response	"ID格式错误、商品不存在或商品为上架状态"
 //	@Failure		500	{object}	response.Response	"服务器内部错误"
@@ -192,10 +193,10 @@ func (h *ProductHandler) AddInventory(c *gin.Context) {
 }
 
 type updateSKUReq struct {
-	ProductID uint   `json:"productId" binding:"required"` // 商品ID
-	SKUCode   string `json:"skuCode" binding:"required"`   // SKU编码
+	ProductID uint   `json:"productId" binding:"required"`  // 商品ID
+	SKUCode   string `json:"skuCode" binding:"required"`    // SKU编码
 	Price     int64  `json:"price" binding:"required,gt=0"` // 单价(分)
-	Picture   string `json:"picture" binding:"required"`   // 商品图片
+	Picture   string `json:"picture" binding:"required"`    // 商品图片
 }
 
 // UpdateSKU 更新SKU
@@ -279,8 +280,8 @@ func (h *ProductHandler) Update(c *gin.Context) {
 //	@Description	根据商品ID和SKU编码删除SKU；仅下架商品可删，且商品至少保留一个SKU
 //	@Tags			管理端-商品
 //	@Produce		json
-//	@Param			productId	path		int					true	"商品ID"
-//	@Param			skuCode		path		string				true	"SKU编码"
+//	@Param			productId	path		int		true	"商品ID"
+//	@Param			skuCode		path		string	true	"SKU编码"
 //	@Success		200			{object}	response.Response
 //	@Failure		400			{object}	response.Response	"ID格式错误、商品或SKU不存在、商品为上架状态或仅剩最后一个SKU"
 //	@Failure		500			{object}	response.Response	"服务器内部错误"

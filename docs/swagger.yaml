@@ -565,6 +565,45 @@ definitions:
     required:
     - nickname
     type: object
+  imapp.ConversationDTO:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: integer
+      lastMsgAt:
+        type: string
+      lastMsgContent:
+        type: string
+      merchantId:
+        type: integer
+      peerId:
+        description: 对端身份:买家视角=merchantId,卖家视角=userId
+        type: integer
+      unread:
+        description: 我这一侧的未读数
+        type: integer
+      userId:
+        description: 买家侧身份
+        type: integer
+    type: object
+  imapp.MessageDTO:
+    properties:
+      content:
+        type: string
+      contentType:
+        type: integer
+      conversationId:
+        type: integer
+      createdAt:
+        type: string
+      id:
+        type: integer
+      senderId:
+        type: integer
+      senderSide:
+        type: integer
+    type: object
   merchantapp.ApplicationDTO:
     properties:
       contactName:
@@ -2163,6 +2202,258 @@ paths:
       summary: 分页查询规格列表
       tags:
       - 规格
+  /im/conversations:
+    get:
+      description: 买家侧会话,按最近消息排序。peerId=对面商户,unread=我的未读数。
+      parameters:
+      - description: 条数(默认20,上限50)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/imapp.ConversationDTO'
+                  type: array
+              type: object
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 我的会话列表
+      tags:
+      - 消息
+  /im/conversations/{id}/messages:
+    get:
+      description: 游标分页:before 传上一页最后一条的 ID,不传/传0=第一页;
+      parameters:
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 翻页游标(上一页最后一条的消息ID)
+        in: query
+        name: before
+        type: integer
+      - description: 条数(默认20,上限50)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/imapp.MessageDTO'
+                  type: array
+              type: object
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: 不是会话成员
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 会话不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 历史消息(买家)
+      tags:
+      - 消息
+  /im/conversations/{id}/read:
+    post:
+      description: 我侧未读清零;条件 UPDATE,重复调用幂等仍 200。
+      parameters:
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: 不是会话成员
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 会话不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 标记已读(买家)
+      tags:
+      - 消息
+  /im/merchant/conversations:
+    get:
+      description: 商家工作台侧会话。merchantId 服务端由 token 推导,请求参数不收商户 ID。
+      parameters:
+      - description: 条数(默认20,上限50)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/imapp.ConversationDTO'
+                  type: array
+              type: object
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: 还不是商户
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 商家会话列表
+      tags:
+      - 消息
+  /im/merchant/conversations/{id}/messages:
+    get:
+      description: 同买家侧,身份视角换商户侧。
+      parameters:
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 翻页游标(上一页最后一条的消息ID)
+        in: query
+        name: before
+        type: integer
+      - description: 条数(默认20,上限50)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/imapp.MessageDTO'
+                  type: array
+              type: object
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: 不是会话成员/还不是商户
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 会话不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 历史消息(商家)
+      tags:
+      - 消息
+  /im/merchant/conversations/{id}/read:
+    post:
+      description: 同买家侧,身份视角换商户侧。
+      parameters:
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未登录或 token 失效
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: 不是会话成员/还不是商户
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 会话不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 标记已读(商家)
+      tags:
+      - 消息
   /merchant/admin/applications:
     get:
       description: 全部入驻申请,时间倒序,供管理员审核。教学版全量,分页进阶。需要管理员(JWT+AdminAuth)

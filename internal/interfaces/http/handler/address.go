@@ -57,11 +57,11 @@ type updateAddressReq struct {
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			request	body	createAddressReq	true	"地址信息"
-//	@Success		200	{object}	response.Response{data=addressapp.AddressDto}
-//	@Failure		400	{object}	response.Response	"参数校验失败或已达地址上限"
-//	@Failure		401	{object}	response.Response	"未登录或 token 失效"
-//	@Failure		500	{object}	response.Response	"服务器内部错误"
+//	@Param			request	body		createAddressReq	true	"地址信息"
+//	@Success		200		{object}	response.Response{data=addressapp.AddressDto}
+//	@Failure		400		{object}	response.Response	"参数校验失败或已达地址上限"
+//	@Failure		401		{object}	response.Response	"未登录或 token 失效"
+//	@Failure		500		{object}	response.Response	"服务器内部错误"
 //	@Router			/user/address [post]
 func (h *AddressHandler) Create(c *gin.Context) {
 	userID, ok := getCurrentUserID(c)
@@ -123,7 +123,7 @@ func (h *AddressHandler) List(c *gin.Context) {
 //	@Tags			地址
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			id	path	int	true	"地址ID"
+//	@Param			id	path		int	true	"地址ID"
 //	@Success		200	{object}	response.Response{data=addressapp.AddressDto}
 //	@Failure		401	{object}	response.Response	"未登录或 token 失效"
 //	@Failure		404	{object}	response.Response	"收货地址不存在"
@@ -152,8 +152,8 @@ func (h *AddressHandler) GetAddress(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			id		path	int				true	"地址ID"
-//	@Param			request	body	updateAddressReq	true	"待更新字段"
+//	@Param			id		path		int					true	"地址ID"
+//	@Param			request	body		updateAddressReq	true	"待更新字段"
 //	@Success		200		{object}	response.Response{data=addressapp.AddressDto}
 //	@Failure		400		{object}	response.Response	"参数校验失败或字段值非法"
 //	@Failure		401		{object}	response.Response	"未登录或 token 失效"
@@ -196,7 +196,7 @@ func (h *AddressHandler) Update(c *gin.Context) {
 //	@Tags			地址
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			id	path	int	true	"地址ID"
+//	@Param			id	path		int	true	"地址ID"
 //	@Success		200	{object}	response.Response
 //	@Failure		401	{object}	response.Response	"未登录或 token 失效"
 //	@Failure		404	{object}	response.Response	"收货地址不存在"
@@ -224,7 +224,7 @@ func (h *AddressHandler) Delete(c *gin.Context) {
 //	@Tags			地址
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			id	path	int	true	"地址ID"
+//	@Param			id	path		int	true	"地址ID"
 //	@Success		200	{object}	response.Response
 //	@Failure		401	{object}	response.Response	"未登录或 token 失效"
 //	@Failure		404	{object}	response.Response	"收货地址不存在"

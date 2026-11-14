@@ -3,10 +3,10 @@ package settlement
 type SettleStatus int
 
 const (
-	SettleStatusPending SettleStatus = iota + 1 // 待结算
-	SettleStatusExecuting                       // 结算中
-	SettleStatusSuccess                         // 结算成功
-	SettleStatusFailed                          // 结算失败
+	SettleStatusPending   SettleStatus = iota + 1 // 待结算
+	SettleStatusExecuting                         // 结算中
+	SettleStatusSuccess                           // 结算成功
+	SettleStatusFailed                            // 结算失败
 )
 
 // StatusName 状态中文名,管理端列表展示用

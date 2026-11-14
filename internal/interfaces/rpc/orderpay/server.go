@@ -21,10 +21,11 @@ func NewServer(repo domainorder.OrderRepository) *Server {
 }
 
 // NotifyPaid 通知支付结果。状态码即契约(proto 里的注释):
-//   已支付重放       → OK(幂等:重复通知安全,渠道/重试器都靠它兜底)
-//   订单已取消       → FailedPrecondition(payment 侧转"待退款",取消竞态的信号)
-//   金额与订单不符   → InvalidArgument(金额防线:绝不自动放行,人工介入)
-//   订单不存在       → NotFound
+//
+//	已支付重放       → OK(幂等:重复通知安全,渠道/重试器都靠它兜底)
+//	订单已取消       → FailedPrecondition(payment 侧转"待退款",取消竞态的信号)
+//	金额与订单不符   → InvalidArgument(金额防线:绝不自动放行,人工介入)
+//	订单不存在       → NotFound
 func (s *Server) NotifyPaid(ctx context.Context, req *orderpb.NotifyPaidRequest) (*orderpb.NotifyPaidResponse, error) {
 	if req.GetOrderNo() == "" || req.GetPayNo() == "" {
 		return nil, status.Error(codes.InvalidArgument, "order_no/pay_no 不能为空")

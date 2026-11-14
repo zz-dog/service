@@ -46,14 +46,14 @@ func (h *MerchantHandler) ListApplications(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			id		path	uint					true	"申请单ID"
-//	@Param			request	body	reviewApplicationReq	true	"审核决定"
-//	@Success		200	{object}	response.Response{data=string}
-//	@Failure		400	{object}	response.Response	"参数缺失/驳回理由为空/当前状态不允许该操作(并发败北)"
-//	@Failure		401	{object}	response.Response	"未登录或 token 失效"
-//	@Failure		403	{object}	response.Response	"需要管理员权限"
-//	@Failure		404	{object}	response.Response	"申请单不存在"
-//	@Failure		500	{object}	response.Response	"服务器内部错误"
+//	@Param			id		path		uint					true	"申请单ID"
+//	@Param			request	body		reviewApplicationReq	true	"审核决定"
+//	@Success		200		{object}	response.Response{data=string}
+//	@Failure		400		{object}	response.Response	"参数缺失/驳回理由为空/当前状态不允许该操作(并发败北)"
+//	@Failure		401		{object}	response.Response	"未登录或 token 失效"
+//	@Failure		403		{object}	response.Response	"需要管理员权限"
+//	@Failure		404		{object}	response.Response	"申请单不存在"
+//	@Failure		500		{object}	response.Response	"服务器内部错误"
 //	@Router			/merchant/admin/applications/{id}/review [post]
 func (h *MerchantHandler) Review(c *gin.Context) {
 	var req reviewApplicationReq
@@ -76,7 +76,7 @@ func (h *MerchantHandler) Review(c *gin.Context) {
 //	@Tags			商户管理
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Param			id	path	uint	true	"商户ID"
+//	@Param			id	path		uint	true	"商户ID"
 //	@Success		200	{object}	response.Response{data=string}
 //	@Failure		400	{object}	response.Response	"当前状态不允许封禁(如已封禁)"
 //	@Failure		401	{object}	response.Response	"未登录或 token 失效"

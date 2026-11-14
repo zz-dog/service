@@ -13,8 +13,8 @@ import (
 )
 
 type Service struct {
-	repo        domainpayment.Repository
-	channel     Channel
+	repo    domainpayment.Repository
+	channel Channel
 	// channelType 本服务装配的渠道类型,建支付单时写进流水——
 	// 渠道由配置选择(payment.channel),不由前端每次请求指定
 	channelType domainpayment.Channel

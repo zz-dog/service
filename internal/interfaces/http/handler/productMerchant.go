@@ -116,7 +116,7 @@ type merchantUpdateProductReq struct {
 //	@Tags			商户端-商品
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		int						true	"商品ID"
+//	@Param			id		path		int							true	"商品ID"
 //	@Param			request	body		merchantUpdateProductReq	true	"商品更新信息"
 //	@Success		200		{object}	response.Response{data=productapp.ProductDTO}
 //	@Failure		400		{object}	response.Response	"参数校验失败/商品不存在(含非本店商品)"
@@ -163,7 +163,7 @@ func (h *ProductHandler) MerchantUpdate(c *gin.Context) {
 //	@Description	仅已下架/已驳回的商品可删除(软删除)
 //	@Tags			商户端-商品
 //	@Produce		json
-//	@Param			id	path		int					true	"商品ID"
+//	@Param			id	path		int	true	"商品ID"
 //	@Success		200	{object}	response.Response
 //	@Failure		400	{object}	response.Response	"商品不存在(含非本店商品)或当前状态不允许删除"
 //	@Failure		500	{object}	response.Response	"服务器内部错误"
@@ -197,7 +197,7 @@ func (h *ProductHandler) MerchantDelete(c *gin.Context) {
 //	@Description	已下架的商品重新上架,免重审(下架是经营决策,不是合规否决)
 //	@Tags			商户端-商品
 //	@Produce		json
-//	@Param			id	path		int					true	"商品ID"
+//	@Param			id	path		int	true	"商品ID"
 //	@Success		200	{object}	response.Response
 //	@Failure		400	{object}	response.Response	"商品不存在(含非本店商品)或当前状态不允许上架"
 //	@Failure		500	{object}	response.Response	"服务器内部错误"
@@ -231,7 +231,7 @@ func (h *ProductHandler) MerchantOnShelf(c *gin.Context) {
 //	@Description	已上架的商品下架,下架后 C 端不可见
 //	@Tags			商户端-商品
 //	@Produce		json
-//	@Param			id	path		int					true	"商品ID"
+//	@Param			id	path		int	true	"商品ID"
 //	@Success		200	{object}	response.Response
 //	@Failure		400	{object}	response.Response	"商品不存在(含非本店商品)或当前状态不允许下架"
 //	@Failure		500	{object}	response.Response	"服务器内部错误"
@@ -271,7 +271,7 @@ type merchantInventoryReq struct {
 //	@Tags			商户端-商品
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		int					true	"商品ID"
+//	@Param			id		path		int						true	"商品ID"
 //	@Param			request	body		merchantInventoryReq	true	"库存信息"
 //	@Success		200		{object}	response.Response
 //	@Failure		400		{object}	response.Response	"参数校验失败/商品或规格不存在(含非本店商品)"
@@ -358,8 +358,8 @@ func (h *ProductHandler) MerchantUpdateSKU(c *gin.Context) {
 //	@Description	删除本店商品的指定 SKU;仅已下架商品可删,且至少保留一个 SKU
 //	@Tags			商户端-商品
 //	@Produce		json
-//	@Param			id		path		int					true	"商品ID"
-//	@Param			skuCode	path		string				true	"SKU编码"
+//	@Param			id		path		int		true	"商品ID"
+//	@Param			skuCode	path		string	true	"SKU编码"
 //	@Success		200		{object}	response.Response
 //	@Failure		400		{object}	response.Response	"商品或规格不存在(含非本店商品)/仅下架可删/至少保留一个SKU"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"

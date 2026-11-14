@@ -34,10 +34,11 @@ func NewClient(addr string, timeout time.Duration) (*Client, error) {
 }
 
 // mapStatus 把 gRPC 状态码翻译回 payment 领域错误——应用层只认业务语义不认协议:
-//   NotFound           → ErrOrderNotFound
-//   FailedPrecondition → ErrOrderCancelled(订单已取消,取消竞态的信号)
-//   InvalidArgument    → ErrAmountMismatch(金额与订单不符)
-//   其他               → 原样包装(基础设施问题,不许静默)
+//
+//	NotFound           → ErrOrderNotFound
+//	FailedPrecondition → ErrOrderCancelled(订单已取消,取消竞态的信号)
+//	InvalidArgument    → ErrAmountMismatch(金额与订单不符)
+//	其他               → 原样包装(基础设施问题,不许静默)
 func mapStatus(err error) error {
 	switch status.Code(err) {
 	case codes.NotFound:

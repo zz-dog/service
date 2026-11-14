@@ -313,6 +313,7 @@ func (r *ProductRepository) UpdateStatus(ctx context.Context, id uint, from, to 
 		Update("status", to)
 	return res.RowsAffected == 1, res.Error
 }
+
 // Reject 条件更新 待审核→已驳回,理由随行——"为什么被拒"是商户有权看到的,
 // 只改 status 不落理由,商户端就只剩一个干巴巴的"已驳回"。
 func (r *ProductRepository) Reject(ctx context.Context, id uint, reason string) (bool, error) {

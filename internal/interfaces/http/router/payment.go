@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 	"github.com/wsc-zz/service/global"
 	paymentapp "github.com/wsc-zz/service/internal/application/payment"
 	settlementapp "github.com/wsc-zz/service/internal/application/settlement"
@@ -18,6 +17,7 @@ import (
 	"github.com/wsc-zz/service/internal/interfaces/http/handler"
 	middleware "github.com/wsc-zz/service/internal/interfaces/http/middleware"
 	orderpay "github.com/wsc-zz/service/internal/interfaces/rpc/orderpay"
+	"go.uber.org/zap"
 )
 
 // InitPaymentRouter payment 服务的路由入口。网关按 /api/payment 前缀转发到本服务,
@@ -113,9 +113,9 @@ func registerPaymentRoutes(api *gin.RouterGroup) {
 	// 鉴权在路由层一次做齐,handler 里不再人人自觉(merchant 教程 2.4 的老话)
 	admin := payApi.Group("/admin", middleware.AdminAuth())
 	{
-		admin.GET("/settlements", settleH.List)                        // 分账单列表(含明细)
-		admin.POST("/settlements/:settleNo/execute", settleH.Execute)  // 立即执行(和 job 共用抢锁语义)
-		admin.POST("/settlements/:settleNo/retry", settleH.Retry)      // 失败单重置回待结算
+		admin.GET("/settlements", settleH.List)                       // 分账单列表(含明细)
+		admin.POST("/settlements/:settleNo/execute", settleH.Execute) // 立即执行(和 job 共用抢锁语义)
+		admin.POST("/settlements/:settleNo/retry", settleH.Retry)     // 失败单重置回待结算
 	}
 
 	// 渠道回调:验签做身份证明,必须在 JWT 组之外——渠道服务器没有用户令牌。
