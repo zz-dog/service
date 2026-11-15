@@ -1,5 +1,5 @@
 # 多阶段构建：构建阶段一次性编译 cmd/ 下全部服务；运行阶段单镜像承载，
-# 由 compose 用不同 command 启动 gateway / identity / catalog / order
+# 由 compose 用不同 command 启动全部应用服务
 # 若服务器拉不动官方镜像，把 FROM 换成 docker.1ms.run/library/ 前缀的同名镜像
 # 版本必须 >= go.mod 的 go 指令（1.26.3）；golang 镜像默认 GOTOOLCHAIN=local，
 # 版本不够时不会自动下载新工具链，而是直接报错
@@ -14,7 +14,7 @@ COPY go.mod go.sum ./
 # 依赖单独成层：go.mod/go.sum 不变时命中构建缓存，不用重新下载
 RUN go mod download
 COPY . .
-RUN for svc in gateway identity catalog order; do \
+RUN for svc in gateway identity catalog order im merchant payment; do \
       CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/$svc ./cmd/$svc; \
     done
 

@@ -25,7 +25,7 @@ jobs:
 
       - name: Build & push app image
         run: |
-          # 单镜像承载 4 个服务（见 Containerfile）；docker build 不会自动识别 Containerfile，需 -f 指定；
+          # 单镜像承载全部服务（见 Containerfile）；docker build 不会自动识别 Containerfile，需 -f 指定；
           # runner 在海外，模块代理用官方源（Containerfile 里 ARG 默认 goproxy.cn 是给国内本地构建的）
           docker build -f Containerfile \
             --build-arg GOPROXY=https://proxy.golang.org,direct \
@@ -64,27 +64,30 @@ jobs:
             # 登录 ACR：密码走 stdin，不进 ps；REGISTRY 用 Actions 插值（workflow env: 里的变量不会跟着 SSH 到服务器）
             echo '${{ secrets.ALIYUN_REG_PWD }}' | docker login ${{ env.REGISTRY }} -u '${{ secrets.ALIYUN_REG_USER }}' --password-stdin
 
+            # 应用服务名单：加新服务时同步改 Containerfile 构建循环、compose.yaml 服务块和这一行
+            SVCS="gateway identity catalog order im merchant payment"
+
             # 镜像由 CI 推到 ACR：只 pull + 滚动更新，不在服务器上构建；
             # APP_IMAGE 供 compose 变量插值（compose.yaml 里写的是 APP_IMAGE，带 demo-app:latest 默认值）
             export APP_IMAGE='${{ env.REGISTRY }}/${{ env.NAMESPACE }}/service-app:${{ env.IMAGE_TAG }}'
-            docker compose pull gateway identity catalog order
+            docker compose pull $SVCS
             # --no-deps：mysql/nacos 由旧的 compose 项目拉起且在运行，容器名被占用，
             # compose 会想在当前项目里重建它们；应用走 host.docker.internal 访问宿主机端口，不需要同网络
             # 应用容器同理：名字被 compose 项目之外的容器占用时（手工 docker run 调试、旧项目残留），
             # compose 不接管、直接报 Conflict。只清掉不属于本项目的同名容器，本项目的交给 up 滚动更新
-            for svc in gateway identity catalog order; do
+            for svc in $SVCS; do
               if [ -z "$(docker compose ps -aq "$svc")" ]; then
                 docker rm -f "$svc" >/dev/null 2>&1 || true
               fi
             done
-            docker compose up -d --no-deps gateway identity catalog order
+            docker compose up -d --no-deps $SVCS
             sleep 5
 
-            for svc in gateway identity catalog order; do
+            for svc in $SVCS; do
               if [ -z "$(docker ps -q --filter "name=^${svc}$" --filter "status=running")" ]; then
                 echo "❌ $svc 未正常运行，最近日志："
                 docker logs --tail 50 "$svc"
                 exit 1
               fi
             done
-            echo "✅ 4 个服务已部署并运行"
+            echo "✅ 7 个服务已部署并运行：$SVCS"

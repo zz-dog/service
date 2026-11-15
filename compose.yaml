@@ -95,6 +95,9 @@ services:
     <<: *app-base
     container_name: catalog
     command: ["./catalog"]
+    environment:
+      # 发布商品前调 merchant_rpc 验商户身份：容器内 127.0.0.1 不通，用 compose 服务名
+      MERCHANT_GRPC_ADDR: merchant:9085
 
   order:
     <<: *app-base
@@ -103,3 +106,21 @@ services:
     environment:
       # 跨服务扣库存的 gRPC 地址：容器网络内用服务名（代码已支持环境变量覆盖配置键）
       CATALOG_GRPC_ADDR: catalog:9082
+
+  merchant:
+    <<: *app-base
+    container_name: merchant
+    command: ["./merchant"]
+
+  im:
+    <<: *app-base
+    container_name: im
+    command: ["./im"]
+    environment:
+      # im 推导对方商户身份也要调 merchant_rpc，同 catalog
+      MERCHANT_GRPC_ADDR: merchant:9085
+
+  payment:
+    <<: *app-base
+    container_name: payment
+    command: ["./payment"]
