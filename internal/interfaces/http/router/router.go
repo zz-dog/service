@@ -15,10 +15,13 @@ func InitCatalogRouter() *gin.Engine {
 	r.Use(CORSMiddleware())
 	catalogGroup := r.Group("/api/catalog")
 
-	// C 端读接口:原路径原鉴权,网关/前端无感
-	registerCategoryRoutes(catalogGroup) // /api/catalog/category/**
-	registerSpecRoutes(catalogGroup)     // /api/catalog/spec/**
-	registerProductRoutes(catalogGroup)  // /api/catalog/product/**
+	// C 端读接口:/client 段与 /admin、/merchant 对称,一端一段;
+	// 鉴权模型不变(category/spec 挂 JWTAuth,product 公开),只挪路径。
+	// 仍在 /api/catalog 前缀下,网关按前缀转发,路由表不用改
+	clientGroup := catalogGroup.Group("/client")
+	registerCategoryRoutes(clientGroup) // /api/catalog/client/category/**
+	registerSpecRoutes(clientGroup)     // /api/catalog/client/spec/**
+	registerProductRoutes(clientGroup)  // /api/catalog/client/product/**
 
 	// 管理端写接口:/admin 段统一收口;/api/catalog/admin/** 仍命中网关的
 	// /api/catalog 前缀(最长前缀匹配),网关路由表不用改

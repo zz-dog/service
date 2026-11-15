@@ -91,8 +91,9 @@ func registerMerchantProductRoutes(r *gin.RouterGroup) {
 	}
 }
 
-// registerProductRoutes 商品 C 端读接口:保持原路径(公开无鉴权,与现状一致);
-// status 筛选已被参数白名单收掉——强制只查已上架,想看别的状态走商户端/管理端接口
+// registerProductRoutes 商品 C 端读接口:挂在 /client 段,与 /admin、/merchant 对称
+// (公开无鉴权,与现状一致);status 筛选已被参数白名单收掉——强制只查已上架,
+// 想看别的状态走商户端/管理端接口
 func registerProductRoutes(r *gin.RouterGroup) {
 	h, err := newProductHandler()
 	if err != nil {

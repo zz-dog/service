@@ -1698,7 +1698,7 @@ paths:
       summary: 整包更新规格
       tags:
       - 管理端-规格
-  /catalog/category/findAll:
+  /catalog/client/category/findAll:
     get:
       description: 返回全部分类列表（不分页）
       produces:
@@ -1722,7 +1722,7 @@ paths:
       summary: 查询所有分类
       tags:
       - 分类
-  /catalog/category/findSpecs/{id}:
+  /catalog/client/category/findSpecs/{id}:
     get:
       description: 返回分类下全部绑定的规格维度（含规格值、排序、是否必选）
       parameters:
@@ -1748,6 +1748,158 @@ paths:
       summary: 查询分类绑定的规格
       tags:
       - 分类
+  /catalog/client/product/list:
+    get:
+      description: 根据分类、商品ID或名称筛选商品并分页返回
+      parameters:
+      - description: 分类ID
+        in: query
+        name: categoryId
+        type: integer
+      - description: 商品ID
+        in: query
+        name: productId
+        type: integer
+      - description: 商品名称（模糊匹配）
+        in: query
+        name: name
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/productapp.ProductListResult'
+              type: object
+        "400":
+          description: 查询参数校验失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 分页查询商品
+      tags:
+      - 商品
+  /catalog/client/spec/findById/{id}:
+    get:
+      description: 根据规格ID查询规格详情（含规格值列表）
+      parameters:
+      - description: 规格ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/specapp.SpecDTO'
+              type: object
+        "400":
+          description: 规格ID格式错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 根据ID查询规格
+      tags:
+      - 规格
+  /catalog/client/spec/findByName/{name}:
+    get:
+      description: 根据规格名称精确查询规格详情（含规格值列表）
+      parameters:
+      - description: 规格名称
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/specapp.SpecDTO'
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 根据名称查询规格
+      tags:
+      - 规格
+  /catalog/client/spec/list:
+    get:
+      description: 分页查询规格维度列表，支持按名称模糊搜索；返回列表与总数
+      parameters:
+      - description: 页码（默认1）
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量（默认10，最大100）
+        in: query
+        name: pageSize
+        type: integer
+      - description: 规格名称（模糊搜索）
+        in: query
+        name: name
+        type: string
+      - description: 规格ID
+        in: query
+        name: specId
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/specapp.ListDto'
+              type: object
+        "400":
+          description: 参数校验失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 分页查询规格列表
+      tags:
+      - 规格
   /catalog/merchant/product:
     post:
       consumes:
@@ -2050,159 +2202,7 @@ paths:
       summary: 我的商品列表(全状态)
       tags:
       - 商户端-商品
-  /catalog/product/list:
-    get:
-      description: 根据分类、商品ID或名称筛选商品并分页返回
-      parameters:
-      - description: 分类ID
-        in: query
-        name: categoryId
-        type: integer
-      - description: 商品ID
-        in: query
-        name: productId
-        type: integer
-      - description: 商品名称（模糊匹配）
-        in: query
-        name: name
-        type: string
-      - description: 页码
-        in: query
-        name: page
-        required: true
-        type: integer
-      - description: 每页数量
-        in: query
-        name: pageSize
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/productapp.ProductListResult'
-              type: object
-        "400":
-          description: 查询参数校验失败
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 分页查询商品
-      tags:
-      - 商品
-  /catalog/spec/findById/{id}:
-    get:
-      description: 根据规格ID查询规格详情（含规格值列表）
-      parameters:
-      - description: 规格ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/specapp.SpecDTO'
-              type: object
-        "400":
-          description: 规格ID格式错误
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 根据ID查询规格
-      tags:
-      - 规格
-  /catalog/spec/findByName/{name}:
-    get:
-      description: 根据规格名称精确查询规格详情（含规格值列表）
-      parameters:
-      - description: 规格名称
-        in: path
-        name: name
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/specapp.SpecDTO'
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 根据名称查询规格
-      tags:
-      - 规格
-  /catalog/spec/list:
-    get:
-      description: 分页查询规格维度列表，支持按名称模糊搜索；返回列表与总数
-      parameters:
-      - description: 页码（默认1）
-        in: query
-        name: page
-        type: integer
-      - description: 每页数量（默认10，最大100）
-        in: query
-        name: pageSize
-        type: integer
-      - description: 规格名称（模糊搜索）
-        in: query
-        name: name
-        type: string
-      - description: 规格ID
-        in: query
-        name: specId
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/specapp.ListDto'
-              type: object
-        "400":
-          description: 参数校验失败
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 分页查询规格列表
-      tags:
-      - 规格
-  /im/conversations:
+  /im/client/conversations:
     get:
       description: 买家侧会话,按最近消息排序。peerId=对面商户,unread=我的未读数。
       parameters:
@@ -2237,7 +2237,7 @@ paths:
       summary: 我的会话列表
       tags:
       - 消息
-  /im/conversations/{id}/messages:
+  /im/client/conversations/{id}/messages:
     get:
       description: 游标分页:before 传上一页最后一条的 ID,不传/传0=第一页;
       parameters:
@@ -2289,7 +2289,7 @@ paths:
       summary: 历史消息(买家)
       tags:
       - 消息
-  /im/conversations/{id}/read:
+  /im/client/conversations/{id}/read:
     post:
       description: 我侧未读清零;条件 UPDATE,重复调用幂等仍 200。
       parameters:

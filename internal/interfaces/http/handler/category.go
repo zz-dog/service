@@ -138,7 +138,7 @@ func (h *CategoryHandler) Delete(c *gin.Context) {
 //	@Produce		json
 //	@Success		200	{object}	response.Response{data=[]categoryapp.CategoryDto}
 //	@Failure		500	{object}	response.Response	"服务器内部错误"
-//	@Router			/catalog/category/findAll [get]
+//	@Router			/catalog/client/category/findAll [get]
 func (h *CategoryHandler) FindAll(c *gin.Context) {
 
 	cs, err := h.categorySvc.FindAll(c.Request.Context())
@@ -226,7 +226,7 @@ func (h *CategoryHandler) UnbindSpec(c *gin.Context) {
 //	@Produce		json
 //	@Param			id	path		int	true	"分类ID"
 //	@Success		200	{object}	response.Response{data=[]categoryapp.CategorySpecDto}
-//	@Router			/catalog/category/findSpecs/{id} [get]
+//	@Router			/catalog/client/category/findSpecs/{id} [get]
 func (h *CategoryHandler) ListSpecs(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil || id == 0 {

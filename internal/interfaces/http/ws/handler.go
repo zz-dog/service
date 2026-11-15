@@ -35,7 +35,7 @@ func NewWSHandler(hub *Hub, svc *appim.Service, blacklist middleware.TokenBlackl
 	return &WSHandler{hub: hub, im: svc, blacklist: blacklist}
 }
 
-// UserWS 买家端握手 GET /api/im/ws?token=xxx
+// UserWS 买家端握手 GET /api/im/client/ws?token=xxx
 func (h *WSHandler) UserWS(c *gin.Context) {
 	actor, ok := h.userActor(c.Request.Context(), c.Query("token"))
 	if !ok {

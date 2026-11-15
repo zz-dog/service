@@ -39,8 +39,8 @@ func registerCategoryAdminRoutes(r *gin.RouterGroup) {
 	}
 }
 
-// registerCategoryRoutes 分类 C 端读接口:保持原路径原鉴权
-// (挂不挂 JWT 是产品决策,现状是什么就保持什么)
+// registerCategoryRoutes 分类 C 端读接口:挂在 /client 段,与 /admin、/merchant 对称;
+// 鉴权不变(挂不挂 JWT 是产品决策,现状是 JWTAuth 就保持 JWTAuth)
 func registerCategoryRoutes(r *gin.RouterGroup) {
 	h := newCategoryHandler()
 	blacklist := NewTokenBlacklist()

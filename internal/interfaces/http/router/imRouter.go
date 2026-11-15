@@ -43,11 +43,11 @@ func InitImRouter() *gin.Engine {
 
 	// ---- WS 握手:鉴权在握手 handler 内联(token 走 query,JWTAuth 中间件
 	// 只认 header),所以注册在 JWT 组外;路径与 REST 组不冲突 ----
-	api.GET("/ws", wsh.UserWS)              // 买家端
+	api.GET("/client/ws", wsh.UserWS)       // 买家端(/client 段与 /merchant 对称)
 	api.GET("/merchant/ws", wsh.MerchantWS) // 商家工作台
 
-	// ---- C 端(买家):列表/历史/已读,全部 JWT ----
-	user := api.Group("", middleware.JWTAuth(blacklist))
+	// ---- C 端(买家):列表/历史/已读,全部 JWT;挂 /client 段,与 /merchant 对称 ----
+	user := api.Group("/client", middleware.JWTAuth(blacklist))
 	{
 		user.GET("/conversations", h.MyConversations)
 		user.GET("/conversations/:id/messages", h.MyMessages)

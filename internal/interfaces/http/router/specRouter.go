@@ -29,7 +29,7 @@ func registerSpecAdminRoutes(r *gin.RouterGroup) {
 	specRouter.DELETE("/delete/:id", h.Delete)
 }
 
-// registerSpecRoutes 规格 C 端读接口:保持原路径原鉴权
+// registerSpecRoutes 规格 C 端读接口:挂在 /client 段,与 /admin、/merchant 对称;鉴权不变(JWTAuth)
 func registerSpecRoutes(r *gin.RouterGroup) {
 	h := newSpecHandler()
 	blacklist := NewTokenBlacklist()

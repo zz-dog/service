@@ -33,7 +33,7 @@ func NewImHandler(svc *imapp.Service) *ImHandler {
 //	@Success		200		{object}	response.Response{data=[]imapp.ConversationDTO}
 //	@Failure		401		{object}	response.Response	"未登录或 token 失效"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/im/conversations [get]
+//	@Router			/im/client/conversations [get]
 func (h *ImHandler) MyConversations(c *gin.Context) {
 	actor := imapp.Actor{Side: domainim.SideUser, UserID: currentUint64(c)}
 	h.listConversations(c, actor)
@@ -76,7 +76,7 @@ func (h *ImHandler) MerchantConversations(c *gin.Context) {
 //	@Failure		403		{object}	response.Response	"不是会话成员"
 //	@Failure		404		{object}	response.Response	"会话不存在"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
-//	@Router			/im/conversations/{id}/messages [get]
+//	@Router			/im/client/conversations/{id}/messages [get]
 func (h *ImHandler) MyMessages(c *gin.Context) {
 	actor := imapp.Actor{Side: domainim.SideUser, UserID: currentUint64(c)}
 	h.history(c, actor)
@@ -119,7 +119,7 @@ func (h *ImHandler) MerchantMessages(c *gin.Context) {
 //	@Failure		403	{object}	response.Response	"不是会话成员"
 //	@Failure		404	{object}	response.Response	"会话不存在"
 //	@Failure		500	{object}	response.Response	"服务器内部错误"
-//	@Router			/im/conversations/{id}/read [post]
+//	@Router			/im/client/conversations/{id}/read [post]
 func (h *ImHandler) MyRead(c *gin.Context) {
 	actor := imapp.Actor{Side: domainim.SideUser, UserID: currentUint64(c)}
 	h.markRead(c, actor)
