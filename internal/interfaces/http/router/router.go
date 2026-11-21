@@ -33,13 +33,14 @@ func InitCatalogRouter() *gin.Engine {
 	return r
 }
 
-// registerCatalogMerchantRoutes catalog 商户端路由:商户经营自己的商品,
+// registerCatalogMerchantRoutes catalog 商户端路由:商户经营自己的商品与媒体,
 // 鉴权模型是"登录即可,归属后置校验",与 /admin 组(JWTAuth+AdminAuth 双闸)分开——
 // 分组的依据是授权模型,不是"有多少种身份"
 func registerCatalogMerchantRoutes(catalogGroup *gin.RouterGroup) {
 	blacklist := NewTokenBlacklist()
 	merchantApi := catalogGroup.Group("/merchant", middleware.JWTAuth(blacklist))
 	registerMerchantProductRoutes(merchantApi)
+	registerMerchantMediaRoutes(merchantApi) // 商户端媒体上传/签名:对象强制落 merchant/<id>/ 命名空间
 }
 
 // registerCatalogAdminRoutes catalog 管理端路由:全部挂在 /admin 段下,由 AdminAuth
