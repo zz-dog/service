@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 
 	imapp "github.com/wsc-zz/service/internal/application/im"
 	domainim "github.com/wsc-zz/service/internal/domain/im"
+	domainmerchant "github.com/wsc-zz/service/internal/domain/merchant"
 	"github.com/wsc-zz/service/pkg/response"
 )
 
@@ -180,18 +182,24 @@ func (h *ImHandler) markRead(c *gin.Context, actor imapp.Actor) {
 	response.SuccessMsg(c, "read", nil)
 }
 
-// merchantActor B 端身份组装:JWT 已由中间件放行,这里再把 userId 换成 merchantId——
-// 请求参数里根本没有 merchantId,伪造 merchantId = 冒充别人的店收消息(铁律第 6 条)。
-// 查不到商户(0)→ 403"还不是商户"
+// merchantActor B 端身份组装:X-Merchant-Id 头声明"以哪家店的身份工作",
+// (userId, merchantId) 成员关系由 ResolveMerchant 经 merchant RPC 实时校验——
+// 铁律第 6 条的 N:N 版:身份/归属不进 token 也不信 body,伪造 merchantId 毫无意义。
+// 缺头 → 400;非成员/店不存在 → 403(统一口径,不泄露存在性)
 func (h *ImHandler) merchantActor(c *gin.Context) (imapp.Actor, bool) {
 	uid := currentUint64(c)
-	merchantID, err := h.svc.ResolveMerchant(c.Request.Context(), uid)
-	if err != nil {
-		response.ServerError(c, "商户身份校验失败")
+	mid, ok := getCurrentMerchantID(c)
+	if !ok {
+		response.BadRequest(c, "缺少 " + HeaderMerchantID + " 店铺上下文头")
 		return imapp.Actor{}, false
 	}
-	if merchantID == 0 {
-		response.Forbidden(c, "还不是商户")
+	merchantID, err := h.svc.ResolveMerchant(c.Request.Context(), uid, uint64(mid))
+	if err != nil {
+		if errors.Is(err, domainmerchant.ErrMerchantNotFound) {
+			response.Forbidden(c, "还不是商户或无权访问该店铺")
+			return imapp.Actor{}, false
+		}
+		response.ServerError(c, "商户身份校验失败")
 		return imapp.Actor{}, false
 	}
 	return imapp.Actor{Side: domainim.SideMerchant, UserID: uid, MerchantID: merchantID}, true

@@ -1805,7 +1805,7 @@ const docTemplate = `{
         },
         "/catalog/merchant/product": {
             "post": {
-                "description": "商户发布商品,服务端推导归属商户;商品进入待审核,审核通过才对 C 端可见",
+                "description": "商户发布商品,服务端实时校验 (userId, merchantId) 成员关系;",
                 "consumes": [
                     "application/json"
                 ],
@@ -1818,7 +1818,14 @@ const docTemplate = `{
                 "summary": "发布商品(商户)",
                 "parameters": [
                     {
-                        "description": "商品信息(merchantId 不收,服务端推导)",
+                        "type": "integer",
+                        "description": "当前店铺ID",
+                        "name": "X-Merchant-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "商品信息(merchantId 不收,走店铺上下文头)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -1847,7 +1854,25 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "参数校验失败/无店铺/店铺未营业",
+                        "description": "参数校验失败/缺店铺上下文/店铺未营业",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "是成员但角色不够(staff 不能发布)",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "店铺不存在或非成员(不泄露存在性)",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1863,7 +1888,7 @@ const docTemplate = `{
         },
         "/catalog/merchant/product/my": {
             "get": {
-                "description": "当前商户的全部商品,含待审核/已驳回(带理由)/已下架;归属即过滤条件",
+                "description": "当前店铺的全部商品,含待审核/已驳回(带理由)/已下架;归属即过滤条件",
                 "produces": [
                     "application/json"
                 ],
@@ -1872,6 +1897,13 @@ const docTemplate = `{
                 ],
                 "summary": "我的商品列表(全状态)",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "当前店铺ID",
+                        "name": "X-Merchant-Id",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "分类ID",
@@ -1919,7 +1951,25 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "查询参数校验失败/无店铺",
+                        "description": "查询参数校验失败/缺店铺上下文",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "是成员但角色不够",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "店铺不存在或非成员(不泄露存在性)",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1935,7 +1985,7 @@ const docTemplate = `{
         },
         "/catalog/merchant/product/{id}": {
             "put": {
-                "description": "修改商品资料,内容变更回待审核;违规下架的商品不可修改",
+                "description": "修改商品资料,内容变更回待审核;违规下架的商品不可修改。owner/admin 可操作",
                 "consumes": [
                     "application/json"
                 ],
@@ -1947,6 +1997,13 @@ const docTemplate = `{
                 ],
                 "summary": "修改商品(商户)",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "当前店铺ID",
+                        "name": "X-Merchant-Id",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "商品ID",
@@ -1989,6 +2046,24 @@ const docTemplate = `{
                             "$ref": "#/definitions/response.Response"
                         }
                     },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "是成员但角色不够(staff 不能修改商品)",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "店铺或商品不存在(含非成员/非本店商品,不泄露存在性)",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
@@ -1998,7 +2073,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "仅已下架/已驳回的商品可删除(软删除)",
+                "description": "仅已下架/已驳回的商品可删除(软删除)。owner/admin 可操作",
                 "produces": [
                     "application/json"
                 ],
@@ -2007,6 +2082,13 @@ const docTemplate = `{
                 ],
                 "summary": "删除商品(商户)",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "当前店铺ID",
+                        "name": "X-Merchant-Id",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "商品ID",
@@ -2024,6 +2106,24 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "商品不存在(含非本店商品)或当前状态不允许删除",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "是成员但角色不够(staff 不能删除商品)",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "店铺或商品不存在(含非成员,不泄露存在性)",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -2051,6 +2151,13 @@ const docTemplate = `{
                 ],
                 "summary": "补货(商户)",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "当前店铺ID",
+                        "name": "X-Merchant-Id",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "商品ID",
@@ -2081,6 +2188,24 @@ const docTemplate = `{
                             "$ref": "#/definitions/response.Response"
                         }
                     },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "是成员但角色不够",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "店铺或商品不存在(含非成员,不泄露存在性)",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
@@ -2103,6 +2228,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
+                        "description": "当前店铺ID",
+                        "name": "X-Merchant-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
                         "description": "商品ID",
                         "name": "id",
                         "in": "path",
@@ -2118,6 +2250,24 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "商品不存在(含非本店商品)或当前状态不允许下架",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "是成员但角色不够",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "店铺或商品不存在(含非成员,不泄露存在性)",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -2144,6 +2294,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
+                        "description": "当前店铺ID",
+                        "name": "X-Merchant-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
                         "description": "商品ID",
                         "name": "id",
                         "in": "path",
@@ -2159,6 +2316,24 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "商品不存在(含非本店商品)或当前状态不允许上架",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "是成员但角色不够",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "店铺或商品不存在(含非成员,不泄露存在性)",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -2186,6 +2361,13 @@ const docTemplate = `{
                 ],
                 "summary": "调价/换图(商户)",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "当前店铺ID",
+                        "name": "X-Merchant-Id",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "商品ID",
@@ -2216,6 +2398,24 @@ const docTemplate = `{
                             "$ref": "#/definitions/response.Response"
                         }
                     },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "是成员但角色不够",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "店铺或商品不存在(含非成员,不泄露存在性)",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
@@ -2236,6 +2436,13 @@ const docTemplate = `{
                 ],
                 "summary": "删除规格(商户)",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "当前店铺ID",
+                        "name": "X-Merchant-Id",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "商品ID",
@@ -2260,6 +2467,24 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "商品或规格不存在(含非本店商品)/仅下架可删/至少保留一个SKU",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "是成员但角色不够",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "店铺或商品不存在(含非成员,不泄露存在性)",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -2956,7 +3181,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "参数校验失败/已有待审核申请/已拥有店铺/申请信息不完整",
+                        "description": "参数校验失败/已有待审核申请/申请信息不完整",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -3098,21 +3323,21 @@ const docTemplate = `{
                 }
             }
         },
-        "/merchant/my": {
+        "/merchant/shops": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "当前登录用户的店铺。一人一店:FindByUserID 查出来的店就是你的,",
+                "description": "当前登录用户归属的全部店铺,每家带 myRole(1=店主 2=管理员 3=员工)。",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "商户"
                 ],
-                "summary": "我的店铺",
+                "summary": "我的店铺列表",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -3125,7 +3350,10 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/merchantapp.MerchantDTO"
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/merchantapp.ShopDTO"
+                                            }
                                         }
                                     }
                                 }
@@ -3138,12 +3366,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/response.Response"
                         }
                     },
-                    "404": {
-                        "description": "还没有店铺",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
@@ -3151,14 +3373,16 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
+            }
+        },
+        "/merchant/shops/{id}": {
             "put": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "更新自己店铺的名称/Logo/描述(全字段替换)。改名次数限制是阶段五的进阶。",
+                "description": "更新店铺名称/Logo/描述(全字段替换)。仅店主可操作。",
                 "consumes": [
                     "application/json"
                 ],
@@ -3168,8 +3392,15 @@ const docTemplate = `{
                 "tags": [
                     "商户"
                 ],
-                "summary": "更新店铺资料",
+                "summary": "更新店铺资料(店主)",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "店铺ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "店铺资料",
                         "name": "request",
@@ -3192,7 +3423,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/merchantapp.MerchantDTO"
+                                            "$ref": "#/definitions/merchantapp.ShopDTO"
                                         }
                                     }
                                 }
@@ -3211,8 +3442,14 @@ const docTemplate = `{
                             "$ref": "#/definitions/response.Response"
                         }
                     },
+                    "403": {
+                        "description": "是成员但不是店主",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
                     "404": {
-                        "description": "还没有店铺",
+                        "description": "店铺不存在(非成员同此错误,不泄露存在性)",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -3226,21 +3463,367 @@ const docTemplate = `{
                 }
             }
         },
-        "/merchant/my/resume": {
+        "/merchant/shops/{id}/members": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "店铺全部成员与角色(1=店主 2=管理员 3=员工),店主在前。仅店主可查。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "商户-成员管理"
+                ],
+                "summary": "店铺成员列表(店主)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "店铺ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/merchantapp.MemberDTO"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "是成员但不是店主",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "店铺不存在(非成员同此错误,不泄露存在性)",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "已停业 → 营业中,只有店主本人可操作;封禁的店不在此列。",
+                "description": "把指定用户加进店铺,角色只能 admin(管理员)或 staff(员工)。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "商户-成员管理"
+                ],
+                "summary": "邀请成员(店主)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "店铺ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "目标用户与角色",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.inviteMemberReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/merchantapp.MemberDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "参数校验失败/角色不合法/已是成员/成员数达上限",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "是成员但不是店主",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "店铺不存在(非成员同此错误,不泄露存在性)",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/merchant/shops/{id}/members/{userId}": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "把指定用户移出店铺。店主不可被移除(包括店主移除自己)。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "商户-成员管理"
+                ],
+                "summary": "移除成员(店主)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "店铺ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "目标成员的用户ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "不能移除店主",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "是成员但不是店主",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "店铺不存在或目标不是店铺成员",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/merchant/shops/{id}/members/{userId}/role": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "管理员↔员工互换(2↔3)。店主角色不可调整,也不能授出新的店主。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "商户-成员管理"
+                ],
+                "summary": "调整成员角色(店主)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "店铺ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "目标成员的用户ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "新角色",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.changeMemberRoleReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "角色不合法/不能调整店主",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "未登录或 token 失效",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "是成员但不是店主",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "店铺不存在或目标不是店铺成员",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/merchant/shops/{id}/resume": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "已停业 → 营业中,仅店主可操作;封禁的店不在此列。",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "商户"
                 ],
-                "summary": "恢复营业",
+                "summary": "恢复营业(店主)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "店铺ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -3272,8 +3855,14 @@ const docTemplate = `{
                             "$ref": "#/definitions/response.Response"
                         }
                     },
+                    "403": {
+                        "description": "是成员但不是店主",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
                     "404": {
-                        "description": "还没有店铺",
+                        "description": "店铺不存在(非成员同此错误,不泄露存在性)",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -3287,21 +3876,30 @@ const docTemplate = `{
                 }
             }
         },
-        "/merchant/my/suspend": {
+        "/merchant/shops/{id}/suspend": {
             "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "营业中 → 已停业,只有店主本人可操作(userID 取自 JWT)。",
+                "description": "营业中 → 已停业,仅店主可操作。",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "商户"
                 ],
-                "summary": "停业",
+                "summary": "停业(店主)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "店铺ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -3333,8 +3931,14 @@ const docTemplate = `{
                             "$ref": "#/definitions/response.Response"
                         }
                     },
+                    "403": {
+                        "description": "是成员但不是店主",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
                     "404": {
-                        "description": "还没有店铺",
+                        "description": "店铺不存在(非成员同此错误,不泄露存在性)",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -4998,6 +5602,17 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.changeMemberRoleReq": {
+            "type": "object",
+            "required": [
+                "role"
+            ],
+            "properties": {
+                "role": {
+                    "type": "integer"
+                }
+            }
+        },
         "handler.changeStatusRequest": {
             "type": "object",
             "required": [
@@ -5118,6 +5733,21 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/handler.SkU"
                     }
+                }
+            }
+        },
+        "handler.inviteMemberReq": {
+            "type": "object",
+            "required": [
+                "role",
+                "userId"
+            ],
+            "properties": {
+                "role": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "type": "integer"
                 }
             }
         },
@@ -5604,7 +6234,21 @@ const docTemplate = `{
                 }
             }
         },
-        "merchantapp.MerchantDTO": {
+        "merchantapp.MemberDTO": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "merchantapp.ShopDTO": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -5619,6 +6263,9 @@ const docTemplate = `{
                 "merchantId": {
                     "type": "integer"
                 },
+                "myRole": {
+                    "type": "integer"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -5627,9 +6274,6 @@ const docTemplate = `{
                 },
                 "updatedAt": {
                     "type": "string"
-                },
-                "userId": {
-                    "type": "integer"
                 }
             }
         },

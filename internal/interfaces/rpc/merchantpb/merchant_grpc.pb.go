@@ -8,7 +8,6 @@ package merchantpb
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -20,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MerchantService_GetMerchantByUserID_FullMethodName = "/merchant.v1.MerchantService/GetMerchantByUserID"
+	MerchantService_AuthorizeMember_FullMethodName = "/merchant.v1.MerchantService/AuthorizeMember"
 )
 
 // MerchantServiceClient is the client API for MerchantService service.
@@ -30,9 +29,12 @@ const (
 // MerchantService 商户域对 catalog 域开放的 RPC 契约。
 // 契约变更规则:merchant 和 catalog 必须同一次提交里同步改,靠编译期报错保证两边一致。
 type MerchantServiceClient interface {
-	// GetMerchantByUserID 按归属用户查商户。只做取数,不做策略:
-	// "这个人能不能发布商品"由 catalog 裁决(和 GetPayableOrder 同一纪律)。
-	GetMerchantByUserID(ctx context.Context, in *GetMerchantByUserIDRequest, opts ...grpc.CallOption) (*GetMerchantByUserIDResponse, error)
+	// AuthorizeMember 校验 (userId, merchantId) 的成员关系并带回角色。
+	// N:N 后商户端必须显式携带 merchantId(HTTP 走 X-Merchant-Id 头,WS 握手走 query),
+	// 服务端实时校验归属——身份/归属不进 token:token 是快照,
+	// 店可能随时被封禁/停业/成员被移除,快照身份会变成僵尸身份。
+	// 只做取数不做策略:"拿到角色后能做什么"由调用方(catalog)裁决(和 GetPayableOrder 同一纪律)。
+	AuthorizeMember(ctx context.Context, in *AuthorizeMemberRequest, opts ...grpc.CallOption) (*AuthorizeMemberResponse, error)
 }
 
 type merchantServiceClient struct {
@@ -43,10 +45,10 @@ func NewMerchantServiceClient(cc grpc.ClientConnInterface) MerchantServiceClient
 	return &merchantServiceClient{cc}
 }
 
-func (c *merchantServiceClient) GetMerchantByUserID(ctx context.Context, in *GetMerchantByUserIDRequest, opts ...grpc.CallOption) (*GetMerchantByUserIDResponse, error) {
+func (c *merchantServiceClient) AuthorizeMember(ctx context.Context, in *AuthorizeMemberRequest, opts ...grpc.CallOption) (*AuthorizeMemberResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetMerchantByUserIDResponse)
-	err := c.cc.Invoke(ctx, MerchantService_GetMerchantByUserID_FullMethodName, in, out, cOpts...)
+	out := new(AuthorizeMemberResponse)
+	err := c.cc.Invoke(ctx, MerchantService_AuthorizeMember_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -60,9 +62,12 @@ func (c *merchantServiceClient) GetMerchantByUserID(ctx context.Context, in *Get
 // MerchantService 商户域对 catalog 域开放的 RPC 契约。
 // 契约变更规则:merchant 和 catalog 必须同一次提交里同步改,靠编译期报错保证两边一致。
 type MerchantServiceServer interface {
-	// GetMerchantByUserID 按归属用户查商户。只做取数,不做策略:
-	// "这个人能不能发布商品"由 catalog 裁决(和 GetPayableOrder 同一纪律)。
-	GetMerchantByUserID(context.Context, *GetMerchantByUserIDRequest) (*GetMerchantByUserIDResponse, error)
+	// AuthorizeMember 校验 (userId, merchantId) 的成员关系并带回角色。
+	// N:N 后商户端必须显式携带 merchantId(HTTP 走 X-Merchant-Id 头,WS 握手走 query),
+	// 服务端实时校验归属——身份/归属不进 token:token 是快照,
+	// 店可能随时被封禁/停业/成员被移除,快照身份会变成僵尸身份。
+	// 只做取数不做策略:"拿到角色后能做什么"由调用方(catalog)裁决(和 GetPayableOrder 同一纪律)。
+	AuthorizeMember(context.Context, *AuthorizeMemberRequest) (*AuthorizeMemberResponse, error)
 	mustEmbedUnimplementedMerchantServiceServer()
 }
 
@@ -73,8 +78,8 @@ type MerchantServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedMerchantServiceServer struct{}
 
-func (UnimplementedMerchantServiceServer) GetMerchantByUserID(context.Context, *GetMerchantByUserIDRequest) (*GetMerchantByUserIDResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetMerchantByUserID not implemented")
+func (UnimplementedMerchantServiceServer) AuthorizeMember(context.Context, *AuthorizeMemberRequest) (*AuthorizeMemberResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AuthorizeMember not implemented")
 }
 func (UnimplementedMerchantServiceServer) mustEmbedUnimplementedMerchantServiceServer() {}
 func (UnimplementedMerchantServiceServer) testEmbeddedByValue()                         {}
@@ -97,20 +102,20 @@ func RegisterMerchantServiceServer(s grpc.ServiceRegistrar, srv MerchantServiceS
 	s.RegisterService(&MerchantService_ServiceDesc, srv)
 }
 
-func _MerchantService_GetMerchantByUserID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetMerchantByUserIDRequest)
+func _MerchantService_AuthorizeMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthorizeMemberRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MerchantServiceServer).GetMerchantByUserID(ctx, in)
+		return srv.(MerchantServiceServer).AuthorizeMember(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MerchantService_GetMerchantByUserID_FullMethodName,
+		FullMethod: MerchantService_AuthorizeMember_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MerchantServiceServer).GetMerchantByUserID(ctx, req.(*GetMerchantByUserIDRequest))
+		return srv.(MerchantServiceServer).AuthorizeMember(ctx, req.(*AuthorizeMemberRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -123,8 +128,8 @@ var MerchantService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*MerchantServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetMerchantByUserID",
-			Handler:    _MerchantService_GetMerchantByUserID_Handler,
+			MethodName: "AuthorizeMember",
+			Handler:    _MerchantService_AuthorizeMember_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

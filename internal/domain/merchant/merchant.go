@@ -3,11 +3,10 @@ package merchant
 import "time"
 
 // Merchant 商户(店铺):审核通过后诞生的经营实体。
-// 与 user 一对一(教学版一人一店,靠 user_id 唯一索引落死),
+// 与 user 是 N:N(成员关系落在 merchant_members 表),谁是店主看 role=owner 的成员记录;
 // 与 user 的关系是"归属于",不是"是"——封店不删号,各活各的。
 type Merchant struct {
 	MerchantID uint
-	UserID     uint
 	Name       string // 店铺名,全局唯一(用户按店名搜索、订单展示"来自 xx 店",重名会串)
 	Logo       string
 	Desc       string
@@ -17,11 +16,12 @@ type Merchant struct {
 }
 
 // NewMerchant 审核通过时构造,出生即营业中。
-func NewMerchant(userID uint, name, logo, desc string) (*Merchant, error) {
-	if userID == 0 || name == "" {
+// 不再收 userID:归属(N:N)由成员表管理,商户自身不认识任何用户。
+func NewMerchant(name, logo, desc string) (*Merchant, error) {
+	if name == "" {
 		return nil, ErrInvalidMerchantInfo
 	}
-	return &Merchant{UserID: userID, Name: name, Logo: logo, Desc: desc, Status: MStatusOperating}, nil
+	return &Merchant{Name: name, Logo: logo, Desc: desc, Status: MStatusOperating}, nil
 }
 
 // Suspend 营业中 → 已停业

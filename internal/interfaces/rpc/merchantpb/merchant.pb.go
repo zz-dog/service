@@ -7,12 +7,11 @@
 package merchantpb
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -22,29 +21,29 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type GetMerchantByUserIDRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 键是 userId 不是 merchantId:调用方(catalog)手里只有 JWT 解出来的 userId;
-	// 若契约收 merchantId,catalog 就得信前端传来的 merchantId 去反查——恰是我们要堵的洞。
-	UserId        uint64 `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+type AuthorizeMemberRequest struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	UserId uint64                 `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// 商户端上下文:HTTP 走 X-Merchant-Id 头,WS 握手走 query,一律不采信 body 参数
+	MerchantId    uint64 `protobuf:"varint,2,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetMerchantByUserIDRequest) Reset() {
-	*x = GetMerchantByUserIDRequest{}
+func (x *AuthorizeMemberRequest) Reset() {
+	*x = AuthorizeMemberRequest{}
 	mi := &file_internal_interfaces_rpc_merchantpb_merchant_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetMerchantByUserIDRequest) String() string {
+func (x *AuthorizeMemberRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetMerchantByUserIDRequest) ProtoMessage() {}
+func (*AuthorizeMemberRequest) ProtoMessage() {}
 
-func (x *GetMerchantByUserIDRequest) ProtoReflect() protoreflect.Message {
+func (x *AuthorizeMemberRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_interfaces_rpc_merchantpb_merchant_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -56,41 +55,51 @@ func (x *GetMerchantByUserIDRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetMerchantByUserIDRequest.ProtoReflect.Descriptor instead.
-func (*GetMerchantByUserIDRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use AuthorizeMemberRequest.ProtoReflect.Descriptor instead.
+func (*AuthorizeMemberRequest) Descriptor() ([]byte, []int) {
 	return file_internal_interfaces_rpc_merchantpb_merchant_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GetMerchantByUserIDRequest) GetUserId() uint64 {
+func (x *AuthorizeMemberRequest) GetUserId() uint64 {
 	if x != nil {
 		return x.UserId
 	}
 	return 0
 }
 
-type GetMerchantByUserIDResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	MerchantId    uint64                 `protobuf:"varint,1,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"` // 没有商户时为 0:"没有商户"是正常业务态,不是错误
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Status        int32                  `protobuf:"varint,3,opt,name=status,proto3" json:"status,omitempty"` // merchant.status,catalog 据此判断是否营业中
+func (x *AuthorizeMemberRequest) GetMerchantId() uint64 {
+	if x != nil {
+		return x.MerchantId
+	}
+	return 0
+}
+
+type AuthorizeMemberResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 统一口径:merchant_id=0 = 拒绝(店不存在或非成员,不区分、不泄露存在性);
+	// merchant_id>0 时 role 必>0,name/status 可用
+	MerchantId    uint64 `protobuf:"varint,1,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
+	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Status        int32  `protobuf:"varint,3,opt,name=status,proto3" json:"status,omitempty"` // merchant.status,调用方据此判断是否营业中
+	Role          int32  `protobuf:"varint,4,opt,name=role,proto3" json:"role,omitempty"`     // 领域 MemberRole(1=owner 2=admin 3=staff);0=非成员
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetMerchantByUserIDResponse) Reset() {
-	*x = GetMerchantByUserIDResponse{}
+func (x *AuthorizeMemberResponse) Reset() {
+	*x = AuthorizeMemberResponse{}
 	mi := &file_internal_interfaces_rpc_merchantpb_merchant_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetMerchantByUserIDResponse) String() string {
+func (x *AuthorizeMemberResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetMerchantByUserIDResponse) ProtoMessage() {}
+func (*AuthorizeMemberResponse) ProtoMessage() {}
 
-func (x *GetMerchantByUserIDResponse) ProtoReflect() protoreflect.Message {
+func (x *AuthorizeMemberResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_interfaces_rpc_merchantpb_merchant_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -102,28 +111,35 @@ func (x *GetMerchantByUserIDResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetMerchantByUserIDResponse.ProtoReflect.Descriptor instead.
-func (*GetMerchantByUserIDResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use AuthorizeMemberResponse.ProtoReflect.Descriptor instead.
+func (*AuthorizeMemberResponse) Descriptor() ([]byte, []int) {
 	return file_internal_interfaces_rpc_merchantpb_merchant_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GetMerchantByUserIDResponse) GetMerchantId() uint64 {
+func (x *AuthorizeMemberResponse) GetMerchantId() uint64 {
 	if x != nil {
 		return x.MerchantId
 	}
 	return 0
 }
 
-func (x *GetMerchantByUserIDResponse) GetName() string {
+func (x *AuthorizeMemberResponse) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *GetMerchantByUserIDResponse) GetStatus() int32 {
+func (x *AuthorizeMemberResponse) GetStatus() int32 {
 	if x != nil {
 		return x.Status
+	}
+	return 0
+}
+
+func (x *AuthorizeMemberResponse) GetRole() int32 {
+	if x != nil {
+		return x.Role
 	}
 	return 0
 }
@@ -132,16 +148,19 @@ var File_internal_interfaces_rpc_merchantpb_merchant_proto protoreflect.FileDesc
 
 const file_internal_interfaces_rpc_merchantpb_merchant_proto_rawDesc = "" +
 	"\n" +
-	"1internal/interfaces/rpc/merchantpb/merchant.proto\x12\vmerchant.v1\"5\n" +
-	"\x1aGetMerchantByUserIDRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x04R\x06userId\"j\n" +
-	"\x1bGetMerchantByUserIDResponse\x12\x1f\n" +
+	"1internal/interfaces/rpc/merchantpb/merchant.proto\x12\vmerchant.v1\"R\n" +
+	"\x16AuthorizeMemberRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x1f\n" +
+	"\vmerchant_id\x18\x02 \x01(\x04R\n" +
+	"merchantId\"z\n" +
+	"\x17AuthorizeMemberResponse\x12\x1f\n" +
 	"\vmerchant_id\x18\x01 \x01(\x04R\n" +
 	"merchantId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
-	"\x06status\x18\x03 \x01(\x05R\x06status2{\n" +
-	"\x0fMerchantService\x12h\n" +
-	"\x13GetMerchantByUserID\x12'.merchant.v1.GetMerchantByUserIDRequest\x1a(.merchant.v1.GetMerchantByUserIDResponseBIZGgithub.com/wsc-zz/service/internal/interfaces/rpc/merchantpb;merchantpbb\x06proto3"
+	"\x06status\x18\x03 \x01(\x05R\x06status\x12\x12\n" +
+	"\x04role\x18\x04 \x01(\x05R\x04role2o\n" +
+	"\x0fMerchantService\x12\\\n" +
+	"\x0fAuthorizeMember\x12#.merchant.v1.AuthorizeMemberRequest\x1a$.merchant.v1.AuthorizeMemberResponseBIZGgithub.com/wsc-zz/service/internal/interfaces/rpc/merchantpb;merchantpbb\x06proto3"
 
 var (
 	file_internal_interfaces_rpc_merchantpb_merchant_proto_rawDescOnce sync.Once
@@ -157,12 +176,12 @@ func file_internal_interfaces_rpc_merchantpb_merchant_proto_rawDescGZIP() []byte
 
 var file_internal_interfaces_rpc_merchantpb_merchant_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_internal_interfaces_rpc_merchantpb_merchant_proto_goTypes = []any{
-	(*GetMerchantByUserIDRequest)(nil),  // 0: merchant.v1.GetMerchantByUserIDRequest
-	(*GetMerchantByUserIDResponse)(nil), // 1: merchant.v1.GetMerchantByUserIDResponse
+	(*AuthorizeMemberRequest)(nil),  // 0: merchant.v1.AuthorizeMemberRequest
+	(*AuthorizeMemberResponse)(nil), // 1: merchant.v1.AuthorizeMemberResponse
 }
 var file_internal_interfaces_rpc_merchantpb_merchant_proto_depIdxs = []int32{
-	0, // 0: merchant.v1.MerchantService.GetMerchantByUserID:input_type -> merchant.v1.GetMerchantByUserIDRequest
-	1, // 1: merchant.v1.MerchantService.GetMerchantByUserID:output_type -> merchant.v1.GetMerchantByUserIDResponse
+	0, // 0: merchant.v1.MerchantService.AuthorizeMember:input_type -> merchant.v1.AuthorizeMemberRequest
+	1, // 1: merchant.v1.MerchantService.AuthorizeMember:output_type -> merchant.v1.AuthorizeMemberResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

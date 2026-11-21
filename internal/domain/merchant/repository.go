@@ -26,10 +26,30 @@ type ApplicationRepository interface {
 type MerchantRepository interface {
 	Save(ctx context.Context, m *Merchant) error
 	FindByID(ctx context.Context, id uint) (*Merchant, error)
-	// FindByUserID 一人一店:按归属用户查商户;没有返回 (nil, nil)
-	FindByUserID(ctx context.Context, userID uint) (*Merchant, error)
+	// ListByIDs 批量按 ID 查商户(我的店铺列表:成员记录翻译成店铺视图时用)
+	ListByIDs(ctx context.Context, ids []uint) ([]Merchant, error)
 	// UpdateStatus 条件更新 from→to;停业/恢复/封禁共用,状态机迁移由调用方(领域方法)裁决合法性
 	UpdateStatus(ctx context.Context, id uint, from, to int) (bool, error)
 	// UpdateInfo 更新店铺资料
 	UpdateInfo(ctx context.Context, id uint, name, logo, desc string) error
+}
+
+// MemberRepository 成员仓储:N:N 归属的事实源。
+// "这个用户和这家商户是什么关系"只由这张表回答,商户表不再挂 user_id。
+type MemberRepository interface {
+	// Save 新增成员(开店时的 owner / 邀请)。
+	// 撞 (user_id, merchant_id) 唯一索引 = 重复邀请,并发防线在这里,应用层的查重只是友好报错
+	Save(ctx context.Context, m *Member) error
+	// FindByUserAndMerchant 查成员关系;没有返回 (nil, nil)——非成员是正常业务态,不是错误
+	FindByUserAndMerchant(ctx context.Context, userID, merchantID uint) (*Member, error)
+	// ListByMerchant 某店铺的成员列表(店主管人事用)
+	ListByMerchant(ctx context.Context, merchantID uint) ([]Member, error)
+	// ListByUser 某用户加入的所有店铺("我的店铺"列表)
+	ListByUser(ctx context.Context, userID uint) ([]Member, error)
+	// CountByMerchant 某店铺的成员数(邀请上限检查)
+	CountByMerchant(ctx context.Context, merchantID uint) (int64, error)
+	// Delete 移除成员;返回是否有行被删(目标本来就不是成员 = false)
+	Delete(ctx context.Context, merchantID, userID uint) (bool, error)
+	// UpdateRole 调整成员角色(admin↔staff);返回是否生效
+	UpdateRole(ctx context.Context, merchantID, userID uint, role MemberRole) (bool, error)
 }

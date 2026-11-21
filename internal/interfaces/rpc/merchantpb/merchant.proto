@@ -7,19 +7,25 @@ option go_package = "github.com/wsc-zz/service/internal/interfaces/rpc/merchantp
 // MerchantService 商户域对 catalog 域开放的 RPC 契约。
 // 契约变更规则:merchant 和 catalog 必须同一次提交里同步改,靠编译期报错保证两边一致。
 service MerchantService {
-  // GetMerchantByUserID 按归属用户查商户。只做取数,不做策略:
-  // "这个人能不能发布商品"由 catalog 裁决(和 GetPayableOrder 同一纪律)。
-  rpc GetMerchantByUserID(GetMerchantByUserIDRequest) returns (GetMerchantByUserIDResponse);
+  // AuthorizeMember 校验 (userId, merchantId) 的成员关系并带回角色。
+  // N:N 后商户端必须显式携带 merchantId(HTTP 走 X-Merchant-Id 头,WS 握手走 query),
+  // 服务端实时校验归属——身份/归属不进 token:token 是快照,
+  // 店可能随时被封禁/停业/成员被移除,快照身份会变成僵尸身份。
+  // 只做取数不做策略:"拿到角色后能做什么"由调用方(catalog)裁决(和 GetPayableOrder 同一纪律)。
+  rpc AuthorizeMember(AuthorizeMemberRequest) returns (AuthorizeMemberResponse);
 }
 
-message GetMerchantByUserIDRequest {
-  // 键是 userId 不是 merchantId:调用方(catalog)手里只有 JWT 解出来的 userId;
-  // 若契约收 merchantId,catalog 就得信前端传来的 merchantId 去反查——恰是我们要堵的洞。
+message AuthorizeMemberRequest {
   uint64 user_id = 1;
+  // 商户端上下文:HTTP 走 X-Merchant-Id 头,WS 握手走 query,一律不采信 body 参数
+  uint64 merchant_id = 2;
 }
 
-message GetMerchantByUserIDResponse {
-  uint64 merchant_id = 1; // 没有商户时为 0:"没有商户"是正常业务态,不是错误
+message AuthorizeMemberResponse {
+  // 统一口径:merchant_id=0 = 拒绝(店不存在或非成员,不区分、不泄露存在性);
+  // merchant_id>0 时 role 必>0,name/status 可用
+  uint64 merchant_id = 1;
   string name = 2;
-  int32 status = 3; // merchant.status,catalog 据此判断是否营业中
+  int32 status = 3; // merchant.status,调用方据此判断是否营业中
+  int32 role = 4;   // 领域 MemberRole(1=owner 2=admin 3=staff);0=非成员
 }

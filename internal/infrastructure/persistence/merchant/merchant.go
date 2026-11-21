@@ -41,21 +41,23 @@ func (r MerchantRepository) FindByID(ctx context.Context, id uint) (*domainmerch
 	return todomainMerchant(&po), nil
 }
 
-// FindByUserID 一人一店:按归属用户查商户;没有返回 (nil, nil)——
-// 既是提交申请时"已有店铺"的判定依据,也是"我的店铺"的取数入口。
-// 内联参数 First(&po, userID) 走主键语义,按非主键查必须显式 Where。
-func (r MerchantRepository) FindByUserID(ctx context.Context, userID uint) (*domainmerchant.Merchant, error) {
-	var po MerchantPO
-	err := r.db.WithContext(ctx).
-		Where("user_id = ?", userID).
-		First(&po).Error
+// ListByIDs 批量按 ID 查商户(我的店铺列表:成员记录翻译成店铺视图时用)。
+// ids 为空直接返回空切片——GORM 的 Where("id IN ?", []uint{}) 会生成 1=2 恒假条件,
+// 这里提前短路,语义也更直白。
+func (r MerchantRepository) ListByIDs(ctx context.Context, ids []uint) ([]domainmerchant.Merchant, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var pos []MerchantPO
+	err := r.db.WithContext(ctx).Where("id IN ?", ids).Find(&pos).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
 		return nil, err
 	}
-	return todomainMerchant(&po), nil
+	merchants := make([]domainmerchant.Merchant, len(pos))
+	for i := range pos {
+		merchants[i] = *todomainMerchant(&pos[i])
+	}
+	return merchants, nil
 }
 
 // UpdateStatus 条件更新 from→to:停业/恢复/封禁共用。

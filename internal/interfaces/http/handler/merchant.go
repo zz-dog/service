@@ -30,19 +30,25 @@ type submitApplicationReq struct {
 }
 
 // writeMerchantError 商户域错误 → HTTP 状态码。
-// 不存在类 → 404;规则/状态类 → 400;其余 → 500。
+// 不存在类 → 404;权限类 → 403;规则/状态类 → 400;其余 → 500。
 func writeMerchantError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, domainmerchant.ErrApplicationNotFound),
-		errors.Is(err, domainmerchant.ErrMerchantNotFound):
+		errors.Is(err, domainmerchant.ErrMerchantNotFound),
+		errors.Is(err, domainmerchant.ErrMemberNotFound):
 		response.NotFound(c, err.Error())
+	case errors.Is(err, domainmerchant.ErrPermissionDenied):
+		response.Forbidden(c, err.Error())
 	case errors.Is(err, domainmerchant.ErrAlreadyPending),
-		errors.Is(err, domainmerchant.ErrAlreadyMerchant),
 		errors.Is(err, domainmerchant.ErrShopNameTaken),
 		errors.Is(err, domainmerchant.ErrInvalidApplication),
 		errors.Is(err, domainmerchant.ErrInvalidMerchantInfo),
 		errors.Is(err, domainmerchant.ErrInvalidRejectReason),
-		errors.Is(err, domainmerchant.ErrInvalidStatusTransition):
+		errors.Is(err, domainmerchant.ErrInvalidStatusTransition),
+		errors.Is(err, domainmerchant.ErrAlreadyMember),
+		errors.Is(err, domainmerchant.ErrCannotModifyOwner),
+		errors.Is(err, domainmerchant.ErrInvalidMemberRole),
+		errors.Is(err, domainmerchant.ErrMemberLimitReached):
 		response.BadRequest(c, err.Error())
 	default:
 		response.ServerError(c, err.Error())
@@ -59,7 +65,7 @@ func writeMerchantError(c *gin.Context, err error) {
 //	@Security		ApiKeyAuth
 //	@Param			request	body		submitApplicationReq	true	"申请信息"
 //	@Success		200		{object}	response.Response{data=merchantapp.ApplicationDTO}
-//	@Failure		400		{object}	response.Response	"参数校验失败/已有待审核申请/已拥有店铺/申请信息不完整"
+//	@Failure		400		{object}	response.Response	"参数校验失败/已有待审核申请/申请信息不完整"
 //	@Failure		401		{object}	response.Response	"未登录或 token 失效"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
 //	@Router			/merchant/application [post]

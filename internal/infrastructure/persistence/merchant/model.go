@@ -26,11 +26,10 @@ type MerchantApplicationPO struct {
 
 func (MerchantApplicationPO) TableName() string { return "merchant_applications" }
 
-// MerchantPO 商户。user_id 唯一索引是"一人一店"的最终防线:
-// 应用层查询只是友好报错,并发下(两张申请同时被审过)只有索引拦得住。
+// MerchantPO 商户。不再挂 user_id:N:N 归属的事实源在 merchant_members 表,
+// 谁是店主 = role=owner 的那条成员记录——归属只有一个事实源,两处各说各话迟早漂移。
 type MerchantPO struct {
 	ID        uint   `gorm:"primaryKey"`
-	UserID    uint   `gorm:"uniqueIndex"`
 	Name      string `gorm:"type:varchar(64);uniqueIndex"`
 	Logo      string `gorm:"type:varchar(512)"`
 	Desc      string `gorm:"type:varchar(512)"`
@@ -40,6 +39,19 @@ type MerchantPO struct {
 }
 
 func (MerchantPO) TableName() string { return "merchants" }
+
+// MemberPO 店铺成员。(user_id, merchant_id) 复合唯一索引是"一人一店一条成员记录"的最终防线:
+// 应用层的重复邀请检查只是友好报错,并发下(两个入口同时邀请同一人)只有索引拦得住。
+type MemberPO struct {
+	ID         uint                       `gorm:"primaryKey"`
+	UserID     uint                       `gorm:"uniqueIndex:uk_user_merchant"`
+	MerchantID uint                       `gorm:"uniqueIndex:uk_user_merchant;index"`
+	Role       domainmerchant.MemberRole  // 1=owner 2=admin 3=staff
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
+func (MemberPO) TableName() string { return "merchant_members" }
 
 // topo 领域申请单 → PO。落库前必须转换:领域结构和 PO 是两套结构,
 // 现在字段名恰好一致是运气,一旦漂移(领域改字段/PO 加列)直接喂 GORM 就是静默坏表。
@@ -66,13 +78,24 @@ func topo(a *domainmerchant.MerchantApplication) *MerchantApplicationPO {
 func topoMerchant(m *domainmerchant.Merchant) *MerchantPO {
 	return &MerchantPO{
 		ID:        m.MerchantID,
-		UserID:    m.UserID,
 		Name:      m.Name,
 		Logo:      m.Logo,
 		Desc:      m.Desc,
 		Status:    m.Status,
 		CreatedAt: m.CreatedAt,
 		UpdatedAt: m.UpdatedAt,
+	}
+}
+
+// topoMember 领域成员 → PO。成员是新聚合,同商户一样显式安放,不许直接喂 GORM。
+func topoMember(m *domainmerchant.Member) *MemberPO {
+	return &MemberPO{
+		ID:         m.ID,
+		UserID:     m.UserID,
+		MerchantID: m.MerchantID,
+		Role:       m.Role,
+		CreatedAt:  m.CreatedAt,
+		UpdatedAt:  m.UpdatedAt,
 	}
 }
 
@@ -105,7 +128,6 @@ func todomains(pos []MerchantApplicationPO) []domainmerchant.MerchantApplication
 func todomainMerchant(po *MerchantPO) *domainmerchant.Merchant {
 	return &domainmerchant.Merchant{
 		MerchantID: po.ID,
-		UserID:     po.UserID,
 		Name:       po.Name,
 		Logo:       po.Logo,
 		Desc:       po.Desc,
@@ -113,4 +135,23 @@ func todomainMerchant(po *MerchantPO) *domainmerchant.Merchant {
 		CreatedAt:  po.CreatedAt,
 		UpdatedAt:  po.UpdatedAt,
 	}
+}
+
+func todomainMember(po *MemberPO) *domainmerchant.Member {
+	return &domainmerchant.Member{
+		ID:         po.ID,
+		UserID:     po.UserID,
+		MerchantID: po.MerchantID,
+		Role:       po.Role,
+		CreatedAt:  po.CreatedAt,
+		UpdatedAt:  po.UpdatedAt,
+	}
+}
+
+func todomainMembers(pos []MemberPO) []domainmerchant.Member {
+	domains := make([]domainmerchant.Member, len(pos))
+	for i := range pos {
+		domains[i] = *todomainMember(&pos[i])
+	}
+	return domains
 }

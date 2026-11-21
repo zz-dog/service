@@ -6,9 +6,12 @@ import (
 	domainim "github.com/wsc-zz/service/internal/domain/im"
 )
 
+// MerchantResolver 商户成员关系校验端口(N:N):
+// B 端请求/握手显式声明 merchantId(REST 走 X-Merchant-Id 头,WS 走 query),
+// 这里实时校验 (userID, merchantID) 的成员关系——归属不进 token,也永不采信 body。
 type MerchantResolver interface {
-	// 找不到商户返回 (0, nil)——"不是商户"是正常业务态,不是错误
-	MerchantIDByUserID(ctx context.Context, userID uint64) (uint64, error)
+	// Authorize 校验成员关系;非成员/店不存在返回 domainmerchant.ErrMerchantNotFound
+	Authorize(ctx context.Context, userID, merchantID uint64) error
 }
 
 // Notifier 推送端口:落库成功后通知"对侧在线的连接"。

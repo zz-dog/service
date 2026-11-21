@@ -7,6 +7,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 
 	domainim "github.com/wsc-zz/service/internal/domain/im"
+	domainmerchant "github.com/wsc-zz/service/internal/domain/merchant"
 )
 
 // Service im 应用服务:编排会话/消息仓储、事务与推送。
@@ -24,11 +25,18 @@ func NewService(convRepo domainim.ConversationRepository, msgRepo domainim.Messa
 	return &Service{convRepo: convRepo, msgRepo: msgRepo, runner: runner, resolver: resolver, notifier: notifier}
 }
 
-// ResolveMerchant 把 JWT 里的 userId 换成 merchantId(0 = 不是商户,调用方回 403)。
+// ResolveMerchant 校验 B 端身份:userID(取自 JWT)+ merchantID(取自上下文头/握手 query)
+// 必须构成成员关系——N:N 下"以哪家店的身份工作"由请求显式声明,能不能由成员关系裁决。
 // 挂在 Service 上:REST 的 B 端 handler 和 WS 的握手 handler 共用同一个入口,
-// "商户身份服务端推导"这条铁律只写一处
-func (s *Service) ResolveMerchant(ctx context.Context, userID uint64) (uint64, error) {
-	return s.resolver.MerchantIDByUserID(ctx, userID)
+// "商户身份服务端校验"这条铁律只写一处。非成员/店不存在 → ErrMerchantNotFound。
+func (s *Service) ResolveMerchant(ctx context.Context, userID, merchantID uint64) (uint64, error) {
+	if userID == 0 || merchantID == 0 {
+		return 0, domainmerchant.ErrMerchantNotFound
+	}
+	if err := s.resolver.Authorize(ctx, userID, merchantID); err != nil {
+		return 0, err
+	}
+	return merchantID, nil
 }
 
 // SendText 发一条文本:建会话(懒创建)→ 插消息 → 刷会话 → 推对侧。

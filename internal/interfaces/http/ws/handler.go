@@ -2,6 +2,7 @@ package ws
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/wsc-zz/service/global"
 	appim "github.com/wsc-zz/service/internal/application/im"
 	domainim "github.com/wsc-zz/service/internal/domain/im"
+	domainmerchant "github.com/wsc-zz/service/internal/domain/merchant"
 	"github.com/wsc-zz/service/internal/infrastructure/auth"
 	middleware "github.com/wsc-zz/service/internal/interfaces/http/middleware"
 	"github.com/wsc-zz/service/pkg/response"
@@ -46,10 +48,12 @@ func (h *WSHandler) UserWS(c *gin.Context) {
 	h.serve(c, actor)
 }
 
-// MerchantWS 商家工作台握手 GET /api/im/merchant/ws?token=xxx。
-// 铁律:merchantId 不信前端(请求参数里也没有),握手时拿 userId 调 merchant_rpc 推导
+// MerchantWS 商家工作台握手 GET /api/im/merchant/ws?token=xxx&merchantId=123。
+// N:N 下"以哪家店的身份工作"必须显式声明;浏览器 WS 带不了自定义 header,
+// 店铺上下文只能走 query——query 同样只是"你想用哪家店",
+// 能不能用由 merchant RPC 实时校验 (userId, merchantId) 成员关系,采信的只是声明本身
 func (h *WSHandler) MerchantWS(c *gin.Context) {
-	actor, status, msg := h.merchantActor(c.Request.Context(), c.Query("token"))
+	actor, status, msg := h.merchantActor(c.Request.Context(), c.Query("token"), c.Query("merchantId"))
 	if status != http.StatusOK {
 		c.JSON(status, gin.H{"code": status, "message": msg})
 		return
@@ -88,9 +92,9 @@ func (h *WSHandler) userActor(ctx context.Context, token string) (appim.Actor, b
 	return appim.Actor{Side: domainim.SideUser, UserID: uid}, true
 }
 
-// merchantActor 卖家端身份:JWT + 黑名单之后,再过 MerchantResolver 推导商户;
-// 查不到商户(0)→ 403"还不是商户"。返回 (actor, httpStatus, msg)
-func (h *WSHandler) merchantActor(ctx context.Context, token string) (appim.Actor, int, string) {
+// merchantActor 卖家端身份:JWT + 黑名单之后,再实时校验 (userId, merchantId) 成员关系;
+// 缺 merchantId → 400,非成员/店不存在 → 403(统一口径,不泄露存在性)。返回 (actor, httpStatus, msg)
+func (h *WSHandler) merchantActor(ctx context.Context, token, merchantIDQuery string) (appim.Actor, int, string) {
 	claims, err := auth.ParseToken(token)
 	if err != nil {
 		return appim.Actor{}, http.StatusUnauthorized, "token无效"
@@ -102,13 +106,17 @@ func (h *WSHandler) merchantActor(ctx context.Context, token string) (appim.Acto
 	if err != nil || uid == 0 {
 		return appim.Actor{}, http.StatusUnauthorized, "token无效"
 	}
-	merchantID, err := h.im.ResolveMerchant(ctx, uid)
-	if err != nil {
-		global.Logger.Error("im 握手推导商户身份失败", zap.Uint64("user_id", uid), zap.Error(err))
-		return appim.Actor{}, http.StatusInternalServerError, "商户身份校验失败"
+	mid, err := strconv.ParseUint(merchantIDQuery, 10, 64)
+	if err != nil || mid == 0 {
+		return appim.Actor{}, http.StatusBadRequest, "缺少 merchantId 店铺上下文"
 	}
-	if merchantID == 0 {
-		return appim.Actor{}, http.StatusForbidden, "还不是商户"
+	merchantID, err := h.im.ResolveMerchant(ctx, uid, mid)
+	if err != nil {
+		if errors.Is(err, domainmerchant.ErrMerchantNotFound) {
+			return appim.Actor{}, http.StatusForbidden, "还不是商户或无权访问该店铺"
+		}
+		global.Logger.Error("im 握手校验商户身份失败", zap.Uint64("user_id", uid), zap.Uint64("merchant_id", mid), zap.Error(err))
+		return appim.Actor{}, http.StatusInternalServerError, "商户身份校验失败"
 	}
 	return appim.Actor{Side: domainim.SideMerchant, UserID: uid, MerchantID: merchantID}, http.StatusOK, ""
 }

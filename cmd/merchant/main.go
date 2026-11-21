@@ -57,9 +57,16 @@ func main() {
 	if err := global.DB.AutoMigrate(
 		&merchantpo.MerchantApplicationPO{},
 		&merchantpo.MerchantPO{},
+		&merchantpo.MemberPO{},
 	); err != nil {
 		global.Logger.Error("数据表迁移失败", zap.Error(err))
 		panic("数据表迁移失败:" + err.Error())
+	}
+	// 一人一店 → N:N 的存量迁移:老 merchants.user_id 搬进 merchant_members(role=owner),
+	// 搬完删列;幂等,重复启动安全。迁移失败 fail-fast——半搬不搬的状态不能带病上线
+	if err := merchantpo.MigrateLegacyOwnership(global.DB); err != nil {
+		global.Logger.Error("存量归属迁移失败", zap.Error(err))
+		panic("存量归属迁移失败:" + err.Error())
 	}
 	global.Logger.Info("数据表迁移成功")
 

@@ -8,26 +8,28 @@ import (
 
 // TxRunner 事务端口(应用层定义契约,infrastructure/persistence/transaction 提供)。
 type TxRunner interface {
-	// RunMerchant 在事务内执行 fn,fn 收到与事务绑定的申请单/商户仓储
-	RunMerchant(ctx context.Context, fn func(domainmerchant.ApplicationRepository, domainmerchant.MerchantRepository) error) error
+	// RunMerchant 在事务内执行 fn,fn 收到与事务绑定的申请单/商户/成员仓储
+	RunMerchant(ctx context.Context, fn func(domainmerchant.ApplicationRepository, domainmerchant.MerchantRepository, domainmerchant.MemberRepository) error) error
 }
 
-// Service 商户入驻应用服务:编排申请提交、审核、店铺管理用例。
+// Service 商户入驻应用服务:编排申请提交、审核、店铺与成员管理用例。
 // 普通读和单步写用普通仓储,审核通过才走 runner——事务是资源,按需用。
 type Service struct {
-	appRepo domainmerchant.ApplicationRepository
-	mRepo   domainmerchant.MerchantRepository
-	runner  TxRunner
+	appRepo    domainmerchant.ApplicationRepository
+	mRepo      domainmerchant.MerchantRepository
+	memberRepo domainmerchant.MemberRepository
+	runner     TxRunner
 }
 
-func NewService(appRepo domainmerchant.ApplicationRepository, mRepo domainmerchant.MerchantRepository, runner TxRunner) *Service {
-	return &Service{appRepo: appRepo, mRepo: mRepo, runner: runner}
+func NewService(appRepo domainmerchant.ApplicationRepository, mRepo domainmerchant.MerchantRepository,
+	memberRepo domainmerchant.MemberRepository, runner TxRunner) *Service {
+	return &Service{appRepo: appRepo, mRepo: mRepo, memberRepo: memberRepo, runner: runner}
 }
 
 // Submit 提交入驻申请。
-// 幂等:同用户已有"待审核"申请 → ErrAlreadyPending(重复点击/网络重试安全);
-// 已有店铺 → ErrAlreadyMerchant。历史被驳回的申请不拦截,允许重新提交(新建,旧单只读)。
-// 两个前置检查只是友好报错,真正的防线是 merchants.user_id 唯一索引(并发兜底)。
+// 幂等:同用户已有"待审核"申请 → ErrAlreadyPending(重复点击/网络重试安全)。
+// N:N 后不再拦"已有店铺"——一个用户可以开多家店,一人多张待审核单仍不允许
+// (防的是刷申请单,不是限制开店数量)。历史被驳回的申请不拦截,重新提交即新建。
 func (s *Service) Submit(ctx context.Context, userID uint, in SubmitInput) (*ApplicationDTO, error) {
 	pending, err := s.appRepo.FindPendingByUser(ctx, userID)
 	if err != nil {
@@ -35,13 +37,6 @@ func (s *Service) Submit(ctx context.Context, userID uint, in SubmitInput) (*App
 	}
 	if pending != nil {
 		return nil, domainmerchant.ErrAlreadyPending
-	}
-	m, err := s.mRepo.FindByUserID(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-	if m != nil {
-		return nil, domainmerchant.ErrAlreadyMerchant
 	}
 	app, err := domainmerchant.NewMerchantApplication(userID, in.ShopName, in.ContactName, in.ContactPhone, in.LicenseURL, in.IDCardURL)
 	if err != nil {

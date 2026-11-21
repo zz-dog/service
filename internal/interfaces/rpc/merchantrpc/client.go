@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	domainmerchant "github.com/wsc-zz/service/internal/domain/merchant"
 	productapp "github.com/wsc-zz/service/internal/application/product"
 	"github.com/wsc-zz/service/internal/interfaces/rpc/merchantpb"
 	"google.golang.org/grpc"
@@ -30,19 +31,23 @@ func NewClient(addr string, timeout time.Duration) (*Client, error) {
 	return &Client{conn: conn, stub: merchantpb.NewMerchantServiceClient(conn), timeout: timeout}, nil
 }
 
-// GetMerchantByUserID 实现 productapp.MerchantGateway 端口:协议翻译,不做策略。
-// merchant_id=0 原样返回,归属判断(0=无店)交给应用层——client 层不做业务裁决。
-func (c *Client) GetMerchantByUserID(ctx context.Context, userID uint) (productapp.MerchantInfo, error) {
+// AuthorizeMember 实现 productapp.MerchantGateway 端口:协议翻译,不做策略。
+// merchant_id=0 / role=0 原样返回,"能不能做"的裁决在应用层——client 层不做业务裁决。
+func (c *Client) AuthorizeMember(ctx context.Context, userID, merchantID uint) (productapp.MemberInfo, error) {
 	rc, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
-	resp, err := c.stub.GetMerchantByUserID(rc, &merchantpb.GetMerchantByUserIDRequest{UserId: uint64(userID)})
+	resp, err := c.stub.AuthorizeMember(rc, &merchantpb.AuthorizeMemberRequest{
+		UserId:     uint64(userID),
+		MerchantId: uint64(merchantID),
+	})
 	if err != nil {
-		return productapp.MerchantInfo{}, c.mapStatus(err)
+		return productapp.MemberInfo{}, c.mapStatus(err)
 	}
-	return productapp.MerchantInfo{
+	return productapp.MemberInfo{
 		MerchantID: uint(resp.GetMerchantId()),
 		Name:       resp.GetName(),
 		Status:     int(resp.GetStatus()),
+		Role:       domainmerchant.MemberRole(resp.GetRole()),
 	}, nil
 }
 

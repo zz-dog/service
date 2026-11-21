@@ -15,17 +15,18 @@ import (
 	ossclient "github.com/wsc-zz/service/pkg/oss"
 )
 
-// MerchantIdentityResolver 商户身份推导的窄接口(与 middleware.TokenBlacklistChecker 同款纪律):
-// 媒体 handler 只关心"这个登录用户属于哪家店",由 router 组合根注入 merchant RPC 实现。
-// 身份不进 token:店可能随时被封禁/停业,merchantId 必须实时查,不采信请求参数
+// MerchantIdentityResolver 商户成员关系校验的窄接口(与 middleware.TokenBlacklistChecker 同款纪律):
+// 媒体 handler 只关心"这个登录用户是不是这家店的成员(且能做日常经营)",
+// 由 router 组合根注入 merchant RPC 实现。身份不进 token:店可能随时被封禁/停业/
+// 成员被移除,(userId, merchantId) 必须实时校验,不采信请求参数
 type MerchantIdentityResolver interface {
-	GetMerchantByUserID(ctx context.Context, userID uint) (productapp.MerchantInfo, error)
+	AuthorizeMember(ctx context.Context, userID, merchantID uint) (productapp.MemberInfo, error)
 }
 
 // 商户端媒体操作的统一拒绝语
 var (
 	errNotLoggedIn   = errors.New("未登录或登录已过期")
-	errNoShop        = errors.New("未开通店铺,无法操作媒体文件")
+	errNoShop        = errors.New("缺少店铺上下文或无权访问该店铺")
 	errKeyOutOfScope = errors.New("无权访问其他店铺的媒体资源")
 )
 
@@ -41,8 +42,9 @@ func NewMidiaHandler(client *ossclient.Client) *MidiaHandler {
 	return &MidiaHandler{client: client}
 }
 
-// NewMerchantMidiaHandler 商户端媒体 handler:JWT 的 userID 经商户服务实时推导 merchantID,
-// 无店(merchantId=0)拒绝。与商户商品接口同一鉴权哲学:路由层只管认证,归属服务端收口
+// NewMerchantMidiaHandler 商户端媒体 handler:X-Merchant-Id 头声明店铺,
+// (userId, merchantId) 经商户服务实时校验成员关系(任意角色可经营),
+// 缺头/非成员拒绝。与商户商品接口同一鉴权哲学:路由层只管认证,归属服务端收口
 func NewMerchantMidiaHandler(client *ossclient.Client, resolver MerchantIdentityResolver) *MidiaHandler {
 	return &MidiaHandler{
 		client: client,
@@ -51,11 +53,15 @@ func NewMerchantMidiaHandler(client *ossclient.Client, resolver MerchantIdentity
 			if !ok {
 				return "", errNotLoggedIn
 			}
-			m, err := resolver.GetMerchantByUserID(c.Request.Context(), userID)
+			merchantID, ok := getCurrentMerchantID(c)
+			if !ok {
+				return "", errNoShop
+			}
+			m, err := resolver.AuthorizeMember(c.Request.Context(), userID, merchantID)
 			if err != nil {
 				return "", err
 			}
-			if m.MerchantID == 0 {
+			if m.MerchantID == 0 || !m.Role.CanOperateProduct() {
 				return "", errNoShop
 			}
 			return fmt.Sprintf("merchant/%d", m.MerchantID), nil

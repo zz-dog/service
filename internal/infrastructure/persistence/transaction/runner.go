@@ -38,12 +38,13 @@ func (r *Runner) RunAddress(ctx context.Context, fn func(addressdomain.AddressRe
 	})
 }
 
-// RunMerchant 在同一事务内执行 fn，fn 收到与事务绑定的申请单/商户仓储。
-// 审核通过 = 申请单迁移 + 建商户 + 回填,三步必须同生共死:
-// 撞店铺名唯一索引时整个回滚,申请单回到"待审核",不会出现"已通过但没商户"的孤儿状态。
-func (r *Runner) RunMerchant(ctx context.Context, fn func(merchantdomain.ApplicationRepository, merchantdomain.MerchantRepository) error) error {
+// RunMerchant 在同一事务内执行 fn,fn 收到与事务绑定的申请单/商户/成员仓储。
+// 审核通过 = 申请单迁移 + 建商户 + 授予店主成员 + 回填,四步必须同生共死:
+// 撞店铺名唯一索引时整个回滚,申请单回到"待审核",
+// 不会出现"已通过但没商户"或"有商户没店主"的孤儿状态。
+func (r *Runner) RunMerchant(ctx context.Context, fn func(merchantdomain.ApplicationRepository, merchantdomain.MerchantRepository, merchantdomain.MemberRepository) error) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		return fn(merchantpo.NewMerchantApplicationRepository(tx), merchantpo.NewMerchantRepository(tx))
+		return fn(merchantpo.NewMerchantApplicationRepository(tx), merchantpo.NewMerchantRepository(tx), merchantpo.NewMemberRepository(tx))
 	})
 }
 

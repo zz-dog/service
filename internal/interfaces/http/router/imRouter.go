@@ -8,6 +8,7 @@ import (
 	"github.com/wsc-zz/service/global"
 
 	imapp "github.com/wsc-zz/service/internal/application/im"
+	domainmerchant "github.com/wsc-zz/service/internal/domain/merchant"
 	impo "github.com/wsc-zz/service/internal/infrastructure/persistence/im"
 	"github.com/wsc-zz/service/internal/infrastructure/persistence/transaction"
 	"github.com/wsc-zz/service/internal/interfaces/http/handler"
@@ -67,12 +68,12 @@ func InitImRouter() *gin.Engine {
 }
 
 // merchantResolver 把 merchantrpc 客户端适配成 im 应用的 MerchantResolver 端口:
-// 协议翻译,不做策略——merchant_id=0 原样返回,"不是商户"的裁决在应用层/握手层
-// (依赖倒置,application 不 import rpc 客户端的具体类型)
+// 协议翻译,不做策略——merchant_id=0(店不存在或非成员)翻译成领域错误,
+// "不是成员"的裁决在应用层/握手层(依赖倒置,application 不 import rpc 客户端的具体类型)
 type merchantResolver struct{ gw *merchantrpc.Client }
 
 func newMerchantResolver() merchantResolver {
-	// 商户身份推导低频且握手/请求期一次调用,3s 超时足够;装配失败快速 panic
+	// 商户成员校验低频且握手/请求期一次调用,3s 超时足够;装配失败快速 panic
 	gw, err := merchantrpc.NewClient(global.Conf.Merchant.RpcAddr, 3*time.Second)
 	if err != nil {
 		panic(err)
@@ -80,10 +81,13 @@ func newMerchantResolver() merchantResolver {
 	return merchantResolver{gw: gw}
 }
 
-func (r merchantResolver) MerchantIDByUserID(ctx context.Context, userID uint64) (uint64, error) {
-	m, err := r.gw.GetMerchantByUserID(ctx, uint(userID))
+func (r merchantResolver) Authorize(ctx context.Context, userID, merchantID uint64) error {
+	m, err := r.gw.AuthorizeMember(ctx, uint(userID), uint(merchantID))
 	if err != nil {
-		return 0, err
+		return err
 	}
-	return uint64(m.MerchantID), nil
+	if m.MerchantID == 0 {
+		return domainmerchant.ErrMerchantNotFound // 店不存在与非成员同口径,不泄露存在性
+	}
+	return nil
 }
