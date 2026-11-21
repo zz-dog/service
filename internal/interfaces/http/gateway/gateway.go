@@ -10,6 +10,10 @@ import (
 	"sort"
 	"strings"
 	"sync"
+
+	"go.uber.org/zap"
+
+	"github.com/wsc-zz/service/global"
 )
 
 // Resolver 按服务名解析出一个可用实例地址（ip:port）
@@ -47,6 +51,12 @@ func New(routes []Route, resolver Resolver) *Gateway {
 			pr.SetURL(target)
 		},
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+			// 转发失败必须落日志：502 只告诉用户"上游不可用"，
+			// 真实原因（refused/timeout/unreachable）只有 err 里有，不记下来线上无从排查
+			global.Logger.Error("转发上游失败",
+				zap.String("method", r.Method),
+				zap.String("path", r.URL.Path),
+				zap.Error(err))
 			writeError(w, http.StatusBadGateway, "上游服务不可用")
 		},
 	}
