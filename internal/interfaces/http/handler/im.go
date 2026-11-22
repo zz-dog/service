@@ -44,14 +44,17 @@ func (h *ImHandler) MyConversations(c *gin.Context) {
 // MerchantConversations 卖家会话列表
 //
 //	@Summary		商家会话列表
-//	@Description	商家工作台侧会话。merchantId 服务端由 token 推导,请求参数不收商户 ID。
+//	@Description	商家工作台侧会话。"当前店铺"由 X-Merchant-Id 头声明,
+//	                (userId, merchantId) 成员关系由 merchant RPC 实时校验,永不采信 body。
 //	@Tags			消息
 //	@Produce		json
 //	@Security		ApiKeyAuth
+//	@Param			X-Merchant-Id	header		int	true	"当前店铺ID"
 //	@Param			limit	query		int	false	"条数(默认20,上限50)"
 //	@Success		200		{object}	response.Response{data=[]imapp.ConversationDTO}
+//	@Failure		400		{object}	response.Response	"缺少 X-Merchant-Id 店铺上下文头"
 //	@Failure		401		{object}	response.Response	"未登录或 token 失效"
-//	@Failure		403		{object}	response.Response	"还不是商户"
+//	@Failure		403		{object}	response.Response	"还不是商户或无权访问该店铺"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
 //	@Router			/im/merchant/conversations [get]
 func (h *ImHandler) MerchantConversations(c *gin.Context) {
@@ -87,16 +90,18 @@ func (h *ImHandler) MyMessages(c *gin.Context) {
 // MerchantMessages 卖家拉历史消息
 //
 //	@Summary		历史消息(商家)
-//	@Description	同买家侧,身份视角换商户侧。
+//	@Description	同买家侧,身份视角换商户侧;"当前店铺"由 X-Merchant-Id 头声明并实时校验。
 //	@Tags			消息
 //	@Produce		json
 //	@Security		ApiKeyAuth
+//	@Param			X-Merchant-Id	header		int	true	"当前店铺ID"
 //	@Param			id		path		int	true	"会话ID"
 //	@Param			before	query		int	false	"翻页游标(上一页最后一条的消息ID)"
 //	@Param			limit	query		int	false	"条数(默认20,上限50)"
 //	@Success		200		{object}	response.Response{data=[]imapp.MessageDTO}
+//	@Failure		400		{object}	response.Response	"缺少 X-Merchant-Id 店铺上下文头"
 //	@Failure		401		{object}	response.Response	"未登录或 token 失效"
-//	@Failure		403		{object}	response.Response	"不是会话成员/还不是商户"
+//	@Failure		403		{object}	response.Response	"不是会话成员/无权访问该店铺"
 //	@Failure		404		{object}	response.Response	"会话不存在"
 //	@Failure		500		{object}	response.Response	"服务器内部错误"
 //	@Router			/im/merchant/conversations/{id}/messages [get]
@@ -130,14 +135,16 @@ func (h *ImHandler) MyRead(c *gin.Context) {
 // MerchantRead 卖家标记已读
 //
 //	@Summary		标记已读(商家)
-//	@Description	同买家侧,身份视角换商户侧。
+//	@Description	同买家侧,身份视角换商户侧;"当前店铺"由 X-Merchant-Id 头声明并实时校验。
 //	@Tags			消息
 //	@Produce		json
 //	@Security		ApiKeyAuth
+//	@Param			X-Merchant-Id	header		int	true	"当前店铺ID"
 //	@Param			id	path		int	true	"会话ID"
 //	@Success		200	{object}	response.Response
+//	@Failure		400	{object}	response.Response	"缺少 X-Merchant-Id 店铺上下文头"
 //	@Failure		401	{object}	response.Response	"未登录或 token 失效"
-//	@Failure		403	{object}	response.Response	"不是会话成员/还不是商户"
+//	@Failure		403	{object}	response.Response	"不是会话成员/无权访问该店铺"
 //	@Failure		404	{object}	response.Response	"会话不存在"
 //	@Failure		500	{object}	response.Response	"服务器内部错误"
 //	@Router			/im/merchant/conversations/{id}/read [post]

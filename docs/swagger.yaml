@@ -1968,6 +1968,11 @@ paths:
       - application/json
       description: 按 key 生成 OSS 预签名读 URL(私有内容临时读取用),有效期 1 小时。
       parameters:
+      - description: 当前店铺ID
+        in: header
+        name: X-Merchant-Id
+        required: true
+        type: integer
       - description: 对象 key
         in: query
         name: key
@@ -1986,7 +1991,7 @@ paths:
                   type: string
               type: object
         "400":
-          description: 缺少 key
+          description: 缺少 key/缺少店铺上下文/非店铺成员
           schema:
             $ref: '#/definitions/response.Response'
         "401":
@@ -2012,6 +2017,11 @@ paths:
       - multipart/form-data
       description: 商户上传图片到 OSS,返回永久访问 URL(Bucket 公共读时匿名可访问)。
       parameters:
+      - description: 当前店铺ID
+        in: header
+        name: X-Merchant-Id
+        required: true
+        type: integer
       - description: 图片文件（≤10MB）
         in: formData
         name: file
@@ -2030,7 +2040,7 @@ paths:
                   type: string
               type: object
         "400":
-          description: 参数校验失败/未开通店铺
+          description: 参数校验失败/缺少店铺上下文/非店铺成员
           schema:
             $ref: '#/definitions/response.Response'
         "401":
@@ -2060,6 +2070,11 @@ paths:
       - application/json
       description: 按扩展名生成对象 key(强制 merchant/<merchantID>/ 前缀)与预签名 PUT URL,
       parameters:
+      - description: 当前店铺ID
+        in: header
+        name: X-Merchant-Id
+        required: true
+        type: integer
       - description: 扩展名（png/jpg/webp/gif）
         in: query
         name: ext
@@ -2078,7 +2093,7 @@ paths:
                   $ref: '#/definitions/handler.UploadURLResp'
               type: object
         "400":
-          description: 缺少 ext/未开通店铺
+          description: 缺少 ext/缺少店铺上下文/非店铺成员
           schema:
             $ref: '#/definitions/response.Response'
         "401":
@@ -2104,6 +2119,11 @@ paths:
       - application/json
       description: 按 key 返回本店对象的永久 URL(base+key 拼接,Bucket 公共读时匿名可访问),
       parameters:
+      - description: 当前店铺ID
+        in: header
+        name: X-Merchant-Id
+        required: true
+        type: integer
       - description: 对象 key
         in: query
         name: key
@@ -2122,7 +2142,7 @@ paths:
                   type: string
               type: object
         "400":
-          description: 缺少 key
+          description: 缺少 key/缺少店铺上下文/非店铺成员
           schema:
             $ref: '#/definitions/response.Response'
         "401":
@@ -2131,6 +2151,10 @@ paths:
             $ref: '#/definitions/response.Response'
         "403":
           description: 无权访问其他店铺的媒体资源
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器内部错误
           schema:
             $ref: '#/definitions/response.Response'
       security:
@@ -2719,8 +2743,13 @@ paths:
       - 消息
   /im/merchant/conversations:
     get:
-      description: 商家工作台侧会话。merchantId 服务端由 token 推导,请求参数不收商户 ID。
+      description: 商家工作台侧会话。"当前店铺"由 X-Merchant-Id 头声明,
       parameters:
+      - description: 当前店铺ID
+        in: header
+        name: X-Merchant-Id
+        required: true
+        type: integer
       - description: 条数(默认20,上限50)
         in: query
         name: limit
@@ -2739,12 +2768,16 @@ paths:
                     $ref: '#/definitions/imapp.ConversationDTO'
                   type: array
               type: object
+        "400":
+          description: 缺少 X-Merchant-Id 店铺上下文头
+          schema:
+            $ref: '#/definitions/response.Response'
         "401":
           description: 未登录或 token 失效
           schema:
             $ref: '#/definitions/response.Response'
         "403":
-          description: 还不是商户
+          description: 还不是商户或无权访问该店铺
           schema:
             $ref: '#/definitions/response.Response'
         "500":
@@ -2758,8 +2791,13 @@ paths:
       - 消息
   /im/merchant/conversations/{id}/messages:
     get:
-      description: 同买家侧,身份视角换商户侧。
+      description: 同买家侧,身份视角换商户侧;"当前店铺"由 X-Merchant-Id 头声明并实时校验。
       parameters:
+      - description: 当前店铺ID
+        in: header
+        name: X-Merchant-Id
+        required: true
+        type: integer
       - description: 会话ID
         in: path
         name: id
@@ -2787,12 +2825,16 @@ paths:
                     $ref: '#/definitions/imapp.MessageDTO'
                   type: array
               type: object
+        "400":
+          description: 缺少 X-Merchant-Id 店铺上下文头
+          schema:
+            $ref: '#/definitions/response.Response'
         "401":
           description: 未登录或 token 失效
           schema:
             $ref: '#/definitions/response.Response'
         "403":
-          description: 不是会话成员/还不是商户
+          description: 不是会话成员/无权访问该店铺
           schema:
             $ref: '#/definitions/response.Response'
         "404":
@@ -2810,8 +2852,13 @@ paths:
       - 消息
   /im/merchant/conversations/{id}/read:
     post:
-      description: 同买家侧,身份视角换商户侧。
+      description: 同买家侧,身份视角换商户侧;"当前店铺"由 X-Merchant-Id 头声明并实时校验。
       parameters:
+      - description: 当前店铺ID
+        in: header
+        name: X-Merchant-Id
+        required: true
+        type: integer
       - description: 会话ID
         in: path
         name: id
@@ -2824,12 +2871,16 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
+        "400":
+          description: 缺少 X-Merchant-Id 店铺上下文头
+          schema:
+            $ref: '#/definitions/response.Response'
         "401":
           description: 未登录或 token 失效
           schema:
             $ref: '#/definitions/response.Response'
         "403":
-          description: 不是会话成员/还不是商户
+          description: 不是会话成员/无权访问该店铺
           schema:
             $ref: '#/definitions/response.Response'
         "404":

@@ -1531,6 +1531,13 @@ const docTemplate = `{
                 "summary": "获取媒体签名 URL(商户)",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "当前店铺ID",
+                        "name": "X-Merchant-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "type": "string",
                         "description": "对象 key",
                         "name": "key",
@@ -1558,7 +1565,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "缺少 key",
+                        "description": "缺少 key/缺少店铺上下文/非店铺成员",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1604,6 +1611,13 @@ const docTemplate = `{
                 "summary": "上传媒体文件(商户)",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "当前店铺ID",
+                        "name": "X-Merchant-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "type": "file",
                         "description": "图片文件（≤10MB）",
                         "name": "file",
@@ -1631,7 +1645,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "参数校验失败/未开通店铺",
+                        "description": "参数校验失败/缺少店铺上下文/非店铺成员",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1683,6 +1697,13 @@ const docTemplate = `{
                 "summary": "获取 OSS 直传签名 URL(商户)",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "当前店铺ID",
+                        "name": "X-Merchant-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "type": "string",
                         "description": "扩展名（png/jpg/webp/gif）",
                         "name": "ext",
@@ -1710,7 +1731,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "缺少 ext/未开通店铺",
+                        "description": "缺少 ext/缺少店铺上下文/非店铺成员",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1756,6 +1777,13 @@ const docTemplate = `{
                 "summary": "获取对象永久访问 URL(商户)",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "当前店铺ID",
+                        "name": "X-Merchant-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "type": "string",
                         "description": "对象 key",
                         "name": "key",
@@ -1783,7 +1811,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "缺少 key",
+                        "description": "缺少 key/缺少店铺上下文/非店铺成员",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1796,6 +1824,12 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "无权访问其他店铺的媒体资源",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -2708,7 +2742,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "商家工作台侧会话。merchantId 服务端由 token 推导,请求参数不收商户 ID。",
+                "description": "商家工作台侧会话。\"当前店铺\"由 X-Merchant-Id 头声明,",
                 "produces": [
                     "application/json"
                 ],
@@ -2717,6 +2751,13 @@ const docTemplate = `{
                 ],
                 "summary": "商家会话列表",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "当前店铺ID",
+                        "name": "X-Merchant-Id",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "条数(默认20,上限50)",
@@ -2746,6 +2787,12 @@ const docTemplate = `{
                             ]
                         }
                     },
+                    "400": {
+                        "description": "缺少 X-Merchant-Id 店铺上下文头",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
                     "401": {
                         "description": "未登录或 token 失效",
                         "schema": {
@@ -2753,7 +2800,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "还不是商户",
+                        "description": "还不是商户或无权访问该店铺",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -2774,7 +2821,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "同买家侧,身份视角换商户侧。",
+                "description": "同买家侧,身份视角换商户侧;\"当前店铺\"由 X-Merchant-Id 头声明并实时校验。",
                 "produces": [
                     "application/json"
                 ],
@@ -2783,6 +2830,13 @@ const docTemplate = `{
                 ],
                 "summary": "历史消息(商家)",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "当前店铺ID",
+                        "name": "X-Merchant-Id",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "会话ID",
@@ -2825,6 +2879,12 @@ const docTemplate = `{
                             ]
                         }
                     },
+                    "400": {
+                        "description": "缺少 X-Merchant-Id 店铺上下文头",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
                     "401": {
                         "description": "未登录或 token 失效",
                         "schema": {
@@ -2832,7 +2892,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "不是会话成员/还不是商户",
+                        "description": "不是会话成员/无权访问该店铺",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -2859,7 +2919,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "同买家侧,身份视角换商户侧。",
+                "description": "同买家侧,身份视角换商户侧;\"当前店铺\"由 X-Merchant-Id 头声明并实时校验。",
                 "produces": [
                     "application/json"
                 ],
@@ -2868,6 +2928,13 @@ const docTemplate = `{
                 ],
                 "summary": "标记已读(商家)",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "当前店铺ID",
+                        "name": "X-Merchant-Id",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "会话ID",
@@ -2883,6 +2950,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/response.Response"
                         }
                     },
+                    "400": {
+                        "description": "缺少 X-Merchant-Id 店铺上下文头",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
                     "401": {
                         "description": "未登录或 token 失效",
                         "schema": {
@@ -2890,7 +2963,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "不是会话成员/还不是商户",
+                        "description": "不是会话成员/无权访问该店铺",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
