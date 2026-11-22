@@ -4,6 +4,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/wsc-zz/service/internal/interfaces/http/corspolicy"
 )
 
 // getCurrentUserID 从 gin 上下文取 JWT 中间件写入的 userID。
@@ -30,7 +32,8 @@ func getCurrentUserID(c *gin.Context) (uint, bool) {
 // 请求必须显式声明操作哪家店;服务端实时校验成员关系,永不采信 body 里的 merchantId。
 // 放 header 而不是塞进每个路径,是因为"店"对这些服务是上下文不是资源
 // (merchant 服务里店铺本身是资源,走路径 /merchant/shops/:id)。
-const HeaderMerchantID = "X-Merchant-Id"
+// 常量本体放在 corspolicy 包:跨域白名单必须包含这个头,两处共用一份,防漂移。
+const HeaderMerchantID = corspolicy.HeaderMerchantID
 
 // getCurrentMerchantID 取当前请求的店铺上下文;缺失/非法返回 (0,false) → 调用方 400。
 // 只解析不校验:这个 ID 是否真实、请求者是否是它的成员,由应用层经 merchant RPC 裁决。

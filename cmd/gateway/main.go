@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/wsc-zz/service/global"
+	"github.com/wsc-zz/service/internal/interfaces/http/corspolicy"
 	nacosconfig "github.com/wsc-zz/service/internal/infrastructure/configcenter/nacos"
 	"github.com/wsc-zz/service/internal/infrastructure/discovery/nacos"
 	"github.com/wsc-zz/service/internal/interfaces/http/gateway"
@@ -101,7 +102,11 @@ func main() {
 		global.Logger.Error("端口监听失败", zap.Int("port", global.Conf.Gateway.ServicePort), zap.Error(err))
 		panic("端口监听失败: " + err.Error())
 	}
-	srv := &http.Server{Handler: gw}
+	// CORS 中间件套在最外层:预检在网关就地应答(不依赖上游存活),
+	// 网关自身的 502/503/404 也带放行头——否则上游挂掉时,浏览器会把真实错误
+	// 伪装成"预检缺 Access-Control-Allow-Origin"的 CORS 报错,排查方向全错。
+	// 正常转发的响应沿用上游业务服务的 CORS 头,网关不重复加。
+	srv := &http.Server{Handler: corspolicy.Middleware(gw)}
 
 	registry, err := nacos.Register()
 	if err != nil {
